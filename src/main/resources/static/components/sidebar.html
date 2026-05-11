@@ -1,0 +1,126 @@
+<aside class="sidebar">
+
+    <div class="sidebar-brand">
+        <img src="/img/logo-white.png" class="sidebar-logo">
+
+        <div class="brand-text">
+            <h2>CentroPsico</h2>
+            <span>Sistema de gestión</span>
+        </div>
+    </div>
+
+    <nav class="sidebar-nav">
+
+        <button class="sidebar-link active" onclick="showSectionById('home')">
+            <i data-lucide="layout-dashboard"></i>
+            <span>Dashboard</span>
+        </button>
+
+        <button class="sidebar-link admin-only" onclick="showSectionById('leads')">
+            <i data-lucide="inbox"></i>
+            <span>Solicitudes</span>
+        </button>
+
+        <button class="sidebar-link recepcion-only" onclick="showSectionById('patients')">
+            <i data-lucide="users"></i>
+            <span>Pacientes</span>
+        </button>
+
+        <button class="sidebar-link" onclick="showSectionById('appointments')">
+            <i data-lucide="calendar"></i>
+            <span>Citas</span>
+        </button>
+
+        <button class="sidebar-link admin-only" onclick="showSectionById('finances')">
+            <i data-lucide="wallet"></i>
+            <span>Finanzas</span>
+        </button>
+
+        <button class="sidebar-link admin-only" onclick="showSectionById('reports')">
+            <i data-lucide="bar-chart-3"></i>
+            <span>Reportes</span>
+        </button>
+
+        <div class="sidebar-group admin-only">
+
+            <button class="sidebar-link" onclick="toggleModuleMenu('adminMenu')">
+                <i data-lucide="settings"></i>
+                <span>Administración</span>
+            </button>
+
+            <div id="adminMenu" class="sidebar-submenu">
+
+                <button onclick="showSectionById('users')">
+                    <i data-lucide="user"></i>
+                    <span>Usuarios</span>
+                </button>
+
+                <button onclick="showSectionById('psychologists')">
+                    <i data-lucide="brain"></i>
+                    <span>Psicólogos</span>
+                </button>
+
+                <button onclick="showSectionById('services')">
+                    <i data-lucide="briefcase"></i>
+                    <span>Servicios</span>
+                </button>
+
+                <button onclick="showSectionById('availability')">
+                    <i data-lucide="clock"></i>
+                    <span>Disponibilidad</span>
+                </button>
+
+            </div>
+
+        </div>
+
+    </nav>
+
+    <div class="sidebar-bottom">
+
+        <!-- NOTIFICACIONES -->
+        <div class="notification-wrapper">
+            <button
+                class="notification-btn"
+                onclick="animateNotificationBell(); toggleNotificationDropdown();"
+                title="Notificaciones">
+
+                <i data-lucide="bell"></i>
+                <strong id="notificationCount" class="notification-count hidden">0</strong>
+            </button>
+
+            <div id="notificationDropdown" class="notification-dropdown hidden">
+                <div class="notification-header">
+                    <strong>Notificaciones</strong>
+
+                    <div class="notification-header-actions">
+                        <button onclick="markAllNotificationsAsRead()">Marcar leídas</button>
+                        <button class="notification-close" onclick="closeNotificationDropdown()">×</button>
+                    </div>
+                </div>
+
+                <div id="notificationList" class="notification-list">
+                    <div class="notification-empty">
+                        No hay notificaciones
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-user">
+            <div class="sidebar-avatar" id="sidebarUserAvatar">AP</div>
+
+            <div class="sidebar-user-info">
+                <strong id="sidebarUserName">Admin Principal</strong>
+                <span id="sidebarUserRole">ADMIN</span>
+            </div>
+        </div>
+
+        <button class="logout-btn" onclick="logout()">
+            <i data-lucide="log-out"></i>
+            <span>Cerrar sesión</span>
+        </button>
+
+    </div>
+
+</aside>

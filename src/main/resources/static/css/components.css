@@ -1,0 +1,73 @@
+/* BOTONES */
+.btn-primary {
+    background: #0f3d66;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    background: #0c2f4f;
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background: #e6edf5;
+    color: #0f3d66;
+    border: 1px solid #cbd8e6;
+    padding: 9px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+    background: #d6e2ef;
+    transform: translateY(-1px);
+}
+
+/* BADGES */
+.badge {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.badge-active {
+    background: #e6f7ec;
+    color: #1e7e34;
+}
+
+.badge-inactive {
+    background: #fdecea;
+    color: #c82333;
+}
+
+.badge-role {
+    background: #e7f0fb;
+    color: #0f3d66;
+}
+
+/* ACCIONES EN TABLAS */
+.table-wrapper td button {
+    font-size: 12px;
+    padding: 6px 10px;
+    margin-right: 4px;
+    margin-bottom: 4px;
+}
+
+/* MENSAJES */
+.result-box {
+    background: #eaf2fa;
+    border-left: 4px solid #0f3d66;
+    border-radius: 10px;
+    padding: 14px;
+    color: #102a43;
+}

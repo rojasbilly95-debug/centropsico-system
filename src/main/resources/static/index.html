@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Centro Psicológico - Panel</title>
+
+    <link rel="icon" type="image/png" href="/img/logo-dark.png">
+
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/layout.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/modules.css">
+
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
+</head>
+
+<body>
+
+    <div class="app-layout">
+        <div id="sidebar-container"></div>
+
+        <main class="main-content">
+
+            <!-- INICIO -->
+            <section id="home" class="section active">
+                <div class="module-header">
+                    <div>
+                        <h2 class="section-title">Panel de Control</h2>
+                        <p class="section-subtitle">Resumen general del centro psicológico</p>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <span>Pacientes</span>
+                        <strong id="dashPatients">0</strong>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <span>Citas de hoy</span>
+                        <strong id="dashAppointments">0</strong>
+                    </div>
+
+                    <div class="dashboard-card admin-dashboard-only">
+                        <span>Ingresos</span>
+                        <strong id="dashIncome">S/ 0</strong>
+                    </div>
+
+                    <div class="dashboard-card admin-dashboard-only">
+                        <span>Gastos</span>
+                        <strong id="dashExpense">S/ 0</strong>
+                    </div>
+
+                    <div class="dashboard-card dashboard-result admin-dashboard-only">
+                        <span>Resultado</span>
+                        <strong id="dashProfit">S/ 0</strong>
+                        <small id="dashStatus">-</small>
+                    </div>
+                </div>
+
+                <div class="module-grid">
+                    <div class="card">
+                        <h3>Resumen del día</h3>
+                        <div id="dashboardSummary" class="result-box">
+                            Aquí verás alertas importantes del sistema.
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Próximas citas de hoy</h3>
+                        <div id="todaySchedule" class="agenda-list">
+                            Cargando cronograma...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="card chart-card admin-dashboard-only">
+                        <h3>Ingresos vs Gastos del mes</h3>
+                        <canvas id="dashboardFinanceChart"></canvas>
+                    </div>
+
+                    <div class="card chart-card">
+                        <h3>Citas de hoy por estado</h3>
+                        <canvas id="dashboardAppointmentsChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PACIENTES -->
+            <section id="patients" class="section">
+                <div class="module-header">
+                    <div>
+                        <h2 class="section-title">Módulo de Pacientes</h2>
+                        <p class="section-subtitle">Registra, consulta y administra la información de los pacientes del
+                            centro.</p>
+                    </div>
+                </div>
+
+                <div class="module-grid">
+                    <div class="card form-card">
+                        <div class="card-header">
+                            <h3>Registrar paciente</h3>
+                            <span>Datos personales y contacto</span>
+                        </div>
+
+                        <div class="form-grid">
+                            <input type="text" id="patientFirstName" placeholder="Nombres">
+                            <input type="text" id="patientLastName" placeholder="Apellidos">
+                            <input type="text" id="patientDni" placeholder="DNI">
+                            <input type="date" id="patientBirthDate">
+
+                            <select id="patientGender">
+                                <option value="">Sexo</option>
+                                <option value="MASCULINO">Masculino</option>
+                                <option value="FEMENINO">Femenino</option>
+                            </select>
+
+                            <input type="text" id="patientPhone" placeholder="Teléfono">
+                            <input type="email" id="patientEmail" placeholder="Correo">
+                            <input type="text" id="patientAddress" placeholder="Dirección">
+                            <input type="text" id="patientEmergencyContact" placeholder="Contacto de emergencia">
+                            <input type="text" id="patientEmergencyPhone" placeholder="Teléfono de emergencia">
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn-primary" id="patientSaveButton" onclick="savePatient()">Guardar
+                                paciente</button>
+                            <button class="btn-secondary" id="patientCancelEditButton" onclick="cancelPatientEdit()"
+                                style="display:none;">
+                                Cancelar edición
+                            </button>
+                            <button class="btn-secondary" onclick="togglePatientList()">Listar pacientes</button>
+                        </div>
+                    </div>
+
+                    <div class="card message-card">
+                        <div class="card-header">
+                            <h3>Estado</h3>
+                            <span>Mensajes del sistema</span>
+                        </div>
+
+                        <div id="patientResult" class="result-box">
+                            Esperando acción...
+                        </div>
+                    </div>
+                </div>
+
+                <div id="patientListModal" class="floating-modal hidden">
+                    <div class="floating-modal-content patient-modal-content">
+
+                        <div class="floating-modal-header">
+                            <div>
+                                <h3>Pacientes registrados</h3>
+                                <span>Consulta rápida de pacientes activos e inactivos</span>
+                            </div>
+
+                            <button class="modal-close-btn" onclick="closePatientList()">×</button>
+                        </div>
+
+                        <div class="floating-modal-tools">
+                            <input class="table-search" type="text" placeholder="Buscar paciente..."
+                                oninput="filterPatientTable(this.value)">
+                        </div>
+
+                        <div class="table-wrapper floating-table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nombres</th>
+                                        <th>Apellidos</th>
+                                        <th>DNI</th>
+                                        <th>Teléfono</th>
+                                        <th>Correo</th>
+                                        <th>Estado</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="patientTableBody"></tbody>
+                            </table>
+                            <div class="pagination-bar">
+                                <button class="btn-secondary" onclick="changePatientPage(-1)">Anterior</button>
+                                <span id="patientPageInfo">Página 1</span>
+                                <button class="btn-secondary" onclick="changePatientPage(1)">Siguiente</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            <!-- USUARIOS -->
+            <section id="users" class="section">
+                <div class="module-header">
+                    <div>
+                        <h2 class="section-title">Módulo de Usuarios</h2>
+                        <p class="section-subtitle">Administra accesos, roles y estado de los usuarios del sistema.</p>
+                    </div>
+                </div>
+
+                <div class="module-grid">
+                    <div class="card form-card">
+                        <div class="card-header">
+                            <h3>Registrar usuario</h3>
+                            <span>Datos de acceso y rol</span>
+                        </div>
+
+                        <div class="form-grid">
+                            <input type="text" id="userFirstName" placeholder="Nombres">
+                            <input type="text" id="userLastName" placeholder="Apellidos">
+                            <input type="email" id="userEmail" placeholder="Correo">
+                            <input type="password" id="userPassword" placeholder="Contraseña">
+
+                            <select id="userRole">
+                                <option value="ADMIN">ADMIN</option>
+                                <option value="RECEPCIONISTA">RECEPCIONISTA</option>
+                                <option value="PSICOLOGO">PSICOLOGO</option>
+                            </select>
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn-primary" id="userSaveButton" onclick="saveUser()">Guardar
+                                usuario</button>
+
+                            <button class="btn-secondary" id="userCancelEditButton" onclick="cancelUserEdit()"
+                                style="display:none;">
+                                Cancelar edición
+                            </button>
+                            <button class="btn-secondary" onclick="toggleUserList()">Listar usuarios</button>
+                        </div>
+                    </div>
+
+                    <div class="card message-card">
+                        <div class="card-header">
+                            <h3>Estado</h3>
+                            <span>Mensajes del sistema</span>
+                        </div>
+
+                        <div id="userResult" class="result-box">
+                            Esperando acción...
+                        </div>
+                    </div>
+                </div>
+
+                <div id="userListModal" class="floating-modal hidden">
+                    <div class="floating-modal-content admin-modal-content">
+                        <div class="floating-modal-header">
+                            <div>
+                                <h3>Usuarios registrados</h3>
+                                <span>Control de roles y estado de acceso</span>
+                            </div>
+                            <button class="modal-close-btn" onclick="closeUserList()">×</button>
+                        </div>
+
+                        <div class="floating-modal-tools">
+                            <input class="table-search" type="text" placeholder="Buscar usuario..."
+                                oninput="filterUserTable(this.value)">
+                        </div>
+
+                        <div class="table-wrapper floating-table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nombres</th>
+                                        <th>Apellidos</th>
+                                        <th>Correo</th>
+                                        <th>Rol</th>
+                                        <th>Estado</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="userTableBody"></tbody>
+                            </table>
+                        </div>
+
+                        <div class="pagination-bar">
+                            <button class="btn-secondary" onclick="changeUserPage(-1)">Anterior</button>
+                            <span id="userPageInfo">Página 1 de 1</span>
+                            <button class="btn-secondary" onclick="changeUserPage(1)">Siguiente</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PSICOLOGOS -->
+            <section id="psychologists" class="section">
+                <div class="module-header">
+                    <div>
+                        <h2 class="section-title">Módulo de Psicólogos</h2>
+                        <p class="section-subtitle">Registra y administra los psicólogos del centro.</p>
+                    </div>
+                </div>
+
+                <div class="module-grid">
+                    <div class="card form-card">
+                        <div class="card-header">
+                            <h3>Registrar psicólogo</h3>
+                            <span>Datos profesionales y contacto</span>
+                        </div>
+
+                        <div class="form-grid">
+                            <input type="text" id="psychologistFirstName" placeholder="Nombres">
+                            <input type="text" id="psychologistLastName" placeholder="Apellidos">
+                            <input type="text" id="psychologistSpecialty" placeholder="Especialidad">
+                            <input type="text" id="psychologistPhone" placeholder="Teléfono">
+                            <input type="email" id="psychologistEmail" placeholder="Correo">
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn-primary" id="psychologistSaveButton" onclick="savePsychologist()">Guardar
+                                psicólogo</button>
+
+                            <button class="btn-secondary" id="psychologistCancelEditButton"
+                                onclick="cancelPsychologistEdit()" style="display:none;">
+                                Cancelar edición
+                            </button>
+                            <button class="btn-secondary" onclick="togglePsychologistList()">Listar psicólogos</button>
+                        </div>
+                    </div>
+
+                    <div class="card message-card">
+                        <div class="card-header">
+                            <h3>Estado</h3>
+                            <span>Mensajes del sistema</span>
+                        </div>
+
+                        <div id="psychologistResult" class="result-box">
+                            Esperando acción...
+                        </div>
+                    </div>
+                </div>
+
+                <div id="psychologistListModal" class="floating-modal hidden">
+                    <div class="floating-modal-content admin-modal-content">
+                        <div class="floating-modal-header">
+                            <div>
+                                <h3>Psicólogos registrados</h3>
+                                <span>Listado general de psicólogos activos e inactivos</span>
+                            </div>
+                            <button class="modal-close-btn" onclick="closePsychologistList()">×</button>
+                        </div>
+
+                        <div class="floating-modal-tools">
+                            <input class="table-search" type="text" placeholder="Buscar psicólogo..."
+                                oninput="filterPsychologistTable(this.value)">
+                        </div>
+
+                        <div class="table-wrapper floating-table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nombres</th>
+                                        <th>Apellidos</th>
+                                        <th>Especialidad</th>
+                                        <th>Teléfono</th>
+                                        <th>Correo</th>
+                                        <th>Disponibilidad</th>
+                                        <th>Estado</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="psychologistTableBody"></tbody>
+                            </table>
+                        </div>
+
+                        <div class="pagination-bar">
+                            <button class="btn-secondary" onclick="changePsychologistPage(-1)">Anterior</button>
+                            <span id="psychologistPageInfo">Página 1 de 1</span>
+                            <button class="btn-secondary" onclick="changePsychologistPage(1)">Siguiente</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SERVICIOS -->
+            <section id="services" class="section">
+                <div class="module-header">
+                    <div>
+                        <h2 class="section-title">Módulo de Servicios</h2>
+                        <p class="section-subtitle">Registra y administra los servicios ofrecidos por el centro.</p>
+                    </div>
+                </div>
+
+                <div class="module-grid">
+                    <div class="card form-card">
+                        <div class="card-header">
+                            <h3>Registrar servicio</h3>
+                            <span>Datos del servicio, costo y duración</span>
+                        </div>
+
+                        <div class="form-grid">
+                            <input type="text" id="serviceName" placeholder="Nombre del servicio">
+                            <input type="text" id="serviceDescription" placeholder="Descripción">
+                            <input type="number" id="servicePrice" placeholder="Costo">
+                            <input type="number" id="serviceDuration" placeholder="Duración en minutos">
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn-primary" id="serviceSaveButton" onclick="saveService()">Guardar
+                                servicio</button>
+
+                            <button class="btn-secondary" id="serviceCancelEditButton" onclick="cancelServiceEdit()"
+                                style="display:none;">
+                                Cancelar edición
+                            </button>
+                            <button class="btn-secondary" onclick="toggleServiceList()">Listar servicios</button>
+                        </div>
+                    </div>
+
+                    <div class="card message-card">
+                        <div class="card-header">
+                            <h3>Estado</h3>
+                            <span>Mensajes del sistema</span>
+                        </div>
+
+                        <div id="serviceResult" class="result-box">
+                            Esperando acción...
+                        </div>
+                    </div>
+                </div>
+
+                <div id="serviceListModal" class="floating-modal hidden">
+                    <div class="floating-modal-content admin-modal-content">
+                        <div class="floating-modal-header">
+                            <div>
+                                <h3>Servicios registrados</h3>
+                                <span>Listado general de servicios activos e inactivos</span>
+                            </div>
+                            <button class="modal-close-btn" onclick="closeServiceList()">×</button>
+                        </div>
+
+                        <div class="floating-modal-tools">
+                            <input class="table-search" type="text" placeholder="Buscar servicio..."
+                                oninput="filterServiceTable(this.value)">
+                        </div>
+
+                        <div class="table-wrapper floating-table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nombre</th>
+                                        <th>Descripción</th>
+                                        <th>Costo</th>
+                                        <th>Duración</th>
+                                        <th>Estado</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="serviceTableBody"></tbody>
+                            </table>
+                        </div>
+
+                        <div class="pagination-bar">
+                            <button class="btn-secondary" onclick="changeServicePage(-1)">Anterior</button>
+                            <span id="servicePageInfo">Página 1 de 1</span>
+                            <button class="btn-secondary" onclick="changeServicePage(1)">Siguiente</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- DISPONIBILIDAD PSICÓLOGOS -->
+            <section id="availability" class="section">
+                <div class="module-header">
+                    <div>
+                        <h2 class="section-title">Disponibilidad de Psicólogos</h2>
+                        <p class="section-subtitle">Configura los días y horarios en que cada psicólogo puede atender
+                            citas.</p>
+                    </div>
+                </div>
+
+                <div class="module-grid">
+                    <div class="card form-card">
+                        <div class="card-header">
+                            <h3>Registrar disponibilidad</h3>
+                            <span>Horario semanal por psicólogo</span>
+                        </div>
+
+                        <div class="form-grid">
+                            <select id="availabilityPsychologistId"></select>
+
+                            <div class="availability-days-box">
+                                <label class="day-check">
+                                    <input type="checkbox" name="availabilityDays" value="MONDAY">
+                                    <span>Lunes</span>
+                                </label>
+
+                                <label class="day-check">
+                                    <input type="checkbox" name="availabilityDays" value="TUESDAY">
+                                    <span>Martes</span>
+                                </label>
+
+                                <label class="day-check">
+                                    <input type="checkbox" name="availabilityDays" value="WEDNESDAY">
+                                    <span>Miércoles</span>
+                                </label>
+
+                                <label class="day-check">
+                                    <input type="checkbox" name="availabilityDays" value="THURSDAY">
+                                    <span>Jueves</span>
+                                </label>
+
+                                <label class="day-check">
+                                    <input type="checkbox" name="availabilityDays" value="FRIDAY">
+                                    <span>Viernes</span>
+                                </label>
+
+                                <label class="day-check">
+                                    <input type="checkbox" name="availabilityDays" value="SATURDAY">
+                                    <span>Sábado</span>
+                                </label>
+
+                                <label class="day-check">
+                                    <input type="checkbox" name="availabilityDays" value="SUNDAY">
+                                    <span>Domingo</span>
+                                </label>
+                            </div>
+
+                            <input type="time" id="availabilityStartTime">
+                            <input type="time" id="availabilityEndTime">
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn-primary" id="availabilitySaveButton" onclick="saveAvailability()">
+                                Guardar disponibilidad
+                            </button>
+
+                            <button class="btn-secondary" id="availabilityCancelEditButton"
+                                onclick="cancelAvailabilityEdit()" style="display:none;">
+                                Cancelar edición
+                            </button>
+
+                            <button class="btn-secondary" onclick="toggleAvailabilityList()">
+                                Listar disponibilidad
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card message-card">
+                        <div class="card-header">
+                            <h3>Estado</h3>
+                            <span>Mensajes del sistema</span>
+                        </div>
+
+                        <div id="availabilityResult" class="result-box">
+                            Esperando acción...
+                        </div>
+                    </div>
+                </div>
+
+                <div id="availabilityListModal" class="floating-modal hidden">
+                    <div class="floating-modal-content admin-modal-content">
+                        <div class="floating-modal-header">
+                            <div>
+                                <h3>Disponibilidad registrada</h3>
+                                <span>Horarios activos e inactivos por psicólogo</span>
+                            </div>
+                            <button class="modal-close-btn" onclick="closeAvailabilityList()">×</button>
+                        </div>
+
+                        <div class="floating-modal-tools">
+                            <input class="table-search" type="text" placeholder="Buscar disponibilidad..."
+                                oninput="filterAvailabilityTable(this.value)">
+                        </div>
+
+                        <div class="table-wrapper floating-table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Psicólogo</th>
+                                        <th>Día</th>
+                                        <th>Hora inicio</th>
+                                        <th>Hora fin</th>
+                                        <th>Estado</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="availabilityTableBody"></tbody>
+                            </table>
+                        </div>
+
+                        <div class="pagination-bar">
+                            <button class="btn-secondary" onclick="changeAvailabilityPage(-1)">Anterior</button>
+                            <span id="availabilityPageInfo">Página 1 de 1</span>
+                            <button class="btn-secondary" onclick="changeAvailabilityPage(1)">Siguiente</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CITAS -->
+            <section id="appointments" class="section">
+                <div class="module-header">
+                    <div>
+                        <h2 class="section-title">Módulo de Citas</h2>
+                        <p class="section-subtitle">
+                            Programa citas, revisa la agenda diaria y controla pagos o estados de atención.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="module-grid">
+                    <div class="card form-card">
+                        <div class="card-header">
+                            <h3>Registrar cita</h3>
+                            <span>Datos de paciente, psicólogo, servicio y horario</span>
+                        </div>
+
+                        <div class="form-grid">
+                            <select id="appointmentPatientId"></select>
+                            <select id="appointmentPsychologistId"></select>
+                            <select id="appointmentServiceId"></select>
+                            <input type="date" id="appointmentDate">
+                            <input type="time" id="appointmentStartTime">
+                            <input type="time" id="appointmentEndTime">
+
+                            <div id="appointmentSlotsContainer" class="appointment-slots-container">
+                                <span class="slots-placeholder">
+                                    Selecciona psicólogo, servicio y fecha para ver horarios disponibles.
+                                </span>
+                            </div>
+
+                            <select id="appointmentStatus">
+                                <option value="PROGRAMADA">PROGRAMADA</option>
+                                <option value="CANCELADA">CANCELADA</option>
+                                <option value="ATENDIDA">ATENDIDA</option>
+                                <option value="NO_ASISTIO">NO_ASISTIO</option>
+                                <option value="REPROGRAMADA">REPROGRAMADA</option>
+                            </select>
+
+                            <input type="text" id="appointmentReason" placeholder="Motivo">
+                            <input type="text" id="appointmentObservation" placeholder="Observación">
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn-primary" onclick="createAppointment()">Guardar cita</button>
+                            <button class="btn-secondary" onclick="toggleAppointmentList()">Listar citas</button>
+                            <button class="btn-secondary" onclick="loadFullCalendar()">Ver calendario</button>
+                        </div>
+                    </div>
+
+                    <div class="card message-card">
+                        <div class="card-header">
+                            <h3>Agenda diaria</h3>
+                            <span>Consulta las citas programadas por fecha</span>
+                        </div>
+
+                        <div class="agenda-box">
+                            <input type="date" id="agendaDate">
+                            <button class="btn-primary" onclick="loadAgenda()">Ver agenda</button>
+                        </div>
+
+                        <div id="agendaResult" class="agenda-list">
+                            Aquí verás la agenda del día
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FULLCALENDAR -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Calendario de citas</h3>
+                        <span>Vista visual por mes, semana, día y lista</span>
+                    </div>
+
+                    <div id="appointmentsCalendar"></div>
+                </div>
+
+                <div id="appointmentListModal" class="floating-modal hidden">
+                    <div class="floating-modal-content appointment-modal-content">
+
+                        <div class="floating-modal-header">
+                            <div>
+                                <h3>Citas registradas</h3>
+                                <span>Listado general de citas, pagos y estados</span>
+                            </div>
+
+                            <button class="modal-close-btn" onclick="closeAppointmentList()">×</button>
+                        </div>
+
+                        <div class="floating-modal-tools">
+                            <input class="table-search" type="text" placeholder="Buscar cita..."
+                                oninput="filterAppointmentTable(this.value)">
+                        </div>
+
+                        <div id="appointmentResult" class="result-box compact-result">
+                            Mensajes del sistema...
+                        </div>
+
+                        <div class="table-wrapper floating-table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Paciente</th>
+                                        <th>Psicólogo</th>
+                                        <th>Servicio</th>
+                                        <th>Fecha</th>
+                                        <th>Hora inicio</th>
+                                        <th>Hora fin</th>
+                                        <th>Estado</th>
+                                        <th>Pago</th>
+                                        <th>Monto</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="appointmentTableBody"></tbody>
+                            </table>
+                        </div>
+
+                        <div class="pagination-bar">
+                            <button class="btn-secondary" onclick="changeAppointmentPage(-1)">Anterior</button>
+                            <span id="appointmentPageInfo">Página 1 de 1</span>
+                            <button class="btn-secondary" onclick="changeAppointmentPage(1)">Siguiente</button>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            <!-- FINANZAS -->
+            <section id="finances" class="section">
+                <div class="module-header">
+                    <div>
+                        <h2 class="section-title">Módulo de Finanzas</h2>
+                        <p class="section-subtitle">Registra ingresos, gastos, categorías y analiza el resultado
+                            mensual.</p>
+                    </div>
+                </div>
+
+                <div class="module-grid finance-main-grid">
+                    <div class="card form-card">
+                        <div class="card-header">
+                            <h3>Registrar ingreso</h3>
+                            <span>Pagos, entradas y movimientos positivos</span>
+                        </div>
+
+                        <div class="form-grid">
+                            <input type="text" id="incomeDescription" placeholder="Descripción del ingreso">
+                            <input type="number" id="incomeAmount" placeholder="Monto">
+                            <input type="date" id="incomeDate">
+
+                            <select id="incomePaymentMethod">
+                                <option value="EFECTIVO">EFECTIVO</option>
+                                <option value="YAPE">YAPE</option>
+                                <option value="PLIN">PLIN</option>
+                                <option value="TRANSFERENCIA">TRANSFERENCIA</option>
+                                <option value="TARJETA">TARJETA</option>
+                            </select>
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn-primary" onclick="createIncome()">Guardar ingreso</button>
+                            <button class="btn-secondary" onclick="toggleIncomeList()">Listar ingresos</button>
+                        </div>
+                    </div>
+
+                    <div class="card form-card">
+                        <div class="card-header">
+                            <h3>Registrar gasto</h3>
+                            <span>Salidas de dinero, pagos operativos o campañas</span>
+                        </div>
+
+                        <div class="form-grid">
+                            <select id="expenseCategoryId"></select>
+                            <input type="text" id="expenseDescription" placeholder="Descripción del gasto">
+                            <input type="number" id="expenseAmount" placeholder="Monto">
+                            <input type="date" id="expenseDate">
+                            <input type="text" id="expenseResponsible" placeholder="Responsable">
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn-primary" onclick="createExpense()">Guardar gasto</button>
+                            <button class="btn-secondary" onclick="toggleExpenseList()">Listar gastos</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="module-grid finance-secondary-grid">
+                    <div class="card message-card">
+                        <div class="card-header">
+                            <h3>Resumen financiero</h3>
+                            <span>Consulta ganancia o pérdida mensual</span>
+                        </div>
+
+                        <div class="form-grid single-column">
+                            <input type="number" id="summaryYear" placeholder="Año, ejemplo: 2026">
+                            <input type="number" id="summaryMonth" placeholder="Mes, ejemplo: 4">
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn-primary" onclick="loadFinanceSummary()">Ver resumen</button>
+                        </div>
+
+                        <div id="financeSummaryResult" class="result-box finance-result">
+                            Aquí verás ingresos, gastos y ganancia/pérdida.
+                        </div>
+                    </div>
+
+                    <div class="card message-card">
+                        <div class="card-header">
+                            <h3>Categorías de gasto</h3>
+                            <span>Organiza talleres, campañas, alquiler u otros gastos</span>
+                        </div>
+
+                        <div class="form-grid single-column">
+                            <input type="text" id="expenseCategoryName" placeholder="Nombre de categoría">
+                            <input type="text" id="expenseCategoryDescription" placeholder="Descripción">
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn-primary" onclick="createExpenseCategory()">Guardar categoría</button>
+                            <button class="btn-secondary" onclick="loadExpenseCategories()">Listar categorías</button>
+                        </div>
+
+                        <div id="expenseCategoryResult" class="result-box finance-result">
+                            Categorías registradas...
+                        </div>
+                    </div>
+                </div>
+
+                <div id="incomeListModal" class="floating-modal hidden">
+                    <div class="floating-modal-content finance-modal-content">
+                        <div class="floating-modal-header">
+                            <div>
+                                <h3>Ingresos registrados</h3>
+                                <span>Historial de entradas de dinero</span>
+                            </div>
+                            <button class="modal-close-btn" onclick="closeIncomeList()">×</button>
+                        </div>
+
+                        <div class="floating-modal-tools">
+                            <input class="table-search" type="text" placeholder="Buscar ingreso..."
+                                oninput="filterIncomeTable(this.value)">
+                        </div>
+
+                        <div id="incomeResult" class="result-box compact-result">
+                            Mensajes de ingresos...
+                        </div>
+
+                        <div class="table-wrapper floating-table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Descripción</th>
+                                        <th>Monto</th>
+                                        <th>Fecha</th>
+                                        <th>Método</th>
+                                        <th>Estado</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="incomeTableBody"></tbody>
+                            </table>
+                        </div>
+
+                        <div class="pagination-bar">
+                            <button class="btn-secondary" onclick="changeIncomePage(-1)">Anterior</button>
+                            <span id="incomePageInfo">Página 1 de 1</span>
+                            <button class="btn-secondary" onclick="changeIncomePage(1)">Siguiente</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="expenseListModal" class="floating-modal hidden">
+                    <div class="floating-modal-content finance-modal-content">
+                        <div class="floating-modal-header">
+                            <div>
+                                <h3>Gastos registrados</h3>
+                                <span>Historial de gastos del centro</span>
+                            </div>
+                            <button class="modal-close-btn" onclick="closeExpenseList()">×</button>
+                        </div>
+
+                        <div class="floating-modal-tools">
+                            <input class="table-search" type="text" placeholder="Buscar gasto..."
+                                oninput="filterExpenseTable(this.value)">
+                        </div>
+
+                        <div id="expenseResult" class="result-box compact-result">
+                            Mensajes de gastos...
+                        </div>
+
+                        <div class="table-wrapper floating-table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Categoría</th>
+                                        <th>Descripción</th>
+                                        <th>Monto</th>
+                                        <th>Fecha</th>
+                                        <th>Responsable</th>
+                                        <th>Estado</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="expenseTableBody"></tbody>
+                            </table>
+                        </div>
+
+                        <div class="pagination-bar">
+                            <button class="btn-secondary" onclick="changeExpensePage(-1)">Anterior</button>
+                            <span id="expensePageInfo">Página 1 de 1</span>
+                            <button class="btn-secondary" onclick="changeExpensePage(1)">Siguiente</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+<!-- PRE-RESERVAS DE ATENCIÓN -->
+<section id="leads" class="section">
+    <div class="module-header">
+        <div>
+            <h2 class="section-title">Pre-reservas de atención</h2>
+
+            <p class="section-subtitle">
+                Revisa las pre-reservas enviadas desde el portal público y realiza seguimiento.
+            </p>
+        </div>
+    </div>
+
+    <div class="module-grid single-column">
+        <div class="card table-card">
+            <div class="table-header">
+                <div>
+                    <h3>Pre-reservas registradas</h3>
+                    <span>
+                        Seguimiento de personas interesadas, modalidad, psicólogo y horario solicitado
+                    </span>
+                </div>
+                <input
+                    class="table-search"
+                    type="text"
+                    placeholder="Buscar pre-reserva..."
+                    oninput="filterLeadTable(this.value)">
+            </div>
+            <div id="leadResult" class="result-box compact-result">
+                Pre-reservas cargadas desde el portal público.
+            </div>
+            <div class="table-wrapper">
+                <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Correo</th>
+                        <th>Teléfono</th>
+                        <th>Tipo de atención</th>
+                        <th>Modalidad</th>
+                        <th>Psicólogo</th>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>Adelanto</th>
+                        <th>Pago</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                    <tbody id="leadTableBody"></tbody>
+                </table>
+            </div>
+            <div class="pagination-bar">
+                <button
+                    class="btn-secondary"
+                    onclick="changeLeadPage(-1)">
+                    Anterior
+                </button>
+                <span id="leadPageInfo">
+                    Página 1 de 1
+                </span>
+                <button
+                    class="btn-secondary"
+                    onclick="changeLeadPage(1)">
+                    Siguiente
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+            <!-- REPORTES -->
+            <section id="reports" class="section">
+
+                <div class="module-header">
+                    <div>
+                        <h2 class="section-title">Módulo de Reportes</h2>
+                        <p class="section-subtitle">Análisis mensual del centro psicológico</p>
+                    </div>
+                </div>
+
+                <div class="module-grid">
+                    <div class="card form-card">
+                        <div class="card-header">
+                            <h3>Generar reporte</h3>
+                            <span>Selecciona año y mes</span>
+                        </div>
+
+                        <div class="form-grid single-column">
+                            <input type="number" id="reportYear" placeholder="Año">
+                            <input type="number" id="reportMonth" placeholder="Mes">
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn-primary" onclick="loadMonthlyReport()">Generar reporte</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid" id="reportCards" style="display:none;">
+                    <div class="dashboard-card">
+                        <span>Total citas</span>
+                        <strong id="repTotal"></strong>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <span>Atendidas</span>
+                        <strong id="repAttended"></strong>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <span>Canceladas</span>
+                        <strong id="repCancelled"></strong>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <span>No asistieron</span>
+                        <strong id="repNoShow"></strong>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <span>Ingresos</span>
+                        <strong id="repIncome"></strong>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <span>Gastos</span>
+                        <strong id="repExpense"></strong>
+                    </div>
+
+                    <div class="dashboard-card dashboard-result">
+                        <span>Resultado</span>
+                        <strong id="repResult"></strong>
+                    </div>
+                </div>
+
+                <div class="charts-grid" id="reportCharts" style="display:none;">
+                    <div class="card chart-card">
+                        <h3>Ingresos vs Gastos</h3>
+                        <canvas id="incomeExpenseChart"></canvas>
+                    </div>
+
+                    <div class="card chart-card">
+                        <h3>Citas por estado</h3>
+                        <canvas id="appointmentStatusChart"></canvas>
+                    </div>
+
+                    <div class="card chart-card">
+                        <h3>Evolución mensual</h3>
+                        <canvas id="monthlyEvolutionChart"></canvas>
+                    </div>
+                </div>
+
+            </section>
+
+        </main>
+    </div>
+
+    <div id="clinicalHistoryModal" class="clinical-modal hidden">
+        <div class="clinical-modal-content">
+            <div class="clinical-modal-header">
+                <div>
+                    <h2>Historia clínica</h2>
+                    <p id="clinicalPatientName">Paciente</p>
+                </div>
+                <button onclick="closeClinicalHistory()" class="btn-secondary">Cerrar</button>
+            </div>
+
+            <div class="form-grid">
+                <input type="text" id="clinicalReason" placeholder="Motivo de consulta">
+                <textarea id="clinicalDiagnosis" placeholder="Diagnóstico"></textarea>
+                <textarea id="clinicalEvolution" placeholder="Evolución"></textarea>
+                <textarea id="clinicalRecommendations" placeholder="Recomendaciones"></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn-primary" onclick="saveClinicalHistory()">Guardar historia</button>
+            </div>
+
+            <hr>
+
+            <h3>Registros anteriores</h3>
+            <div id="clinicalHistoryList"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+    <script src="/js/notification.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/layout.js"></script>
+    <script src="/js/dashboard.js"></script>
+    <script src="/js/patients.js"></script>
+    <script src="/js/users.js"></script>
+    <script src="/js/psychologists.js"></script>
+    <script src="/js/psychologist-availability.js"></script>
+    <script src="/js/services.js"></script>
+    <script src="/js/appointments.js"></script>
+    <script src="/js/finances.js"></script>
+    <script src="/js/clinical-history.js"></script>
+    <script src="/js/reports.js"></script>
+    <script src="/js/leads.js"></script>
+    <script src="/js/app.js"></script>
+</body>
+
+</html>

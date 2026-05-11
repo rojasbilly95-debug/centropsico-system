@@ -1,0 +1,46 @@
+<header>
+
+    <div class="hero">
+        <div class="hero-overlay"></div>
+
+        <div class="hero-content">
+            <div class="logo">CentroPsicologico</div>
+            <h1>Sistema de Gestión</h1>
+            <p>Centro Psicológico</p>
+            <span class="badge">Panel Administrativo</span>
+            <h2>Organiza pacientes, usuarios, psicólogos, servicios y citas</h2>
+        </div>
+    </div>
+
+    <div class="navbar">
+        <div class="nav-left">
+            <button class="nav-btn active" data-section="home" onclick="showSection('home', this)">Inicio</button>
+            <button class="nav-btn" data-section="patients" onclick="showSection('patients', this)">Pacientes</button>
+            <button class="nav-btn" data-section="users" onclick="showSection('users', this)">Usuarios</button>
+            <button class="nav-btn" data-section="psychologists" onclick="showSection('psychologists', this)">Psicólogos</button>
+            <button class="nav-btn" data-section="services" onclick="showSection('services', this)">Servicios</button>
+            <button class="nav-btn" data-section="appointments" onclick="showSection('appointments', this)">Citas</button>
+            <button class="nav-btn" data-section="finances" onclick="showSection('finances', this)">Finanzas</button>
+            <button class="nav-btn" data-section="reports" onclick="showSection('reports', this)">Reportes</button>
+        </div>
+
+        <div class="session-menu">
+            <div class="user-box" onclick="toggleSessionMenu()">
+                <div class="avatar" id="sessionUserAvatar">AP</div>
+
+                <div class="user-text">
+                    <div id="sessionUserName">Admin Principal</div>
+                    <div id="sessionUserRole">ADMIN</div>
+                </div>
+
+                <span class="arrow">▼</span>
+            </div>
+
+            <div class="dropdown" id="sessionDropdown">
+                <button onclick="viewProfile()">Ver perfil</button>
+                <button onclick="logout()" class="danger">Cerrar sesión</button>
+            </div>
+        </div>
+    </div>
+
+</header>
