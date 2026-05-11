@@ -1,4 +1,4 @@
-const baseUrl = "http://localhost:8080/api";
+const baseUrl = "/api";
 
 /* =========================
    INIT PRINCIPAL
