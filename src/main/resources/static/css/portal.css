@@ -1262,3 +1262,112 @@ body {
         text-align: center;
     }
 }
+
+/* =========================
+   PORTAL MOBILE MENU FINAL
+========================= */
+
+.portal-menu-btn {
+    display: none;
+}
+
+@media (max-width: 768px) {
+
+    .portal-header {
+        position: sticky;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+    }
+
+    .portal-menu-btn {
+        display: flex;
+        width: 42px;
+        height: 42px;
+        border: none;
+        border-radius: 14px;
+        background: linear-gradient(135deg, var(--purple), var(--pink-dark));
+        color: white;
+        font-size: 22px;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 12px 28px rgba(123, 97, 209, 0.25);
+    }
+
+    .portal-nav {
+        display: none;
+        grid-column: 1 / -1;
+        width: 100%;
+        padding: 14px;
+        border-radius: 22px;
+        background: rgba(255,255,255,0.92);
+        border: 1px solid rgba(123, 97, 209, 0.12);
+        box-shadow: 0 18px 40px rgba(123, 97, 209, 0.12);
+    }
+
+    .portal-nav.open {
+        display: grid;
+        gap: 10px;
+    }
+
+    .portal-nav a {
+        padding: 12px 14px;
+        border-radius: 14px;
+        background: var(--purple-soft);
+        color: var(--purple-dark);
+    }
+
+    .portal-login {
+        grid-column: 1 / -1;
+        width: 100%;
+        text-align: center;
+    }
+
+    .problem-grid,
+    .modules-grid,
+    .benefits-grid,
+    .plans-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .mockup-content {
+        grid-template-columns: 1fr;
+        min-height: auto;
+    }
+
+    .mockup-sidebar {
+        display: none;
+    }
+
+    .mockup-main {
+        padding: 18px;
+    }
+
+    .mockup-kpis,
+    .mockup-row {
+        grid-template-columns: 1fr;
+    }
+
+    .quote-section {
+        grid-template-columns: 1fr;
+    }
+
+    .quote-form {
+        grid-template-columns: 1fr;
+        border-radius: 24px;
+    }
+
+    .availability-slots button {
+        width: 100%;
+    }
+
+    .plan-price {
+        font-size: 30px;
+    }
+
+    .portal-footer {
+        flex-direction: column;
+        padding: 28px 18px;
+    }
+}

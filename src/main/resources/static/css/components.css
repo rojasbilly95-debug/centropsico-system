@@ -71,3 +71,34 @@
     padding: 14px;
     color: #102a43;
 }
+
+/* =========================
+   MOBILE BUTTONS & BADGES
+========================= */
+
+@media (max-width: 768px) {
+
+    .btn-primary,
+    .btn-secondary {
+        width: 100%;
+        min-height: 46px;
+        font-size: 14px;
+        border-radius: 14px;
+    }
+
+    .table-wrapper td button {
+        width: 100%;
+        margin-right: 0;
+    }
+
+    .badge {
+        font-size: 11px;
+        padding: 5px 8px;
+    }
+
+    .result-box {
+        padding: 12px;
+        line-height: 1.5;
+        font-size: 13px;
+    }
+}

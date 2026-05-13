@@ -321,3 +321,167 @@
     font-size: 14px;
     color: #334e68;
 }
+
+/* =========================
+   MOBILE FINAL DASHBOARD
+========================= */
+
+@media (max-width: 768px) {
+
+    .module-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .section-title {
+        font-size: 24px;
+        line-height: 1.2;
+    }
+
+    .section-subtitle {
+        font-size: 13px;
+        line-height: 1.5;
+    }
+
+    .dashboard-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px;
+    }
+
+    .dashboard-card {
+        padding: 18px;
+        border-radius: 18px;
+    }
+
+    .dashboard-card strong {
+        font-size: 28px;
+    }
+
+    .module-grid,
+    .finance-main-grid,
+    .finance-secondary-grid,
+    .charts-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .card {
+        border-radius: 18px;
+    }
+
+    .form-card,
+    .message-card,
+    .table-card {
+        padding: 16px;
+    }
+
+    .card-header h3,
+    .table-header h3 {
+        font-size: 17px;
+    }
+
+    .card-header span,
+    .table-header span {
+        line-height: 1.5;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px;
+    }
+
+    .form-grid input,
+    .form-grid select,
+    .form-grid textarea,
+    .table-search {
+        height: 46px;
+        font-size: 14px;
+        border-radius: 14px;
+    }
+
+    textarea {
+        min-height: 120px;
+        padding-top: 12px !important;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .form-actions button,
+    .agenda-box button {
+        width: 100%;
+    }
+
+    .agenda-box {
+        flex-direction: column;
+    }
+
+    .agenda-box input {
+        width: 100%;
+    }
+
+    .agenda-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .chart-card {
+        min-height: auto;
+    }
+
+    .chart-card canvas {
+        max-height: 240px;
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+        border-radius: 14px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table-wrapper table {
+        min-width: 900px;
+    }
+
+    .pagination-bar {
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+    }
+
+    .pagination-bar button {
+        width: 100%;
+    }
+
+    .availability-days-box {
+        grid-template-columns: 1fr !important;
+    }
+
+    .appointment-slots-container {
+        padding: 12px;
+    }
+
+    .slots-placeholder {
+        font-size: 13px;
+        line-height: 1.5;
+    }
+
+    #appointmentsCalendar {
+        overflow-x: auto;
+    }
+
+    .fc {
+        min-width: 760px;
+    }
+
+    .clinical-modal-content {
+        width: 100%;
+        padding: 16px;
+    }
+
+    #clinicalHistoryList {
+        overflow-x: auto;
+    }
+}

@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CentroPsico | Gestión profesional para centros psicológicos</title>
-     <link rel="icon" type="image/png" href="/img/logo-dark.png">
+    <link rel="icon" type="image/png" href="/img/logo-dark.png">
     <link rel="stylesheet" href="/css/portal.css">
 </head>
 
@@ -26,6 +26,10 @@
             </div>
         </a>
 
+        <button class="portal-menu-btn" onclick="togglePortalMenu()">
+            ☰
+        </button>
+        
         <nav class="portal-nav">
             <a href="#solution">Nosotros</a>
             <a href="#modules">Servicios</a>
@@ -391,73 +395,69 @@
             </div>
         </section>
 
-<section id="quote" class="quote-section portal-section reveal">
-    <div class="quote-copy">
-        <span class="eyebrow">Pre-reserva de atención</span>
-        <h2>Déjanos tus datos y separa tu horario de atención.</h2>
-        <p>
-            Revisa los servicios disponibles, consulta horarios y registra el adelanto
-            para que nuestro equipo pueda validar tu pre-reserva.
-        </p>
+        <section id="quote" class="quote-section portal-section reveal">
+            <div class="quote-copy">
+                <span class="eyebrow">Pre-reserva de atención</span>
+                <h2>Déjanos tus datos y separa tu horario de atención.</h2>
+                <p>
+                    Revisa los servicios disponibles, consulta horarios y registra el adelanto
+                    para que nuestro equipo pueda validar tu pre-reserva.
+                </p>
 
-        <div class="quote-bullets">
-            <div>Elige el tipo de atención que necesitas</div>
-            <div>Consulta horarios disponibles según psicólogo</div>
-            <div>Separa tu atención con un adelanto</div>
-        </div>
-    </div>
+                <div class="quote-bullets">
+                    <div>Elige el tipo de atención que necesitas</div>
+                    <div>Consulta horarios disponibles según psicólogo</div>
+                    <div>Separa tu atención con un adelanto</div>
+                </div>
+            </div>
 
-    <form class="quote-form" onsubmit="submitLead(event)">
-        <div class="form-title">
-            <strong>Solicitar pre-reserva</strong>
-            <span>Completa tus datos, selecciona horario y registra tu adelanto</span>
-        </div>
+            <form class="quote-form" onsubmit="submitLead(event)">
+                <div class="form-title">
+                    <strong>Solicitar pre-reserva</strong>
+                    <span>Completa tus datos, selecciona horario y registra tu adelanto</span>
+                </div>
 
-        <input id="leadFullName" type="text" placeholder="Nombre completo">
-        <input id="leadEmail" type="email" placeholder="Correo electrónico">
-        <input id="leadPhone" type="text" placeholder="Teléfono o WhatsApp">
+                <input id="leadFullName" type="text" placeholder="Nombre completo">
+                <input id="leadEmail" type="email" placeholder="Correo electrónico">
+                <input id="leadPhone" type="text" placeholder="Teléfono o WhatsApp">
 
-        <select id="leadServiceInterest" onchange="handleServiceSelection()">
-            <option value="">Tipo de atención que necesitas</option>
-        </select>
+                <select id="leadServiceInterest" onchange="handleServiceSelection()">
+                    <option value="">Tipo de atención que necesitas</option>
+                </select>
 
-        <div id="advancePaymentInfo" class="advance-payment-info"></div>
+                <div id="advancePaymentInfo" class="advance-payment-info"></div>
 
-        <input id="availabilityDate" type="date">
+                <input id="availabilityDate" type="date">
 
-        <button type="button" class="availability-button" onclick="loadPublicAvailability()">
-            Ver horarios disponibles
-        </button>
+                <button type="button" class="availability-button" onclick="loadPublicAvailability()">
+                    Ver horarios disponibles
+                </button>
 
-        <div id="publicAvailabilityResult" class="public-availability-result"></div>
+                <div id="publicAvailabilityResult" class="public-availability-result"></div>
 
-        <select id="leadPaymentMethod">
-            <option value="">Método de pago del adelanto</option>
-            <option value="YAPE">Yape</option>
-            <option value="TRANSFERENCIA">Transferencia</option>
-        </select>
+                <select id="leadPaymentMethod">
+                    <option value="">Método de pago del adelanto</option>
+                    <option value="YAPE">Yape</option>
+                    <option value="TRANSFERENCIA">Transferencia</option>
+                </select>
 
-        <input
-            id="leadOperationCode"
-            type="text"
-            placeholder="Código de operación / número de transferencia">
+                <input id="leadOperationCode" type="text" placeholder="Código de operación / número de transferencia">
 
-        <select id="leadModality">
-            <option value="">Modalidad de preferencia</option>
-            <option value="Presencial">Presencial</option>
-            <option value="Virtual">Virtual</option>
-            <option value="Indistinto">Indistinto</option>
-        </select>
+                <select id="leadModality">
+                    <option value="">Modalidad de preferencia</option>
+                    <option value="Presencial">Presencial</option>
+                    <option value="Virtual">Virtual</option>
+                    <option value="Indistinto">Indistinto</option>
+                </select>
 
-        <textarea
-            id="leadMessage"
-            placeholder="Cuéntanos brevemente qué necesitas o qué te gustaría consultar"></textarea>
+                <textarea id="leadMessage"
+                    placeholder="Cuéntanos brevemente qué necesitas o qué te gustaría consultar"></textarea>
 
-        <button type="submit">Enviar pre-reserva</button>
+                <button type="submit">Enviar pre-reserva</button>
 
-        <div id="quoteResult" class="quote-result"></div>
-    </form>
-</section>
+                <div id="quoteResult" class="quote-result"></div>
+            </form>
+        </section>
 
     </main>
 

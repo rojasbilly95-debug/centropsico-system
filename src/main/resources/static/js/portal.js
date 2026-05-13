@@ -445,3 +445,21 @@ function getSelectedServiceId() {
 
     return Number(select.value);
 }
+
+function togglePortalMenu() {
+    const nav = document.querySelector(".portal-nav");
+    if (!nav) return;
+
+    nav.classList.toggle("open");
+}
+
+document.addEventListener("click", function (event) {
+    const nav = document.querySelector(".portal-nav");
+    const button = document.querySelector(".portal-menu-btn");
+
+    if (!nav || !button) return;
+
+    if (!nav.contains(event.target) && !button.contains(event.target)) {
+        nav.classList.remove("open");
+    }
+});
