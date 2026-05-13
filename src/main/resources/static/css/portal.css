@@ -1182,3 +1182,83 @@ body {
     background: var(--purple-dark);
     color: white;
 }
+
+/* =========================
+   RESPONSIVE PORTAL EXTRA
+========================= */
+
+@media (max-width: 768px) {
+
+    .portal-header {
+        height: auto;
+        min-height: 72px;
+        padding: 12px 18px;
+    }
+
+    .portal-brand strong {
+        font-size: 17px;
+    }
+
+    .portal-brand img {
+        width: 42px;
+        height: 42px;
+    }
+
+    .hero-section {
+        min-height: auto;
+        padding: 42px 18px;
+        gap: 28px;
+    }
+
+    .hero-copy h1 {
+        font-size: 38px;
+        line-height: 1.08;
+    }
+
+    .hero-copy p {
+        font-size: 15px;
+        line-height: 1.7;
+    }
+
+    .hero-actions a,
+    .btn-primary,
+    .btn-secondary {
+        width: 100%;
+    }
+
+    .hero-trust {
+        gap: 12px;
+    }
+
+    .hero-trust div {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .portal-section {
+        padding: 44px 18px;
+    }
+
+    .section-heading h2,
+    .solution-card h2,
+    .quote-copy h2 {
+        font-size: 30px;
+    }
+
+    .solution-card {
+        padding: 22px;
+        border-radius: 26px;
+    }
+
+    .service-image {
+        height: 230px;
+    }
+
+    .quote-form {
+        padding: 20px;
+    }
+
+    .portal-footer {
+        text-align: center;
+    }
+}

@@ -392,3 +392,95 @@ body.role-psicologo .sidebar-avatar {
 .notification-btn:hover {
     background: rgba(255,255,255,0.24);
 }
+
+/* =========================
+   RESPONSIVE SIDEBAR MOBILE
+========================= */
+
+.mobile-menu-btn {
+    display: none;
+}
+
+.sidebar-overlay {
+    display: none;
+}
+
+@media (max-width: 768px) {
+
+    .app-layout {
+        display: block;
+    }
+
+    .mobile-menu-btn {
+        display: flex;
+        position: fixed;
+        top: 14px;
+        left: 14px;
+        z-index: 1002;
+        width: 44px;
+        height: 44px;
+        border: none;
+        border-radius: 14px;
+        background: #7B61D1;
+        color: white;
+        font-size: 24px;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 12px 28px rgba(123, 97, 209, 0.32);
+        cursor: pointer;
+    }
+
+    .sidebar {
+        width: 270px !important;
+        left: -290px;
+        top: 0;
+        height: 100vh;
+        transition: left 0.28s ease;
+        z-index: 1001;
+    }
+
+    .sidebar.mobile-open {
+        left: 0;
+    }
+
+    .sidebar:not(:hover) {
+        width: 270px !important;
+    }
+
+    .sidebar:not(:hover) .brand-text,
+    .sidebar:not(:hover) .sidebar-user-info,
+    .sidebar:not(:hover) .sidebar-link span,
+    .sidebar:not(:hover) .logout-btn span {
+        opacity: 1;
+        width: auto;
+        overflow: visible;
+        pointer-events: auto;
+    }
+
+    .sidebar:not(:hover) .sidebar-link,
+    .sidebar:not(:hover) .logout-btn {
+        justify-content: flex-start;
+        padding: 11px 12px;
+    }
+
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.55);
+        backdrop-filter: blur(3px);
+        z-index: 1000;
+    }
+
+    .sidebar-overlay.active {
+        display: block;
+    }
+
+    .main-content,
+    #sidebar-container:has(.sidebar:not(:hover)) + .main-content,
+    #sidebar-container:has(.sidebar:hover) + .main-content {
+        margin-left: 0;
+        width: 100%;
+        padding: 72px 14px 20px;
+    }
+}

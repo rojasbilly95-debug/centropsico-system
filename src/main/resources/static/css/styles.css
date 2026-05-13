@@ -2583,3 +2583,284 @@ body:not(.login-body) .section-title + p {
     border-color: #0f3d66 !important;
     box-shadow: 0 10px 22px rgba(15, 61, 102, 0.22) !important;
 }
+
+/* =========================
+   RESPONSIVE GENERAL APP
+========================= */
+
+@media (max-width: 768px) {
+
+    body:not(.login-body) .container {
+        margin: 0 !important;
+        padding: 12px !important;
+        width: 100%;
+    }
+
+    body:not(.login-body) .section-title {
+        font-size: 22px;
+        line-height: 1.2;
+        margin-top: 8px;
+    }
+
+    .card,
+    .home-card,
+    .dashboard-card {
+        padding: 16px;
+        border-radius: 16px;
+    }
+
+    .dashboard-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px;
+    }
+
+    .home-grid,
+    .dashboard-content-grid {
+        grid-template-columns: 1fr !important;
+        gap: 14px;
+    }
+
+    .row {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .col {
+        width: 100%;
+        min-width: 0;
+    }
+
+    input,
+    select,
+    textarea {
+        font-size: 14px;
+    }
+
+    .btn-primary,
+    .btn-secondary,
+    .btn-danger-soft {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 8px;
+        text-align: center;
+    }
+
+    .table-wrapper,
+    .floating-table-wrapper {
+        overflow-x: auto !important;
+        width: 100%;
+    }
+
+    table {
+        min-width: 760px;
+    }
+
+    td,
+    th {
+        font-size: 12px;
+        padding: 8px;
+    }
+}
+
+/* =========================
+   RESPONSIVE MODALES
+========================= */
+
+@media (max-width: 768px) {
+
+    .floating-modal {
+        align-items: flex-start;
+        padding: 10px;
+        overflow-y: auto;
+    }
+
+    .floating-modal-content,
+    .patient-modal-content,
+    .appointment-modal-content,
+    .finance-modal-content,
+    .admin-modal-content {
+        width: 100% !important;
+        max-width: 100% !important;
+        max-height: none !important;
+        border-radius: 18px;
+    }
+
+    .floating-modal-header {
+        padding: 16px;
+        gap: 12px;
+    }
+
+    .floating-modal-header h3 {
+        font-size: 18px;
+    }
+
+    .floating-modal-tools {
+        padding: 14px 16px;
+    }
+
+    .floating-modal-tools .table-search {
+        max-width: none;
+        width: 100%;
+    }
+
+    .floating-table-wrapper {
+        padding: 0 12px 12px !important;
+    }
+
+    .pagination-bar {
+        flex-direction: column;
+        gap: 8px;
+        padding: 12px;
+    }
+
+    .clinical-modal {
+        align-items: flex-start;
+        padding: 10px;
+        overflow-y: auto;
+    }
+
+    .clinical-modal-content {
+        width: 100%;
+        padding: 16px;
+        border-radius: 18px;
+    }
+
+    .clinical-modal-header {
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .payment-receipt {
+        padding: 14px;
+    }
+
+    .receipt-header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .receipt-status {
+        margin-left: 0;
+    }
+
+    .receipt-row {
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .receipt-row strong {
+        text-align: left;
+    }
+
+    .notification-dropdown {
+        left: 10px !important;
+        right: 10px !important;
+        bottom: 80px !important;
+        width: auto !important;
+        max-width: none !important;
+    }
+}
+
+/* =========================
+   RESPONSIVE CALENDARIO Y TABLAS
+========================= */
+
+@media (max-width: 768px) {
+
+    #appointmentsCalendar {
+        padding: 10px;
+        overflow-x: auto;
+    }
+
+    .fc {
+        min-width: 760px;
+    }
+
+    .fc-toolbar {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .fc-toolbar-title {
+        font-size: 16px !important;
+        text-align: center;
+    }
+
+    .fc-button {
+        padding: 6px 8px !important;
+        font-size: 12px !important;
+    }
+
+    .table-wrapper {
+        border-radius: 14px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+        min-width: 850px;
+    }
+
+    .floating-table-wrapper table {
+        min-width: 900px !important;
+    }
+
+    #appointmentListModal table {
+        min-width: 1150px !important;
+    }
+
+    #patientTableBody td:last-child,
+    #psychologistTableBody td:last-child,
+    #userTableBody td:last-child,
+    #serviceTableBody td:last-child,
+    #availabilityTableBody td:last-child {
+        min-width: 190px;
+    }
+}
+
+/* =========================
+   RESPONSIVE LOGIN EXTRA
+========================= */
+
+@media (max-width: 480px) {
+
+    .login-page {
+        padding: 10px;
+    }
+
+    .login-shell {
+        width: 100%;
+        border-radius: 20px;
+    }
+
+    .login-panel {
+        padding: 26px 16px;
+    }
+
+    .login-logo {
+        width: 70px;
+        height: 70px;
+    }
+
+    .login-card h1 {
+        font-size: 25px;
+    }
+
+    .login-subtitle {
+        font-size: 13px;
+    }
+
+    .login-form input,
+    .login-button {
+        height: 48px;
+        border-radius: 14px;
+    }
+
+    .login-help {
+        font-size: 11px;
+    }
+}

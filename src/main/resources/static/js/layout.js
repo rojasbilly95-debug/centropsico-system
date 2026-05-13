@@ -47,6 +47,11 @@ function showSectionById(id) {
 
     if (restrictedSections[role]?.includes(id)) {
         Swal.fire("Acceso denegado", "No tienes permiso para acceder a este módulo", "warning");
+
+        if (typeof closeMobileSidebar === "function") {
+            closeMobileSidebar();
+        }
+
         return;
     }
 
@@ -65,6 +70,10 @@ function showSectionById(id) {
         .find(btn => btn.getAttribute("onclick")?.includes(`'${id}'`));
 
     if (activeButton) activeButton.classList.add("active");
+
+    if (typeof closeMobileSidebar === "function") {
+        closeMobileSidebar();
+    }
 }
 
 function applyRoleVisibility() {
@@ -116,4 +125,24 @@ function applyRoleTheme() {
     if (currentUser.role === "PSICOLOGO") {
         document.body.classList.add("role-psicologo");
     }
+}
+
+function toggleMobileSidebar() {
+    const sidebar = document.querySelector(".sidebar");
+    const overlay = document.querySelector(".sidebar-overlay");
+
+    if (!sidebar || !overlay) return;
+
+    sidebar.classList.toggle("mobile-open");
+    overlay.classList.toggle("active");
+}
+
+function closeMobileSidebar() {
+    const sidebar = document.querySelector(".sidebar");
+    const overlay = document.querySelector(".sidebar-overlay");
+
+    if (!sidebar || !overlay) return;
+
+    sidebar.classList.remove("mobile-open");
+    overlay.classList.remove("active");
 }
