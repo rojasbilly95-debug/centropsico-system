@@ -8,7 +8,7 @@ window.onload = async () => {
     if (!validateSession()) return;
 
     await loadSidebar();
-applyRoleVisibility();
+    applyRoleVisibility();
     loadDashboard();
 
     // ADMIN y RECEPCIONISTA
@@ -46,6 +46,11 @@ applyRoleVisibility();
 
     await loadNotifications();
     connectNotificationWebSocket();
+
+    // RECORDATORIOS INTERNOS
+    if (typeof loadReminders === "function") {
+        loadReminders();
+    }
 };
 
 function applyRoleVisibility() {
