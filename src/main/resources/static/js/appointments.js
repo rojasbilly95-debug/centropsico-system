@@ -716,13 +716,18 @@ async function refreshAppointmentsRealtime() {
         await loadDashboard();
     }
 
-    if (typeof loadAgenda === "function") {
-        const date = document.getElementById("agendaDate")?.value;
-        if (date) await loadAgenda();
-    }
+    const appointmentSection = document.getElementById("appointments");
 
-    if (typeof loadFullCalendar === "function" && appointmentsCalendar) {
-        await loadFullCalendar();
+    if (appointmentSection && appointmentSection.classList.contains("active")) {
+        const date = document.getElementById("agendaDate")?.value;
+
+        if (date && typeof loadAgenda === "function") {
+            await loadAgenda();
+        }
+
+        if (typeof loadFullCalendar === "function" && appointmentsCalendar) {
+            await loadFullCalendar();
+        }
     }
 }
 

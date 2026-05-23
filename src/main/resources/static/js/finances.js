@@ -467,3 +467,26 @@ async function toggleExpenseList() {
 function closeExpenseList() {
     document.getElementById("expenseListModal").classList.add("hidden");
 }
+
+async function refreshFinancesRealtime() {
+    if (currentUser.role !== "ADMIN") return;
+
+    if (typeof loadIncomes === "function") {
+        await loadIncomes();
+    }
+
+    if (typeof loadExpenses === "function") {
+        await loadExpenses();
+    }
+
+    if (typeof loadDashboard === "function") {
+        await loadDashboard();
+    }
+
+    const year = document.getElementById("summaryYear")?.value;
+    const month = document.getElementById("summaryMonth")?.value;
+
+    if (year && month && typeof loadFinanceSummary === "function") {
+        await loadFinanceSummary();
+    }
+}

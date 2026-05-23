@@ -2,7 +2,6 @@ package com.centropsicologico.sistema.service.impl;
 
 import com.centropsicologico.sistema.dto.ReminderDTO;
 import com.centropsicologico.sistema.entity.Appointment;
-import com.centropsicologico.sistema.entity.Lead;
 import com.centropsicologico.sistema.entity.User;
 import com.centropsicologico.sistema.repository.AppointmentRepository;
 import com.centropsicologico.sistema.repository.LeadRepository;

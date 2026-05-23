@@ -58,8 +58,7 @@ public class PublicPortalController {
 
         Lead saved = leadRepository.save(lead);
 
-        notificationService.createForRole(
-                "Nueva pre-reserva con adelanto",
+        String notificationMessage =
                 "Se registró una nueva pre-reserva de "
                         + saved.getFullName()
                         + " para "
@@ -70,9 +69,12 @@ public class PublicPortalController {
                         + (saved.getPaymentMethod() != null ? saved.getPaymentMethod() : "método no especificado")
                         + ". Código: "
                         + (saved.getOperationCode() != null ? saved.getOperationCode() : "sin código")
-                        + ".",
-                "PRE_RESERVA_PAGO",
-                "ADMIN"
+                        + ".";
+
+        notifyRoles(
+                "Nueva pre-reserva con adelanto",
+                notificationMessage,
+                "PRE_RESERVA_PAGO"
         );
 
         return Map.of(
@@ -168,27 +170,50 @@ public class PublicPortalController {
         if (request.getFullName() == null || request.getFullName().trim().isEmpty()) {
             throw new RuntimeException("Debe ingresar su nombre completo");
         }
+
         if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
             throw new RuntimeException("Debe ingresar un correo electrónico");
         }
+
         if (request.getPhone() == null || request.getPhone().trim().isEmpty()) {
             throw new RuntimeException("Debe ingresar un teléfono o WhatsApp");
         }
+
         if (request.getServiceInterest() == null || request.getServiceInterest().trim().isEmpty()) {
             throw new RuntimeException("Debe seleccionar el tipo de atención");
         }
+
         if (request.getModality() == null || request.getModality().trim().isEmpty()) {
             throw new RuntimeException("Debe seleccionar una modalidad");
         }
+
         if (request.getPaymentMethod() == null || request.getPaymentMethod().trim().isEmpty()) {
             throw new RuntimeException("Debe seleccionar el método de pago del adelanto");
         }
+
         if (request.getOperationCode() == null || request.getOperationCode().trim().isEmpty()) {
             throw new RuntimeException("Debe ingresar el código de operación del adelanto");
         }
+
         if (request.getAdvanceAmount() == null || request.getAdvanceAmount() <= 0) {
             throw new RuntimeException("No se pudo calcular el monto del adelanto");
         }
+    }
+
+    private void notifyRoles(String title, String message, String type) {
+        notificationService.createForRole(
+                title,
+                message,
+                type,
+                "ADMIN"
+        );
+
+        notificationService.createForRole(
+                title,
+                message,
+                type,
+                "RECEPCIONISTA"
+        );
     }
 
     private String clean(String value) {

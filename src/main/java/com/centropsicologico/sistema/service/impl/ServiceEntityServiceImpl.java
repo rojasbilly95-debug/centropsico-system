@@ -19,6 +19,7 @@ public class ServiceEntityServiceImpl implements ServiceEntityService {
     public ServiceEntityServiceImpl(
             ServiceRepository serviceRepository,
             NotificationService notificationService) {
+
         this.serviceRepository = serviceRepository;
         this.notificationService = notificationService;
     }
@@ -27,17 +28,18 @@ public class ServiceEntityServiceImpl implements ServiceEntityService {
     public ServiceEntity save(ServiceEntity serviceEntity) {
         validateServiceData(serviceEntity);
 
+        serviceEntity.setName(clean(serviceEntity.getName()));
+        serviceEntity.setDescription(clean(serviceEntity.getDescription()));
         serviceEntity.setActive(true);
 
         ServiceEntity saved = serviceRepository.save(serviceEntity);
 
-        notificationService.createForRole(
+        notifyAdmin(
                 "Servicio registrado",
-                "Se registró el servicio " + saved.getName()
-                        + " con costo S/ " + saved.getPrice()
+                "Se registró el servicio " + getServiceName(saved)
+                        + " con costo S/ " + formatPrice(saved.getPrice())
                         + " y duración de " + saved.getDurationMinutes() + " minutos.",
-                "SERVICIO_CREADO",
-                "ADMIN"
+                "SERVICIO_CREADO"
         );
 
         return saved;
@@ -65,8 +67,8 @@ public class ServiceEntityServiceImpl implements ServiceEntityService {
 
         ServiceEntity currentService = findById(id);
 
-        currentService.setName(serviceEntity.getName());
-        currentService.setDescription(serviceEntity.getDescription());
+        currentService.setName(clean(serviceEntity.getName()));
+        currentService.setDescription(clean(serviceEntity.getDescription()));
         currentService.setPrice(serviceEntity.getPrice());
         currentService.setDurationMinutes(serviceEntity.getDurationMinutes());
 
@@ -76,11 +78,12 @@ public class ServiceEntityServiceImpl implements ServiceEntityService {
 
         ServiceEntity updated = serviceRepository.save(currentService);
 
-        notificationService.createForRole(
+        notifyAdmin(
                 "Servicio actualizado",
-                "Se actualizaron los datos del servicio " + updated.getName() + ".",
-                "SERVICIO_EDITADO",
-                "ADMIN"
+                "Se actualizaron los datos del servicio " + getServiceName(updated)
+                        + ". Costo actual: S/ " + formatPrice(updated.getPrice())
+                        + ". Duración: " + updated.getDurationMinutes() + " minutos.",
+                "SERVICIO_EDITADO"
         );
 
         return updated;
@@ -93,13 +96,14 @@ public class ServiceEntityServiceImpl implements ServiceEntityService {
 
         ServiceEntity updated = serviceRepository.save(serviceEntity);
 
-        String status = Boolean.TRUE.equals(updated.getActive()) ? "reactivado" : "desactivado";
+        String status = Boolean.TRUE.equals(updated.getActive())
+                ? "reactivado"
+                : "desactivado";
 
-        notificationService.createForRole(
+        notifyAdmin(
                 "Estado de servicio modificado",
-                "El servicio " + updated.getName() + " fue " + status + ".",
-                "SERVICIO_ESTADO",
-                "ADMIN"
+                "El servicio " + getServiceName(updated) + " fue " + status + ".",
+                "SERVICIO_ESTADO"
         );
 
         return updated;
@@ -110,17 +114,20 @@ public class ServiceEntityServiceImpl implements ServiceEntityService {
         ServiceEntity serviceEntity = findById(id);
         serviceEntity.setActive(false);
 
-        serviceRepository.save(serviceEntity);
+        ServiceEntity updated = serviceRepository.save(serviceEntity);
 
-        notificationService.createForRole(
+        notifyAdmin(
                 "Servicio desactivado",
-                "El servicio " + serviceEntity.getName() + " fue desactivado.",
-                "SERVICIO_ELIMINADO",
-                "ADMIN"
+                "El servicio " + getServiceName(updated) + " fue desactivado.",
+                "SERVICIO_ELIMINADO"
         );
     }
 
     private void validateServiceData(ServiceEntity serviceEntity) {
+        if (serviceEntity == null) {
+            throw new BusinessRuleException("Los datos del servicio son obligatorios");
+        }
+
         if (serviceEntity.getName() == null || serviceEntity.getName().trim().isEmpty()) {
             throw new BusinessRuleException("El nombre del servicio es obligatorio");
         }
@@ -132,5 +139,34 @@ public class ServiceEntityServiceImpl implements ServiceEntityService {
         if (serviceEntity.getDurationMinutes() == null || serviceEntity.getDurationMinutes() <= 0) {
             throw new BusinessRuleException("La duración del servicio debe ser mayor a cero");
         }
+    }
+
+    private String clean(String value) {
+        return value == null ? null : value.trim();
+    }
+
+    private String getServiceName(ServiceEntity serviceEntity) {
+        if (serviceEntity == null || serviceEntity.getName() == null || serviceEntity.getName().trim().isEmpty()) {
+            return "Servicio";
+        }
+
+        return serviceEntity.getName().trim();
+    }
+
+    private String formatPrice(Double price) {
+        if (price == null) {
+            return "0.00";
+        }
+
+        return String.format("%.2f", price);
+    }
+
+    private void notifyAdmin(String title, String message, String type) {
+        notificationService.createForRole(
+                title,
+                message,
+                type,
+                "ADMIN"
+        );
     }
 }

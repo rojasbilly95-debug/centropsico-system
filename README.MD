@@ -35,7 +35,9 @@ El sistema busca centralizar la gestión clínica, mejorar la organización admi
 * Sistema financiero integrado
 * Historia clínica digital
 * Seguridad JWT
-* Notificaciones en tiempo real
+* Notificaciones en tiempo real con WebSocket + STOMP
+* Alertas automáticas por rol y usuario
+* Actualización en vivo de citas, pre-reservas, dashboard y finanzas
 * Arquitectura cloud moderna
 
 ---
@@ -55,10 +57,12 @@ El sistema incorpora un portal web moderno orientado a pacientes y personas inte
 * Selección dinámica de fecha y horario
 * Pre-reservas inteligentes
 * Registro de adelanto
-* Validación administrativa del pago
-* Conversión automática de pre-reserva en cita
-* Asociación automática con paciente registrado
-* Registro financiero automático del adelanto
+* Validación administrativa del adelanto
+* Rechazo o aprobación del pago desde el panel interno
+* Conversión controlada de pre-reserva en cita
+* Asociación de la pre-reserva con un paciente registrado
+* Registro financiero automático del adelanto validado
+* Notificación automática a administración, recepción y psicólogo asignado
 * Responsive design profesional
 * Experiencia mobile-first
 
@@ -89,16 +93,25 @@ Persona consulta disponibilidad real
 ↓
 Selecciona servicio, fecha, psicólogo y horario
 ↓
-Registra adelanto con método de pago
+Registra adelanto con método de pago y código de operación
 ↓
-Recepción valida el adelanto
+Sistema genera una pre-reserva en estado PAGO_EN_REVISION
+↓
+ADMIN y RECEPCIONISTA reciben notificación en tiempo real
+↓
+Recepción valida o rechaza el adelanto
+↓
+Si el adelanto es validado, la pre-reserva pasa a PRE_RESERVADO
+↓
+Recepción asocia la pre-reserva con un paciente registrado
 ↓
 Sistema convierte la pre-reserva en cita
 ↓
-El adelanto se registra como pago parcial
+El adelanto se registra como pago parcial o total
 ↓
-Ingreso financiero automático
-```
+Se genera ingreso financiero automático
+↓
+El psicólogo asignado recibe la notificación de nueva cita
 
 # 📌 Estados de pre-reserva
 
@@ -125,10 +138,13 @@ Ingreso financiero automático
 ## Psicólogos
 
 * Registro de psicólogos
-* Especialidades
+* Especialidades profesionales
+* Activación y desactivación de psicólogos
 * Disponibilidad semanal configurable
+* Validación de cruces en horarios de disponibilidad
 * Agenda personalizada
 * Visualización exclusiva de sus citas
+* Notificación automática cuando se asigna una cita
 
 ## Usuarios del sistema
 
@@ -242,6 +258,8 @@ Indicadores dinámicos:
 * Agenda diaria
 * Gráficas interactivas
 * Resumen financiero
+* Actualización automática ante nuevas citas, pagos, ingresos y gastos
+* Sincronización con eventos recibidos por WebSocket
 
 ---
 
@@ -263,7 +281,80 @@ Incluye:
 
 # 🔔 Notificaciones en tiempo real
 
-Implementado con WebSocket + STOMP.
+El sistema incorpora un módulo de notificaciones en tiempo real implementado con WebSocket + STOMP, permitiendo informar automáticamente a los usuarios sobre eventos importantes del sistema según su rol o asignación directa.
+
+Las notificaciones se almacenan en base de datos y también se emiten en tiempo real hacia el frontend, actualizando la campanita, el contador dinámico, los toasts y los módulos relacionados.
+
+## Eventos implementados
+
+### Pacientes
+
+* Nuevo paciente registrado
+* Paciente actualizado
+* Activación o desactivación de pacientes
+
+### Psicólogos
+
+* Nuevo psicólogo registrado
+* Psicólogo actualizado
+* Activación o desactivación de psicólogos
+
+### Servicios
+
+* Nuevo servicio registrado
+* Servicio actualizado
+* Activación o desactivación de servicios
+
+### Disponibilidad de psicólogos
+
+* Nueva disponibilidad registrada
+* Disponibilidad actualizada
+* Activación o desactivación de disponibilidad
+* Validación de cruces de horarios
+
+### Citas
+
+* Nueva cita registrada
+* Cita actualizada
+* Cambio de estado de cita
+* Cita cancelada
+* Cita asignada al psicólogo
+* Actualización automática de agenda y calendario
+
+### Pagos y finanzas
+
+* Pago registrado en cita
+* Adelanto registrado
+* Ingreso registrado
+* Gasto registrado
+* Alerta por gasto alto
+* Actualización automática del dashboard financiero
+
+### Portal público y pre-reservas
+
+* Nueva pre-reserva con adelanto
+* Cambio de estado de pre-reserva
+* Validación de adelanto
+* Rechazo de adelanto
+* Conversión de pre-reserva en cita
+* Registro financiero automático del adelanto
+* Notificación al psicólogo asignado
+
+## Destinatarios
+
+* ADMIN
+* RECEPCIONISTA
+* PSICÓLOGO asignado por correo
+
+## Características visuales
+
+* Campanita interactiva
+* Contador dinámico de no leídas
+* Dropdown profesional
+* Toasts en tiempo real
+* Marcado individual como leído
+* Marcado masivo como leído
+* Recarga automática de módulos relacionados
 
 ## Eventos en tiempo real
 
@@ -375,7 +466,7 @@ ENTRYPOINT ["java","-jar","/app.jar"]
 * Hibernate 6
 * Spring Security
 * JWT
-* WebSocket
+* WebSocket + STOMP
 * REST API
 
 ## Frontend
@@ -387,6 +478,8 @@ ENTRYPOINT ["java","-jar","/app.jar"]
 * Chart.js
 * SweetAlert2
 * Lucide Icons
+* SockJS
+* STOMP.js
 
 ## Base de datos
 
@@ -557,12 +650,48 @@ DELETE /api/clinical-history/{id}
 ## 💰 Finanzas
 
 ```http
-POST /api/incomes
-POST /api/expenses
+POST /api/finances/incomes
+GET  /api/finances/incomes
+POST /api/finances/expenses
+GET  /api/finances/expenses
+POST /api/finances/expense-categories
+GET  /api/finances/expense-categories
 GET  /api/finances/summary
-```
 
----
+## 🔔 Notificaciones
+
+```http
+GET   /api/notifications/role/{role}
+GET   /api/notifications/me
+GET   /api/notifications/role/{role}/unread-count
+GET   /api/notifications/me/unread-count
+PATCH /api/notifications/{id}/read
+PATCH /api/notifications/role/{role}/read-all
+PATCH /api/notifications/me/read-all
+
+## 📥 Pre-reservas
+
+```http
+GET  /api/leads
+GET  /api/leads/{id}
+PUT  /api/leads/{id}/status
+PUT  /api/leads/{id}/payment/validate
+PUT  /api/leads/{id}/payment/reject
+POST /api/leads/{id}/convert-to-appointment
+
+## 🧑‍⚕️ Psicólogos y disponibilidad
+
+```http
+POST  /api/psychologists
+GET   /api/psychologists
+PUT   /api/psychologists/{id}
+PATCH /api/psychologists/{id}/toggle-active
+
+POST  /api/psychologist-availabilities
+GET   /api/psychologist-availabilities
+GET   /api/psychologist-availabilities/psychologist/{id}
+PUT   /api/psychologist-availabilities/{id}
+PATCH /api/psychologist-availabilities/{id}/toggle-active
 
 # 🧠 Metodología
 
@@ -599,6 +728,11 @@ Proyecto desarrollado utilizando:
 * [ ] Exportación PDF
 * [ ] Dashboard analítico avanzado
 * [ ] Integración Stripe/Yape
+* [ ] Exportación PDF de comprobantes, reportes e historias clínicas
+* [ ] Dashboard analítico avanzado con filtros por rango de fechas
+* [ ] Integración directa con pasarelas de pago
+* [ ] Mejora de seguridad en endpoints de notificaciones por rol
+* [ ] Historial avanzado de auditoría por usuario
 
 ---
 

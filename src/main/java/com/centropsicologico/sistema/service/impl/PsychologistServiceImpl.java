@@ -34,11 +34,11 @@ public class PsychologistServiceImpl implements PsychologistService {
         Psychologist saved = psychologistRepository.save(psychologist);
         setAvailabilityCount(saved);
 
-        notificationService.createForRole(
+        notifyAdmin(
                 "Psicólogo registrado",
-                "Se registró al psicólogo " + getFullName(saved) + ". Ahora debe configurarse su disponibilidad.",
-                "PSICOLOGO_CREADO",
-                "ADMIN"
+                "Se registró al psicólogo " + getFullName(saved)
+                        + ". Ahora debe configurarse su disponibilidad.",
+                "PSICOLOGO_CREADO"
         );
 
         return saved;
@@ -84,11 +84,10 @@ public class PsychologistServiceImpl implements PsychologistService {
         Psychologist updated = psychologistRepository.save(currentPsychologist);
         setAvailabilityCount(updated);
 
-        notificationService.createForRole(
+        notifyAdmin(
                 "Psicólogo actualizado",
                 "Se actualizaron los datos del psicólogo " + getFullName(updated) + ".",
-                "PSICOLOGO_EDITADO",
-                "ADMIN"
+                "PSICOLOGO_EDITADO"
         );
 
         return updated;
@@ -102,13 +101,14 @@ public class PsychologistServiceImpl implements PsychologistService {
         Psychologist updated = psychologistRepository.save(psychologist);
         setAvailabilityCount(updated);
 
-        String status = Boolean.TRUE.equals(updated.getActive()) ? "reactivado" : "desactivado";
+        String status = Boolean.TRUE.equals(updated.getActive())
+                ? "reactivado"
+                : "desactivado";
 
-        notificationService.createForRole(
+        notifyAdmin(
                 "Estado de psicólogo modificado",
                 "El psicólogo " + getFullName(updated) + " fue " + status + ".",
-                "PSICOLOGO_ESTADO",
-                "ADMIN"
+                "PSICOLOGO_ESTADO"
         );
 
         return updated;
@@ -119,22 +119,40 @@ public class PsychologistServiceImpl implements PsychologistService {
         Psychologist psychologist = findById(id);
         psychologist.setActive(false);
 
-        psychologistRepository.save(psychologist);
+        Psychologist updated = psychologistRepository.save(psychologist);
+        setAvailabilityCount(updated);
 
-        notificationService.createForRole(
+        notifyAdmin(
                 "Psicólogo desactivado",
-                "El psicólogo " + getFullName(psychologist) + " fue desactivado.",
-                "PSICOLOGO_ELIMINADO",
-                "ADMIN"
+                "El psicólogo " + getFullName(updated) + " fue desactivado.",
+                "PSICOLOGO_ELIMINADO"
         );
     }
 
     private void setAvailabilityCount(Psychologist psychologist) {
+        if (psychologist == null || psychologist.getId() == null) return;
+
         long count = availabilityRepository.countByPsychologistIdAndActiveTrue(psychologist.getId());
         psychologist.setAvailabilityCount(count);
     }
 
     private String getFullName(Psychologist psychologist) {
-        return (psychologist.getFirstName() + " " + psychologist.getLastName()).trim();
+        if (psychologist == null) return "Psicólogo";
+
+        String firstName = psychologist.getFirstName() != null ? psychologist.getFirstName() : "";
+        String lastName = psychologist.getLastName() != null ? psychologist.getLastName() : "";
+
+        String fullName = (firstName + " " + lastName).trim();
+
+        return fullName.isEmpty() ? "Psicólogo" : fullName;
+    }
+
+    private void notifyAdmin(String title, String message, String type) {
+        notificationService.createForRole(
+                title,
+                message,
+                type,
+                "ADMIN"
+        );
     }
 }

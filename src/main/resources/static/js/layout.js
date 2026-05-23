@@ -1,12 +1,13 @@
 async function loadSidebar() {
     const res = await fetch("/components/sidebar.html");
     const html = await res.text();
+
     document.getElementById("sidebar-container").innerHTML = html;
 
-loadSidebarUser();
-applyRoleTheme();
-applyRoleVisibility();
-applySectionSecurity();
+    loadSidebarUser();
+    applyRoleTheme();
+    applyRoleVisibility();
+    applySectionSecurity();
 
     if (window.lucide) {
         lucide.createIcons();
@@ -36,8 +37,8 @@ function toggleModuleMenu(id) {
 function getRestrictedSections() {
     return {
         ADMIN: [],
-        RECEPCIONISTA: ["finances", "reports", "users", "psychologists", "services"],
-        PSICOLOGO: ["patients", "finances", "reports", "users", "psychologists", "services"]
+        RECEPCIONISTA: ["finances", "reports", "users", "psychologists", "services", "availability"],
+        PSICOLOGO: ["patients", "leads", "finances", "reports", "users", "psychologists", "services", "availability"]
     };
 }
 
@@ -71,6 +72,18 @@ function showSectionById(id) {
 
     if (activeButton) activeButton.classList.add("active");
 
+    if (typeof loadLeads === "function" && id === "leads") {
+        loadLeads();
+    }
+
+    if (typeof loadDashboard === "function" && id === "home") {
+        loadDashboard();
+    }
+
+    if (typeof loadAppointments === "function" && id === "appointments") {
+        loadAppointments();
+    }
+
     if (typeof closeMobileSidebar === "function") {
         closeMobileSidebar();
     }
@@ -79,17 +92,19 @@ function showSectionById(id) {
 function applyRoleVisibility() {
     if (!currentUser) return;
 
-    if (currentUser.role !== "ADMIN") {
-        document.querySelectorAll(".admin-only").forEach(el => {
-            el.style.display = "none";
-        });
-    }
+    const role = currentUser.role;
 
-    if (currentUser.role === "PSICOLOGO") {
-        document.querySelectorAll(".recepcion-only").forEach(el => {
-            el.style.display = "none";
-        });
-    }
+    document.querySelectorAll(".admin-only").forEach(el => {
+        el.style.display = role === "ADMIN" ? "" : "none";
+    });
+
+    document.querySelectorAll(".recepcion-only").forEach(el => {
+        el.style.display = role === "ADMIN" || role === "RECEPCIONISTA" ? "" : "none";
+    });
+
+    document.querySelectorAll(".admin-recepcion-only").forEach(el => {
+        el.style.display = role === "ADMIN" || role === "RECEPCIONISTA" ? "" : "none";
+    });
 }
 
 function applySectionSecurity() {

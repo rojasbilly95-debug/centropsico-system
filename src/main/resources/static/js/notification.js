@@ -3,6 +3,8 @@ let notificationData = [];
 
 async function loadNotifications() {
     try {
+        if (!currentUser || !currentUser.role) return;
+
         const roleUrl = `${baseUrl}/notifications/role/${currentUser.role}`;
         const userUrl = `${baseUrl}/notifications/me`;
 
@@ -23,6 +25,7 @@ async function loadNotifications() {
         }
 
         notificationData = mergeNotifications(roleNotifications, userNotifications);
+
         renderNotifications();
         updateNotificationCount();
         showPendingNotificationsAlert();
@@ -35,8 +38,8 @@ async function loadNotifications() {
 function mergeNotifications(roleNotifications, userNotifications) {
     const map = new Map();
 
-    [...roleNotifications, ...userNotifications].forEach(n => {
-        map.set(n.id, n);
+    [...roleNotifications, ...userNotifications].forEach(notification => {
+        map.set(notification.id, notification);
     });
 
     return Array.from(map.values())
@@ -71,7 +74,7 @@ function renderNotifications() {
 }
 
 function updateNotificationCount() {
-    const count = notificationData.filter(n => !n.read).length;
+    const count = notificationData.filter(notification => !notification.read).length;
     const badge = document.getElementById("notificationCount");
 
     if (!badge) return;
@@ -86,7 +89,7 @@ function updateNotificationCount() {
 }
 
 function toggleNotificationDropdown() {
-    let dropdown = document.getElementById("notificationDropdown");
+    const dropdown = document.getElementById("notificationDropdown");
 
     if (!dropdown) {
         console.error("No existe #notificationDropdown");
@@ -107,21 +110,12 @@ function toggleNotificationDropdown() {
     }
 }
 
-function animateNotificationBell() {
-    const button = document.querySelector(".notification-btn");
+function closeNotificationDropdown() {
+    const dropdown = document.getElementById("notificationDropdown");
+    if (!dropdown) return;
 
-    if (!button) {
-        console.warn("No se encontró .notification-btn");
-        return;
-    }
-
-    button.classList.remove("has-new");
-    void button.offsetWidth;
-    button.classList.add("has-new");
-
-    setTimeout(() => {
-        button.classList.remove("has-new");
-    }, 3200);
+    dropdown.classList.add("hidden");
+    dropdown.style.display = "none";
 }
 
 async function markNotificationAsRead(id) {
@@ -130,7 +124,7 @@ async function markNotificationAsRead(id) {
             method: "PATCH"
         });
 
-        if (!response) return;
+        if (!response || !response.ok) return;
 
         await loadNotifications();
 
@@ -141,6 +135,8 @@ async function markNotificationAsRead(id) {
 
 async function markAllNotificationsAsRead() {
     try {
+        if (!currentUser || !currentUser.role) return;
+
         await Promise.all([
             authFetch(`${baseUrl}/notifications/role/${currentUser.role}/read-all`, {
                 method: "PATCH"
@@ -153,12 +149,16 @@ async function markAllNotificationsAsRead() {
         await loadNotifications();
 
     } catch (error) {
-        console.error("Error marcando todas:", error);
+        console.error("Error marcando todas las notificaciones:", error);
     }
 }
 
 function connectNotificationWebSocket() {
     if (!currentUser || !currentUser.role) return;
+
+    if (stompClient && stompClient.connected) {
+        return;
+    }
 
     const socket = new SockJS("/ws");
     stompClient = Stomp.over(socket);
@@ -185,7 +185,7 @@ function connectNotificationWebSocket() {
 }
 
 function handleRealtimeNotification(notification) {
-    const exists = notificationData.some(n => n.id === notification.id);
+    const exists = notificationData.some(item => item.id === notification.id);
 
     if (!exists) {
         notificationData.unshift(notification);
@@ -194,6 +194,12 @@ function handleRealtimeNotification(notification) {
     renderNotifications();
     updateNotificationCount();
     animateNotificationBell();
+    showRealtimeToast(notification);
+    refreshRealtimeModules();
+}
+
+function showRealtimeToast(notification) {
+    if (typeof Swal === "undefined") return;
 
     Swal.fire({
         toast: true,
@@ -204,26 +210,24 @@ function handleRealtimeNotification(notification) {
         timer: 3500,
         showConfirmButton: false
     });
+}
 
+function refreshRealtimeModules() {
     if (typeof refreshAppointmentsRealtime === "function") {
         refreshAppointmentsRealtime();
     }
 
     if (typeof refreshLeadsRealtime === "function") {
-    refreshLeadsRealtime();
+        refreshLeadsRealtime();
     }
 
-}
+    if (typeof refreshDashboardRealtime === "function") {
+        refreshDashboardRealtime();
+    }
 
-function formatNotificationDate(value) {
-    if (!value) return "";
-
-    const date = new Date(value);
-
-    return date.toLocaleString("es-PE", {
-        dateStyle: "short",
-        timeStyle: "short"
-    });
+    if (typeof refreshFinancesRealtime === "function") {
+        refreshFinancesRealtime();
+    }
 }
 
 function animateNotificationBell() {
@@ -235,9 +239,7 @@ function animateNotificationBell() {
     }
 
     button.classList.remove("has-new");
-
     void button.offsetWidth;
-
     button.classList.add("has-new");
 
     setTimeout(() => {
@@ -245,18 +247,16 @@ function animateNotificationBell() {
     }, 3200);
 }
 
-function closeNotificationDropdown() {
-    const dropdown = document.getElementById("notificationDropdown");
-    if (!dropdown) return;
-
-    dropdown.classList.add("hidden");
-    dropdown.style.display = "none";
-}
-
 function showPendingNotificationsAlert() {
-    const pending = notificationData.filter(n => !n.read);
+    const pending = notificationData.filter(notification => !notification.read);
 
     if (pending.length === 0) return;
+
+    if (sessionStorage.getItem("pendingNotificationsAlertShown") === "true") return;
+
+    sessionStorage.setItem("pendingNotificationsAlertShown", "true");
+
+    if (typeof Swal === "undefined") return;
 
     Swal.fire({
         icon: "info",
@@ -273,5 +273,16 @@ function showPendingNotificationsAlert() {
         if (result.isConfirmed) {
             toggleNotificationDropdown();
         }
+    });
+}
+
+function formatNotificationDate(value) {
+    if (!value) return "";
+
+    const date = new Date(value);
+
+    return date.toLocaleString("es-PE", {
+        dateStyle: "short",
+        timeStyle: "short"
     });
 }

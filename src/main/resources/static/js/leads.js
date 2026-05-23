@@ -4,21 +4,11 @@ let filteredLeads = [];
 let leadCurrentPage = 1;
 const leadPageSize = 6;
 
-document.addEventListener("DOMContentLoaded", () => {
-    const leadSection = document.getElementById("leads");
-
-    if (leadSection) {
-        loadLeads();
-    }
-});
-
 async function loadLeads() {
     try {
-        const response = await fetch("/api/leads", {
-            headers: getAuthHeaders(),
-        });
+        const response = await authFetch("/api/leads");
 
-        if (!response.ok) {
+        if (!response || !response.ok) {
             throw new Error("No se pudieron cargar las pre-reservas");
         }
 
@@ -27,8 +17,10 @@ async function loadLeads() {
         allLeads.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
         filteredLeads = [...allLeads];
+        leadCurrentPage = 1;
 
         renderLeadTable();
+
     } catch (error) {
         setLeadResult(error.message, false);
     }
@@ -54,6 +46,7 @@ function renderLeadTable() {
                 </td>
             </tr>
         `;
+        updateLeadPagination();
         return;
     }
 
@@ -83,14 +76,14 @@ function renderLeadTable() {
                 <td>${lead.preferredTime || "-"}</td>
 
                 <td>
-    S/ ${formatMoney(lead.advanceAmount)}
-</td>
+                    S/ ${formatMoney(lead.advanceAmount)}
+                </td>
 
-<td>
-    ${formatPaymentLeadStatus(lead.paymentStatus)}
-    <br>
-    <small>${lead.paymentMethod || "-"} / ${lead.operationCode || "-"}</small>
-</td>
+                <td>
+                    ${formatPaymentLeadStatus(lead.paymentStatus)}
+                    <br>
+                    <small>${lead.paymentMethod || "-"} / ${lead.operationCode || "-"}</small>
+                </td>
 
                 <td>
                     <span class="lead-status-text">
@@ -119,13 +112,15 @@ function renderLeadTable() {
 
                         <button
                             class="table-btn ${lead.paymentStatus === "PAGO_VALIDADO" ? "active-action" : ""}"
-                            onclick="validateLeadPayment(${lead.id})">
+                            onclick="validateLeadPayment(${lead.id})"
+                            ${lead.paymentStatus === "PAGO_VALIDADO" ? "disabled" : ""}>
                             Validar adelanto
                         </button>
 
                         <button
                             class="table-btn"
-                            onclick="rejectLeadPayment(${lead.id})">
+                            onclick="rejectLeadPayment(${lead.id})"
+                            ${lead.paymentStatus === "PAGO_RECHAZADO" ? "disabled" : ""}>
                             Rechazar pago
                         </button>
 
@@ -137,13 +132,15 @@ function renderLeadTable() {
 
                         <button
                             class="table-btn ${lead.status === "PRE_RESERVADO" ? "active-action" : ""}"
-                            onclick="updateLeadStatus(${lead.id}, 'PRE_RESERVADO')">
+                            onclick="updateLeadStatus(${lead.id}, 'PRE_RESERVADO')"
+                            ${lead.paymentStatus !== "PAGO_VALIDADO" ? "disabled" : ""}>
                             Pre-reserva
                         </button>
 
                         <button
                             class="table-btn ${lead.status === "AGENDADO" ? "active-action" : ""}"
-                            onclick='openConvertLeadModal(${JSON.stringify(lead).replace(/'/g, "&apos;")})'>
+                            onclick='openConvertLeadModal(${JSON.stringify(lead).replace(/'/g, "&apos;")})'
+                            ${lead.status === "AGENDADO" ? "disabled" : ""}>
                             Convertir a cita
                         </button>
 
@@ -166,7 +163,9 @@ function filterLeadTable(value) {
             (lead.phone || "").toLowerCase().includes(search) ||
             (lead.serviceInterest || "").toLowerCase().includes(search) ||
             (lead.psychologistName || "").toLowerCase().includes(search) ||
-            (lead.operationCode || "").toLowerCase().includes(search)
+            (lead.operationCode || "").toLowerCase().includes(search) ||
+            (lead.status || "").toLowerCase().includes(search) ||
+            (lead.paymentStatus || "").toLowerCase().includes(search)
         );
     });
 
@@ -176,7 +175,10 @@ function filterLeadTable(value) {
 }
 
 function changeLeadPage(direction) {
-    const totalPages = Math.ceil(filteredLeads.length / leadPageSize);
+    const totalPages = Math.max(
+        1,
+        Math.ceil(filteredLeads.length / leadPageSize)
+    );
 
     leadCurrentPage += direction;
 
@@ -198,7 +200,7 @@ function updateLeadPagination() {
 
     const totalPages = Math.max(
         1,
-        Math.ceil(filteredLeads.length / leadPageSize),
+        Math.ceil(filteredLeads.length / leadPageSize)
     );
 
     info.textContent = `Página ${leadCurrentPage} de ${totalPages}`;
@@ -206,11 +208,9 @@ function updateLeadPagination() {
 
 async function showLeadDetail(id) {
     try {
-        const response = await fetch(`/api/leads/${id}`, {
-            headers: getAuthHeaders(),
-        });
+        const response = await authFetch(`/api/leads/${id}`);
 
-        if (!response.ok) {
+        if (!response || !response.ok) {
             throw new Error("No se pudo obtener la pre-reserva");
         }
 
@@ -314,22 +314,19 @@ async function showLeadDetail(id) {
 
 async function updateLeadStatus(id, status) {
     try {
-        const response = await fetch(`/api/leads/${id}/status`, {
+        const response = await authFetch(`/api/leads/${id}/status`, {
             method: "PUT",
-            headers: {
-                ...getAuthHeaders(),
-                "Content-Type": "application/json",
-            },
             body: JSON.stringify({ status }),
         });
 
-        if (!response.ok) {
+        if (!response || !response.ok) {
             throw new Error("No se pudo actualizar el estado");
         }
 
         setLeadResult("Estado de pre-reserva actualizado correctamente.", true);
 
         await loadLeads();
+
     } catch (error) {
         setLeadResult(error.message, false);
     }
@@ -348,16 +345,20 @@ async function validateLeadPayment(id) {
     if (!confirm.isConfirmed) return;
 
     try {
-        const response = await fetch(`/api/leads/${id}/payment/validate`, {
-            method: "PUT",
-            headers: getAuthHeaders()
+        const response = await authFetch(`/api/leads/${id}/payment/validate`, {
+            method: "PUT"
         });
 
-        if (!response.ok) {
+        if (!response || !response.ok) {
             throw new Error("No se pudo validar el adelanto");
         }
 
-        await Swal.fire("Adelanto validado", "La pre-reserva quedó separada correctamente.", "success");
+        await Swal.fire(
+            "Adelanto validado",
+            "La pre-reserva quedó separada correctamente.",
+            "success"
+        );
+
         await loadLeads();
 
     } catch (error) {
@@ -378,16 +379,20 @@ async function rejectLeadPayment(id) {
     if (!confirm.isConfirmed) return;
 
     try {
-        const response = await fetch(`/api/leads/${id}/payment/reject`, {
-            method: "PUT",
-            headers: getAuthHeaders()
+        const response = await authFetch(`/api/leads/${id}/payment/reject`, {
+            method: "PUT"
         });
 
-        if (!response.ok) {
+        if (!response || !response.ok) {
             throw new Error("No se pudo rechazar el pago");
         }
 
-        await Swal.fire("Pago rechazado", "Se debe coordinar nuevamente con la persona interesada.", "success");
+        await Swal.fire(
+            "Pago rechazado",
+            "Se debe coordinar nuevamente con la persona interesada.",
+            "success"
+        );
+
         await loadLeads();
 
     } catch (error) {
@@ -401,7 +406,7 @@ function setLeadResult(message, success) {
     if (!result) return;
 
     result.textContent = message;
-    result.className = success ? "result-box success" : "result-box error";
+    result.className = success ? "result-box success compact-result" : "result-box error compact-result";
 }
 
 function formatLeadDate(date) {
@@ -492,16 +497,6 @@ function showLeadPaymentReceipt(lead) {
     });
 }
 
-const originalShowSectionByIdForLeads = window.showSectionById;
-
-window.showSectionById = function (sectionId) {
-    originalShowSectionByIdForLeads(sectionId);
-
-    if (sectionId === "leads") {
-        loadLeads();
-    }
-};
-
 function refreshLeadsRealtime() {
     const leadSection = document.getElementById("leads");
 
@@ -533,10 +528,10 @@ async function openConvertLeadModal(lead) {
     await loadPatients();
 
     const patientOptions = patientsData
-        .filter(p => p.active)
-        .map(p => `
-            <option value="${p.id}">
-                ${p.firstName} ${p.lastName} - DNI: ${p.dni}
+        .filter(patient => patient.active)
+        .map(patient => `
+            <option value="${patient.id}">
+                ${patient.firstName} ${patient.lastName} - DNI: ${patient.dni}
             </option>
         `)
         .join("");
@@ -581,14 +576,12 @@ async function openConvertLeadModal(lead) {
     if (!formValues) return;
 
     try {
-        const response = await fetch(`/api/leads/${lead.id}/convert-to-appointment`, {
+        const response = await authFetch(`/api/leads/${lead.id}/convert-to-appointment`, {
             method: "POST",
-            headers: {
-                ...getAuthHeaders(),
-                "Content-Type": "application/json"
-            },
             body: JSON.stringify(formValues)
         });
+
+        if (!response) return;
 
         const result = await response.json();
 

@@ -23,6 +23,7 @@ public class PsychologistAvailabilityServiceImpl implements PsychologistAvailabi
             PsychologistAvailabilityRepository availabilityRepository,
             PsychologistRepository psychologistRepository,
             NotificationService notificationService) {
+
         this.availabilityRepository = availabilityRepository;
         this.psychologistRepository = psychologistRepository;
         this.notificationService = notificationService;
@@ -32,38 +33,28 @@ public class PsychologistAvailabilityServiceImpl implements PsychologistAvailabi
     public PsychologistAvailability save(PsychologistAvailability availability) {
         validateAvailabilityData(availability);
 
-        Psychologist psychologist = psychologistRepository.findById(availability.getPsychologist().getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Psicólogo no encontrado"));
+        Psychologist psychologist = findPsychologistOrFail(availability.getPsychologist().getId());
 
-        if (Boolean.FALSE.equals(psychologist.getActive())) {
-            throw new BusinessRuleException("No se puede registrar disponibilidad para un psicólogo inactivo");
-        }
+        validateActivePsychologist(psychologist);
 
-        boolean existsOverlap = availabilityRepository
-                .existsByPsychologistAndDayOfWeekAndStartTimeLessThanAndEndTimeGreaterThanAndActiveTrue(
-                        psychologist,
-                        availability.getDayOfWeek(),
-                        availability.getEndTime(),
-                        availability.getStartTime()
-                );
-
-        if (existsOverlap) {
-            throw new BusinessRuleException("El psicólogo ya tiene disponibilidad registrada en ese rango horario");
-        }
+        validateAvailabilityOverlap(
+                psychologist,
+                availability,
+                null
+        );
 
         availability.setPsychologist(psychologist);
         availability.setActive(true);
 
         PsychologistAvailability saved = availabilityRepository.save(availability);
 
-        notificationService.createForRole(
+        notifyAdmin(
                 "Disponibilidad registrada",
                 "Se registró disponibilidad para " + getPsychologistFullName(psychologist)
                         + " el día " + translateDay(saved.getDayOfWeek().name())
-                        + " de " + saved.getStartTime()
-                        + " a " + saved.getEndTime() + ".",
-                "DISPONIBILIDAD_CREADA",
-                "ADMIN"
+                        + " de " + formatTime(saved.getStartTime())
+                        + " a " + formatTime(saved.getEndTime()) + ".",
+                "DISPONIBILIDAD_CREADA"
         );
 
         return saved;
@@ -96,25 +87,15 @@ public class PsychologistAvailabilityServiceImpl implements PsychologistAvailabi
 
         PsychologistAvailability currentAvailability = findById(id);
 
-        Psychologist psychologist = psychologistRepository.findById(availability.getPsychologist().getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Psicólogo no encontrado"));
+        Psychologist psychologist = findPsychologistOrFail(availability.getPsychologist().getId());
 
-        if (Boolean.FALSE.equals(psychologist.getActive())) {
-            throw new BusinessRuleException("No se puede actualizar disponibilidad para un psicólogo inactivo");
-        }
+        validateActivePsychologist(psychologist);
 
-        boolean existsOverlap = availabilityRepository
-                .existsByPsychologistAndDayOfWeekAndStartTimeLessThanAndEndTimeGreaterThanAndActiveTrueAndIdNot(
-                        psychologist,
-                        availability.getDayOfWeek(),
-                        availability.getEndTime(),
-                        availability.getStartTime(),
-                        id
-                );
-
-        if (existsOverlap) {
-            throw new BusinessRuleException("El psicólogo ya tiene otra disponibilidad en ese rango horario");
-        }
+        validateAvailabilityOverlap(
+                psychologist,
+                availability,
+                id
+        );
 
         currentAvailability.setPsychologist(psychologist);
         currentAvailability.setDayOfWeek(availability.getDayOfWeek());
@@ -127,14 +108,13 @@ public class PsychologistAvailabilityServiceImpl implements PsychologistAvailabi
 
         PsychologistAvailability updated = availabilityRepository.save(currentAvailability);
 
-        notificationService.createForRole(
+        notifyAdmin(
                 "Disponibilidad actualizada",
                 "Se actualizó disponibilidad de " + getPsychologistFullName(psychologist)
                         + " para " + translateDay(updated.getDayOfWeek().name())
-                        + " de " + updated.getStartTime()
-                        + " a " + updated.getEndTime() + ".",
-                "DISPONIBILIDAD_EDITADA",
-                "ADMIN"
+                        + " de " + formatTime(updated.getStartTime())
+                        + " a " + formatTime(updated.getEndTime()) + ".",
+                "DISPONIBILIDAD_EDITADA"
         );
 
         return updated;
@@ -147,15 +127,16 @@ public class PsychologistAvailabilityServiceImpl implements PsychologistAvailabi
 
         PsychologistAvailability updated = availabilityRepository.save(availability);
 
-        String status = Boolean.TRUE.equals(updated.getActive()) ? "reactivada" : "desactivada";
+        String status = Boolean.TRUE.equals(updated.getActive())
+                ? "reactivada"
+                : "desactivada";
 
-        notificationService.createForRole(
+        notifyAdmin(
                 "Estado de disponibilidad modificado",
                 "La disponibilidad de " + getPsychologistFullName(updated.getPsychologist())
                         + " para " + translateDay(updated.getDayOfWeek().name())
                         + " fue " + status + ".",
-                "DISPONIBILIDAD_ESTADO",
-                "ADMIN"
+                "DISPONIBILIDAD_ESTADO"
         );
 
         return updated;
@@ -168,13 +149,12 @@ public class PsychologistAvailabilityServiceImpl implements PsychologistAvailabi
 
         PsychologistAvailability updated = availabilityRepository.save(availability);
 
-        notificationService.createForRole(
+        notifyAdmin(
                 "Disponibilidad desactivada",
                 "La disponibilidad de " + getPsychologistFullName(updated.getPsychologist())
                         + " para " + translateDay(updated.getDayOfWeek().name())
                         + " fue desactivada.",
-                "DISPONIBILIDAD_ELIMINADA",
-                "ADMIN"
+                "DISPONIBILIDAD_ELIMINADA"
         );
     }
 
@@ -184,6 +164,10 @@ public class PsychologistAvailabilityServiceImpl implements PsychologistAvailabi
     }
 
     private void validateAvailabilityData(PsychologistAvailability availability) {
+        if (availability == null) {
+            throw new BusinessRuleException("Los datos de disponibilidad son obligatorios");
+        }
+
         if (availability.getPsychologist() == null || availability.getPsychologist().getId() == null) {
             throw new BusinessRuleException("Debe seleccionar un psicólogo");
         }
@@ -205,13 +189,62 @@ public class PsychologistAvailabilityServiceImpl implements PsychologistAvailabi
         }
     }
 
+    private Psychologist findPsychologistOrFail(Long psychologistId) {
+        return psychologistRepository.findById(psychologistId)
+                .orElseThrow(() -> new ResourceNotFoundException("Psicólogo no encontrado"));
+    }
+
+    private void validateActivePsychologist(Psychologist psychologist) {
+        if (Boolean.FALSE.equals(psychologist.getActive())) {
+            throw new BusinessRuleException("No se puede registrar o actualizar disponibilidad para un psicólogo inactivo");
+        }
+    }
+
+    private void validateAvailabilityOverlap(
+            Psychologist psychologist,
+            PsychologistAvailability availability,
+            Long currentAvailabilityId) {
+
+        boolean existsOverlap;
+
+        if (currentAvailabilityId == null) {
+            existsOverlap = availabilityRepository
+                    .existsByPsychologistAndDayOfWeekAndStartTimeLessThanAndEndTimeGreaterThanAndActiveTrue(
+                            psychologist,
+                            availability.getDayOfWeek(),
+                            availability.getEndTime(),
+                            availability.getStartTime()
+                    );
+        } else {
+            existsOverlap = availabilityRepository
+                    .existsByPsychologistAndDayOfWeekAndStartTimeLessThanAndEndTimeGreaterThanAndActiveTrueAndIdNot(
+                            psychologist,
+                            availability.getDayOfWeek(),
+                            availability.getEndTime(),
+                            availability.getStartTime(),
+                            currentAvailabilityId
+                    );
+        }
+
+        if (existsOverlap) {
+            throw new BusinessRuleException("El psicólogo ya tiene disponibilidad registrada en ese rango horario");
+        }
+    }
+
     private String getPsychologistFullName(Psychologist psychologist) {
         if (psychologist == null) return "Psicólogo";
 
-        return (psychologist.getFirstName() + " " + psychologist.getLastName()).trim();
+        String firstName = psychologist.getFirstName() != null ? psychologist.getFirstName() : "";
+        String lastName = psychologist.getLastName() != null ? psychologist.getLastName() : "";
+
+        String fullName = (firstName + " " + lastName).trim();
+
+        return fullName.isEmpty() ? "Psicólogo" : fullName;
     }
 
     private String translateDay(String day) {
+        if (day == null) return "día no definido";
+
         return switch (day) {
             case "MONDAY" -> "lunes";
             case "TUESDAY" -> "martes";
@@ -222,5 +255,22 @@ public class PsychologistAvailabilityServiceImpl implements PsychologistAvailabi
             case "SUNDAY" -> "domingo";
             default -> day;
         };
+    }
+
+    private String formatTime(Object time) {
+        if (time == null) return "--:--";
+
+        String value = time.toString();
+
+        return value.length() >= 5 ? value.substring(0, 5) : value;
+    }
+
+    private void notifyAdmin(String title, String message, String type) {
+        notificationService.createForRole(
+                title,
+                message,
+                type,
+                "ADMIN"
+        );
     }
 }

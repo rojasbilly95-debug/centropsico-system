@@ -196,3 +196,9 @@ function applyDashboardByRole() {
         });
     }
 }
+
+async function refreshDashboardRealtime() {
+    if (typeof loadDashboard === "function") {
+        await loadDashboard();
+    }
+}

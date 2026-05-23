@@ -8,6 +8,7 @@ window.onload = async () => {
     if (!validateSession()) return;
 
     await loadSidebar();
+
     applyRoleVisibility();
     loadDashboard();
 
@@ -17,6 +18,10 @@ window.onload = async () => {
         loadPatientOptions();
         loadPsychologistOptions();
         loadServiceOptions();
+
+        if (typeof loadLeads === "function") {
+            loadLeads();
+        }
     }
 
     // SOLO ADMIN
@@ -62,21 +67,15 @@ function applyRoleVisibility() {
         element.style.display = role === "ADMIN" ? "" : "none";
     });
 
-    if (role === "PSICOLOGO") {
-        document.querySelectorAll(".admin-only, .recepcion-only").forEach(element => {
-            element.style.display = "none";
-        });
-    }
+    document.querySelectorAll(".admin-only").forEach(element => {
+        element.style.display = role === "ADMIN" ? "" : "none";
+    });
 
-    if (role === "RECEPCIONISTA") {
-        document.querySelectorAll(".admin-only").forEach(element => {
-            element.style.display = "none";
-        });
-    }
+    document.querySelectorAll(".recepcion-only").forEach(element => {
+        element.style.display = role === "ADMIN" || role === "RECEPCIONISTA" ? "" : "none";
+    });
 
-    if (role === "ADMIN") {
-        document.querySelectorAll(".admin-only, .recepcion-only").forEach(element => {
-            element.style.display = "";
-        });
-    }
+    document.querySelectorAll(".admin-recepcion-only").forEach(element => {
+        element.style.display = role === "ADMIN" || role === "RECEPCIONISTA" ? "" : "none";
+    });
 }
