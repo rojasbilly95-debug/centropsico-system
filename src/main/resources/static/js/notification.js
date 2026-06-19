@@ -1,7 +1,13 @@
 let stompClient = null;
 let notificationData = [];
+let notificationsDropdownOpen = false;
+let markingNotificationsAsRead = false;
 
-async function loadNotifications() {
+/* =========================
+   CARGA DE NOTIFICACIONES
+========================= */
+
+async function loadNotifications(showAlert = true) {
     try {
         if (!currentUser || !currentUser.role) return;
 
@@ -28,23 +34,32 @@ async function loadNotifications() {
 
         renderNotifications();
         updateNotificationCount();
-        showPendingNotificationsAlert();
+
+        if (showAlert) {
+            showPendingNotificationsAlert();
+        }
 
     } catch (error) {
         console.error("Error cargando notificaciones:", error);
     }
 }
 
-function mergeNotifications(roleNotifications, userNotifications) {
+function mergeNotifications(roleNotifications = [], userNotifications = []) {
     const map = new Map();
 
     [...roleNotifications, ...userNotifications].forEach(notification => {
-        map.set(notification.id, notification);
+        if (notification && notification.id != null) {
+            map.set(notification.id, notification);
+        }
     });
 
     return Array.from(map.values())
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 }
+
+/* =========================
+   RENDER
+========================= */
 
 function renderNotifications() {
     const list = document.getElementById("notificationList");
@@ -52,7 +67,7 @@ function renderNotifications() {
 
     list.innerHTML = "";
 
-    if (notificationData.length === 0) {
+    if (!notificationData || notificationData.length === 0) {
         list.innerHTML = `
             <div class="notification-empty">
                 No hay notificaciones
@@ -62,11 +77,13 @@ function renderNotifications() {
     }
 
     notificationData.slice(0, 10).forEach(notification => {
+        const unreadClass = notification.read ? "" : "unread";
+
         list.innerHTML += `
-            <div class="notification-item ${notification.read ? "" : "unread"}"
+            <div class="notification-item ${unreadClass}"
                  onclick="markNotificationAsRead(${notification.id})">
-                <strong>${notification.title}</strong>
-                <p>${notification.message}</p>
+                <strong>${escapeNotificationHtml(notification.title || "Notificación")}</strong>
+                <p>${escapeNotificationHtml(notification.message || "")}</p>
                 <small>${formatNotificationDate(notification.createdAt)}</small>
             </div>
         `;
@@ -88,7 +105,12 @@ function updateNotificationCount() {
     }
 }
 
-function toggleNotificationDropdown() {
+/* =========================
+   DROPDOWN
+   Al abrir, marca como leído.
+========================= */
+
+async function toggleNotificationDropdown() {
     const dropdown = document.getElementById("notificationDropdown");
 
     if (!dropdown) {
@@ -105,6 +127,12 @@ function toggleNotificationDropdown() {
     if (isHidden) {
         dropdown.classList.remove("hidden");
         dropdown.style.display = "block";
+        notificationsDropdownOpen = true;
+
+        renderNotifications();
+
+        await markVisibleNotificationsAsRead();
+
     } else {
         closeNotificationDropdown();
     }
@@ -116,26 +144,107 @@ function closeNotificationDropdown() {
 
     dropdown.classList.add("hidden");
     dropdown.style.display = "none";
+    notificationsDropdownOpen = false;
+}
+
+/* =========================
+   MARCAR COMO LEÍDO
+========================= */
+
+async function markVisibleNotificationsAsRead() {
+    try {
+        if (markingNotificationsAsRead) return;
+        if (!currentUser || !currentUser.role) return;
+
+        const hasUnread = notificationData.some(notification => !notification.read);
+
+        if (!hasUnread) {
+            updateNotificationCount();
+            return;
+        }
+
+        markingNotificationsAsRead = true;
+
+        // Cambio visual inmediato
+        notificationData = notificationData.map(notification => ({
+            ...notification,
+            read: true
+        }));
+
+        renderNotifications();
+        updateNotificationCount();
+
+        // Cambio real en backend
+        await Promise.all([
+            authFetch(`${baseUrl}/notifications/role/${currentUser.role}/read-all`, {
+                method: "PATCH"
+            }),
+            authFetch(`${baseUrl}/notifications/me/read-all`, {
+                method: "PATCH"
+            })
+        ]);
+
+        // Recarga sin volver a mostrar alerta
+        await loadNotifications(false);
+
+    } catch (error) {
+        console.error("Error marcando notificaciones visibles como leídas:", error);
+
+        // Si falla, recargamos para no dejar una vista falsa
+        await loadNotifications(false);
+
+    } finally {
+        markingNotificationsAsRead = false;
+    }
 }
 
 async function markNotificationAsRead(id) {
     try {
+        const notification = notificationData.find(item => item.id === id);
+
+        if (notification && notification.read) {
+            return;
+        }
+
+        notificationData = notificationData.map(item => {
+            if (item.id === id) {
+                return {
+                    ...item,
+                    read: true
+                };
+            }
+
+            return item;
+        });
+
+        renderNotifications();
+        updateNotificationCount();
+
         const response = await authFetch(`${baseUrl}/notifications/${id}/read`, {
             method: "PATCH"
         });
 
-        if (!response || !response.ok) return;
-
-        await loadNotifications();
+        if (!response || !response.ok) {
+            await loadNotifications(false);
+        }
 
     } catch (error) {
         console.error("Error marcando notificación:", error);
+        await loadNotifications(false);
     }
 }
 
 async function markAllNotificationsAsRead() {
     try {
         if (!currentUser || !currentUser.role) return;
+
+        notificationData = notificationData.map(notification => ({
+            ...notification,
+            read: true
+        }));
+
+        renderNotifications();
+        updateNotificationCount();
 
         await Promise.all([
             authFetch(`${baseUrl}/notifications/role/${currentUser.role}/read-all`, {
@@ -146,12 +255,17 @@ async function markAllNotificationsAsRead() {
             })
         ]);
 
-        await loadNotifications();
+        await loadNotifications(false);
 
     } catch (error) {
         console.error("Error marcando todas las notificaciones:", error);
+        await loadNotifications(false);
     }
 }
+
+/* =========================
+   WEBSOCKET
+========================= */
 
 function connectNotificationWebSocket() {
     if (!currentUser || !currentUser.role) return;
@@ -184,7 +298,7 @@ function connectNotificationWebSocket() {
     });
 }
 
-function handleRealtimeNotification(notification) {
+async function handleRealtimeNotification(notification) {
     const exists = notificationData.some(item => item.id === notification.id);
 
     if (!exists) {
@@ -196,6 +310,12 @@ function handleRealtimeNotification(notification) {
     animateNotificationBell();
     showRealtimeToast(notification);
     refreshRealtimeModules();
+
+    // Si el panel está abierto cuando llega una notificación,
+    // se considera vista y se marca como leída automáticamente.
+    if (notificationsDropdownOpen) {
+        await markVisibleNotificationsAsRead();
+    }
 }
 
 function showRealtimeToast(notification) {
@@ -247,6 +367,10 @@ function animateNotificationBell() {
     }, 3200);
 }
 
+/* =========================
+   ALERTA INICIAL
+========================= */
+
 function showPendingNotificationsAlert() {
     const pending = notificationData.filter(notification => !notification.read);
 
@@ -276,6 +400,10 @@ function showPendingNotificationsAlert() {
     });
 }
 
+/* =========================
+   HELPERS
+========================= */
+
 function formatNotificationDate(value) {
     if (!value) return "";
 
@@ -285,4 +413,13 @@ function formatNotificationDate(value) {
         dateStyle: "short",
         timeStyle: "short"
     });
+}
+
+function escapeNotificationHtml(value) {
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
 }

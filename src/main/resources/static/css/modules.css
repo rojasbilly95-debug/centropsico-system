@@ -485,3 +485,868 @@
         overflow-x: auto;
     }
 }
+
+/* =========================================================
+   AUDITORÍA / MOVIMIENTOS
+========================================================= */
+
+.audit-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.audit-actions select {
+    height: 42px;
+    min-width: 190px;
+    border: 1px solid #d7e2ec;
+    border-radius: 12px;
+    padding: 0 14px;
+    background: #ffffff;
+    color: #334e68;
+    font-weight: 700;
+    outline: none;
+}
+
+.audit-actions select:focus {
+    border-color: #0f3d66;
+    box-shadow: 0 0 0 3px rgba(15, 61, 102, 0.10);
+}
+
+.audit-module-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: #eef2f6;
+    color: #344054;
+    border: 1px solid #d8dee8;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 0.2px;
+}
+
+@media (max-width: 768px) {
+    .audit-actions {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .audit-actions select,
+    .audit-actions button {
+        width: 100%;
+    }
+}
+
+/* =========================================================
+   AUDITORÍA / MOVIMIENTOS AVANZADO
+========================================================= */
+
+.audit-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.audit-actions select {
+    height: 42px;
+    min-width: 170px;
+    border: 1px solid #d7e2ec;
+    border-radius: 12px;
+    padding: 0 14px;
+    background: #ffffff;
+    color: #334e68;
+    font-weight: 700;
+    outline: none;
+}
+
+.audit-actions select:focus {
+    border-color: #0f3d66;
+    box-shadow: 0 0 0 3px rgba(15, 61, 102, 0.10);
+}
+
+.audit-module-pill,
+.audit-severity-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+}
+
+.audit-module-pill {
+    background: #eef2f6;
+    color: #344054;
+    border: 1px solid #d8dee8;
+}
+
+.audit-severity-pill.info {
+    background: #eff8ff;
+    color: #175cd3;
+    border: 1px solid #b2ddff;
+}
+
+.audit-severity-pill.warning {
+    background: #fffaeb;
+    color: #b54708;
+    border: 1px solid #fedf89;
+}
+
+.audit-severity-pill.critical {
+    background: #fef3f2;
+    color: #b42318;
+    border: 1px solid #fecdca;
+}
+
+#auditLogsTableBody td {
+    vertical-align: top;
+}
+
+#auditLogsTableBody td:nth-child(5) {
+    min-width: 360px;
+    line-height: 1.45;
+}
+
+#auditLogsTableBody td button {
+    min-width: 88px;
+}
+
+@media (max-width: 768px) {
+    .audit-actions {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .audit-actions select,
+    .audit-actions button {
+        width: 100%;
+    }
+}
+
+/* =========================================================
+   REPORTES EXPORTABLES
+========================================================= */
+
+.export-report-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.export-report-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 22px;
+    border-radius: 20px;
+    background: #ffffff;
+    border: 1px solid #e4eaf2;
+    box-shadow: 0 16px 38px rgba(15, 23, 42, 0.07);
+}
+
+.export-report-card h3 {
+    margin: 0 0 8px;
+    color: #0f3d66;
+    font-size: 18px;
+    font-weight: 900;
+}
+
+.export-report-card p {
+    margin: 0;
+    color: #64748b;
+    line-height: 1.5;
+    font-size: 14px;
+}
+
+.export-report-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.export-report-note {
+    margin-top: 18px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+    font-size: 14px;
+}
+
+@media (max-width: 900px) {
+    .export-report-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .export-report-card {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .export-report-actions {
+        width: 100%;
+    }
+
+    .export-report-actions button {
+        width: 100%;
+    }
+}
+
+/* =========================================================
+   RESUMEN FINANCIERO MEJORADO
+========================================================= */
+
+.finance-summary-container {
+    padding: 22px;
+    border-radius: 20px;
+    background: #eef6ff;
+    border-left: 4px solid #0f3d66;
+}
+
+.finance-summary-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.finance-summary-title h3 {
+    margin: 0 0 6px;
+    color: #0f3d66;
+    font-size: 20px;
+    font-weight: 900;
+}
+
+.finance-summary-title p {
+    margin: 0;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.finance-summary-badge {
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 900;
+    border: 1px solid transparent;
+}
+
+.finance-summary-badge.gain {
+    background: #ecfdf3;
+    color: #027a48;
+    border-color: #abefc6;
+}
+
+.finance-summary-badge.loss {
+    background: #fff7ed;
+    color: #c2410c;
+    border-color: #fed7aa;
+}
+
+.finance-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.finance-summary-card {
+    background: #ffffff;
+    border: 1px solid #dbe7f3;
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.07);
+}
+
+.finance-summary-card span {
+    display: block;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.finance-summary-card strong {
+    display: block;
+    color: #0f172a;
+    font-size: 24px;
+    font-weight: 900;
+}
+
+.finance-summary-card small {
+    display: block;
+    margin-top: 8px;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.finance-summary-card.income {
+    border-left: 4px solid #059669;
+}
+
+.finance-summary-card.expense {
+    border-left: 4px solid #dc2626;
+}
+
+.finance-summary-card.result.gain {
+    border-left: 4px solid #2563eb;
+}
+
+.finance-summary-card.result.loss {
+    border-left: 4px solid #ea580c;
+}
+
+.finance-summary-card.status.gain {
+    background: #ecfdf3;
+    border-left: 4px solid #059669;
+}
+
+.finance-summary-card.status.loss {
+    background: #fff7ed;
+    border-left: 4px solid #ea580c;
+}
+
+.finance-summary-analysis {
+    padding: 16px;
+    border-radius: 16px;
+    background: #ffffff;
+    border: 1px solid #dbe7f3;
+    margin-bottom: 18px;
+}
+
+.finance-summary-analysis strong {
+    display: block;
+    color: #0f3d66;
+    font-size: 14px;
+    margin-bottom: 6px;
+}
+
+.finance-summary-analysis p {
+    margin: 0;
+    color: #334155;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.finance-summary-bars {
+    display: grid;
+    gap: 14px;
+}
+
+.finance-bar-item {
+    padding: 14px;
+    border-radius: 16px;
+    background: #ffffff;
+    border: 1px solid #dbe7f3;
+}
+
+.finance-bar-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    color: #334155;
+    font-size: 13px;
+}
+
+.finance-bar-track {
+    height: 10px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    overflow: hidden;
+}
+
+.finance-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+}
+
+.finance-bar-fill.income {
+    background: #059669;
+}
+
+.finance-bar-fill.expense {
+    background: #dc2626;
+}
+
+.finance-summary-empty,
+.finance-summary-loading {
+    padding: 18px;
+    border-radius: 16px;
+    background: #ffffff;
+    border: 1px solid #dbe7f3;
+    color: #475569;
+    font-size: 14px;
+}
+
+.finance-summary-empty.error {
+    color: #b42318;
+    background: #fef3f2;
+    border-color: #fecdca;
+}
+
+@media (max-width: 1100px) {
+    .finance-summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 700px) {
+    .finance-summary-title {
+        flex-direction: column;
+    }
+
+    .finance-summary-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* =========================================================
+   MEJORA VISUAL DEL MÓDULO FINANZAS
+========================================================= */
+
+/* Contenedor general de finanzas */
+#finances .module-grid {
+    gap: 18px;
+    align-items: start;
+}
+
+/* Tarjetas de formularios más compactas */
+#finances .card,
+#finances .form-card {
+    border-radius: 18px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+}
+
+/* Encabezados más limpios */
+#finances .card-header h3 {
+    font-size: 17px;
+    font-weight: 700;
+    color: #0f3d66;
+    margin-bottom: 4px;
+}
+
+#finances .card-header span {
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 400;
+}
+
+/* Inputs más equilibrados */
+#finances input,
+#finances select {
+    height: 42px;
+    border-radius: 10px;
+    font-size: 13px;
+}
+
+/* Botones un poco más sobrios */
+#finances .form-actions {
+    margin-top: 14px;
+}
+
+#finances .btn-primary,
+#finances .btn-secondary {
+    min-height: 36px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* Resultado de ingreso y gasto: que no ocupen espacio innecesario */
+#incomeResult,
+#expenseResult,
+#expenseCategoryResult,
+#financeSummaryResult {
+    border-radius: 16px;
+}
+
+/* Resumen financiero al entrar: caja pequeña, no gigante */
+#financeSummaryResult {
+    min-height: auto !important;
+    padding: 16px 18px !important;
+    background: #eef6ff;
+    border-left: 4px solid #0f3d66;
+    color: #334155;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Cuando todavía no se genera resumen */
+#financeSummaryResult:empty::before {
+    content: "Selecciona año y mes para consultar el resumen financiero.";
+    color: #64748b;
+}
+
+/* Categorías de gasto: lista más ordenada */
+#expenseCategoryResult {
+    max-height: 340px;
+    overflow-y: auto;
+    padding: 14px;
+    background: #eef6ff;
+    border-left: 4px solid #0f3d66;
+}
+
+/* Scroll más limpio para categorías */
+#expenseCategoryResult::-webkit-scrollbar {
+    width: 8px;
+}
+
+#expenseCategoryResult::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+}
+
+#expenseCategoryResult::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* Tarjetas internas de categorías */
+#finances .category-list {
+    display: grid;
+    gap: 12px;
+}
+
+#finances .category-item {
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: #ffffff;
+    border: 1px solid #dbe7f3;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.04);
+}
+
+#finances .category-item strong {
+    display: block;
+    color: #0f3d66;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+#finances .category-item span {
+    display: block;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+/* Mejor distribución en pantallas grandes */
+@media (min-width: 1000px) {
+    #finances .module-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    #finances .module-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #expenseCategoryResult {
+        max-height: 260px;
+    }
+}
+
+/* Mensajes compactos en Finanzas */
+.finance-inline-message {
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: #eef6ff;
+    border-left: 4px solid #0f3d66;
+    color: #334155;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.finance-inline-message.success {
+    background: #ecfdf3;
+    border-left-color: #059669;
+    color: #047857;
+}
+
+.finance-inline-message.error {
+    background: #fef3f2;
+    border-left-color: #dc2626;
+    color: #b42318;
+}
+
+/* =========================================================
+   AGENDA DIARIA MEJORADA
+========================================================= */
+
+.agenda-loading {
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: #eef6ff;
+    color: #334155;
+    border-left: 4px solid #0f3d66;
+    font-size: 14px;
+}
+
+.agenda-item-improved {
+    display: grid;
+    grid-template-columns: 150px 1fr 180px;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    border-radius: 14px;
+    background: #ffffff;
+    border: 1px solid #dbe7f3;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+}
+
+.agenda-time strong {
+    display: block;
+    color: #0f3d66;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.agenda-time span {
+    display: inline-flex;
+    margin-top: 5px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #ecfdf3;
+    color: #047857;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.agenda-info strong {
+    display: block;
+    color: #0f172a;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.agenda-info span {
+    display: block;
+    margin-top: 4px;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.agenda-psychologist {
+    color: #334155;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: right;
+}
+
+@media (max-width: 800px) {
+    .agenda-item-improved {
+        grid-template-columns: 1fr;
+        align-items: flex-start;
+    }
+
+    .agenda-psychologist {
+        text-align: left;
+    }
+}
+
+    /* =========================================================
+    MODAL PERFIL DE USUARIO
+    ========================================================= */
+
+    .profile-modal {
+        text-align: left;
+    }
+
+    .profile-header-card {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 18px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #f8fafc, #eef6ff);
+        border: 1px solid #dbe7f3;
+        margin-bottom: 18px;
+    }
+
+    .profile-avatar-preview {
+        width: 86px;
+        height: 86px;
+        min-width: 86px;
+        border-radius: 50%;
+        background: #0f3d66;
+        color: #ffffff;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        box-shadow: 0 12px 26px rgba(15, 61, 102, 0.18);
+    }
+
+    .profile-avatar-preview span {
+        font-size: 24px;
+        font-weight: 800;
+    }
+
+    .profile-avatar-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .profile-header-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .profile-header-info strong {
+        color: #0f172a;
+        font-size: 20px;
+        font-weight: 800;
+    }
+
+    .profile-header-info span {
+        color: #64748b;
+        font-size: 14px;
+    }
+
+    .profile-header-info small {
+        width: fit-content;
+        margin-top: 4px;
+        padding: 5px 10px;
+        border-radius: 999px;
+        background: #e7f0fb;
+        color: #0f3d66;
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    .profile-section {
+        padding: 16px;
+        border-radius: 18px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 14px;
+    }
+
+    .profile-section h4 {
+        margin: 0 0 12px;
+        color: #0f3d66;
+        font-size: 15px;
+        font-weight: 800;
+    }
+
+    .profile-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .profile-grid input,
+    .profile-password-modal input {
+        width: 100%;
+        height: 42px;
+        border: 1px solid #d7e2ec;
+        border-radius: 12px;
+        padding: 0 14px;
+        outline: none;
+        font-size: 14px;
+        background: #fbfdff;
+    }
+
+    .profile-grid input:focus,
+    .profile-password-modal input:focus {
+        border-color: #0f3d66;
+        box-shadow: 0 0 0 3px rgba(15, 61, 102, 0.10);
+    }
+
+    .profile-grid input:disabled {
+        background: #f1f5f9;
+        color: #64748b;
+        cursor: not-allowed;
+    }
+
+    .profile-photo-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .profile-photo-actions input {
+        flex: 1;
+        padding: 10px;
+        border-radius: 12px;
+        border: 1px solid #d7e2ec;
+        background: #fbfdff;
+    }
+
+    .profile-help {
+        margin: 10px 0 0;
+        color: #64748b;
+        font-size: 12px;
+    }
+
+    .profile-result {
+        min-height: 20px;
+        color: #64748b;
+        font-size: 13px;
+    }
+
+    .profile-result.success {
+        padding: 12px;
+        border-radius: 12px;
+        background: #ecfdf3;
+        color: #027a48;
+        border-left: 4px solid #059669;
+    }
+
+    .profile-result.error {
+        padding: 12px;
+        border-radius: 12px;
+        background: #fef3f2;
+        color: #b42318;
+        border-left: 4px solid #dc2626;
+    }
+
+    .profile-password-modal {
+        display: grid;
+        gap: 12px;
+        text-align: left;
+    }
+
+    .profile-password-modal p {
+        margin: 0;
+        color: #64748b;
+        font-size: 13px;
+        line-height: 1.5;
+    }
+
+    @media (max-width: 700px) {
+        .profile-header-card {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .profile-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .profile-photo-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .profile-photo-actions button {
+            width: 100%;
+        }
+    }

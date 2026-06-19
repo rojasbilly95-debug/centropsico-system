@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="/css/layout.css">
     <link rel="stylesheet" href="/css/components.css">
     <link rel="stylesheet" href="/css/modules.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
 
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
 </head>
@@ -24,69 +25,170 @@
 
         <main class="main-content">
 
-            <!-- INICIO -->
+            <!-- INICIO / DASHBOARD ADMIN PREMIUM -->
             <section id="home" class="section active">
-                <div class="module-header">
-                    <div>
-                        <h2 class="section-title">Panel de Control</h2>
-                        <p class="section-subtitle">Resumen general del centro psicológico</p>
-                    </div>
-                </div>
+                <div class="admin-dashboard">
 
-                <div class="dashboard-grid">
-                    <div class="dashboard-card">
-                        <span>Pacientes</span>
-                        <strong id="dashPatients">0</strong>
-                    </div>
+                    <!-- TOPBAR -->
+                    <div class="admin-dashboard-topbar">
+                        <div>
+                            <span class="dashboard-eyebrow">Dashboard administrativo</span>
+                            <h1 id="adminWelcomeTitle">CentroPsico | Administración</h1>
+                            <p>Indicadores operativos, agenda clínica y control financiero del centro.</p>
+                        </div>
 
-                    <div class="dashboard-card">
-                        <span>Citas de hoy</span>
-                        <strong id="dashAppointments">0</strong>
-                    </div>
-
-                    <div class="dashboard-card admin-dashboard-only">
-                        <span>Ingresos</span>
-                        <strong id="dashIncome">S/ 0</strong>
-                    </div>
-
-                    <div class="dashboard-card admin-dashboard-only">
-                        <span>Gastos</span>
-                        <strong id="dashExpense">S/ 0</strong>
-                    </div>
-
-                    <div class="dashboard-card dashboard-result admin-dashboard-only">
-                        <span>Resultado</span>
-                        <strong id="dashProfit">S/ 0</strong>
-                        <small id="dashStatus">-</small>
-                    </div>
-                </div>
-
-                <div class="module-grid">
-                    <div class="card">
-                        <h3>Resumen del día</h3>
-                        <div id="dashboardSummary" class="result-box">
-                            Aquí verás alertas importantes del sistema.
+                        <div class="dashboard-period-box">
+                            <label for="dashboardGlobalPeriod">Periodo</label>
+                            <select id="dashboardGlobalPeriod" class="dashboard-period-filter"
+                                onchange="handleDashboardPeriodChange(this.value)">
+                                <option value="day">Hoy</option>
+                                <option value="week">Esta semana</option>
+                                <option value="month" selected>Este mes</option>
+                                <option value="year">Este año</option>
+                            </select>
                         </div>
                     </div>
 
-                    <div class="card">
-                        <h3>Próximas citas de hoy</h3>
-                        <div id="todaySchedule" class="agenda-list">
-                            Cargando cronograma...
+                    <!-- KPI CARDS -->
+                    <div class="premium-kpi-grid">
+
+                        <div class="premium-kpi-card kpi-purple">
+                            <div class="kpi-icon">
+                                <i data-lucide="users"></i>
+                            </div>
+                            <div class="kpi-content">
+                                <span>Pacientes</span>
+                                <strong id="dashPatients">0</strong>
+                                <small>Total registrados</small>
+                            </div>
+                            <div class="kpi-trend positive">
+                                <i data-lucide="trending-up"></i>
+                                12% vs. mes anterior
+                            </div>
                         </div>
-                    </div>
-                </div>
 
-                <div class="charts-grid">
-                    <div class="card chart-card admin-dashboard-only">
-                        <h3>Ingresos vs Gastos del mes</h3>
-                        <canvas id="dashboardFinanceChart"></canvas>
+                        <div class="premium-kpi-card kpi-blue">
+                            <div class="kpi-icon">
+                                <i data-lucide="calendar-days"></i>
+                            </div>
+                            <div class="kpi-content">
+                                <span>Citas (Hoy)</span>
+                                <strong id="dashAppointments">0</strong>
+                                <small>Citas programadas</small>
+                            </div>
+                            <div class="kpi-trend positive">
+                                <i data-lucide="trending-up"></i>
+                                8% vs. ayer
+                            </div>
+                        </div>
+
+                        <div class="premium-kpi-card kpi-green admin-dashboard-only">
+                            <div class="kpi-icon">
+                                <i data-lucide="circle-dollar-sign"></i>
+                            </div>
+                            <div class="kpi-content">
+                                <span>Ingresos (Mes)</span>
+                                <strong id="dashIncome">S/ 0.00</strong>
+                                <small>Total ingresos</small>
+                            </div>
+                            <div class="kpi-trend positive green">
+                                <i data-lucide="trending-up"></i>
+                                18% vs. mes anterior
+                            </div>
+                        </div>
+
+                        <div class="premium-kpi-card kpi-orange admin-dashboard-only">
+                            <div class="kpi-icon">
+                                <i data-lucide="wallet-cards"></i>
+                            </div>
+                            <div class="kpi-content">
+                                <span>Pendientes de Pago</span>
+                                <strong id="dashPendingPayments">0</strong>
+                                <small>Citas pendientes</small>
+                            </div>
+                            <div class="kpi-trend warning">
+                                <i data-lucide="alert-circle"></i>
+                                Requiere revisión
+                            </div>
+                        </div>
+
                     </div>
 
-                    <div class="card chart-card">
-                        <h3>Citas de hoy por estado</h3>
-                        <canvas id="dashboardAppointmentsChart"></canvas>
+                    <!-- ANALYTICS -->
+                    <div class="premium-dashboard-grid">
+
+                        <div class="premium-panel">
+                            <div class="premium-panel-header">
+                                <div>
+                                    <h3>Citas por estado</h3>
+                                    <span>Distribución mensual de citas</span>
+                                </div>
+
+                            </div>
+
+                            <div class="appointments-status-layout">
+                                <div class="donut-wrapper">
+                                    <canvas id="dashboardAppointmentsChart"></canvas>
+                                    <div class="donut-center">
+                                        <span>Total</span>
+                                        <strong id="dashAppointmentsTotalMonth">0</strong>
+                                    </div>
+                                </div>
+
+                                <div id="appointmentStatusLegend" class="status-legend"></div>
+                            </div>
+                        </div>
+
+                        <div class="premium-panel admin-dashboard-only">
+                            <div class="premium-panel-header">
+                                <div>
+                                    <h3>Ingresos vs Gastos (Mes)</h3>
+                                    <span>Comparación semanal</span>
+                                </div>
+
+                            </div>
+
+                            <div class="bar-chart-wrapper">
+                                <canvas id="dashboardFinanceChart"></canvas>
+                            </div>
+                        </div>
+
                     </div>
+
+                    <!-- BOTTOM -->
+                    <div class="premium-bottom-grid">
+
+                        <div class="premium-panel">
+                            <div class="premium-panel-header">
+                                <div>
+                                    <h3>Citas próximas</h3>
+                                    <span>Agenda relevante del día</span>
+                                </div>
+                                <button class="panel-link" onclick="openAppointmentsAgenda()">
+                                    Ver agenda <i data-lucide="arrow-right"></i>
+                                </button>
+                            </div>
+
+                            <div id="todaySchedule" class="premium-appointments-list">
+                                Cargando cronograma...
+                            </div>
+                        </div>
+
+                        <div class="premium-panel">
+                            <div class="premium-panel-header">
+                                <div>
+                                    <h3>Recordatorios</h3>
+                                    <span>Alertas importantes del sistema</span>
+                                </div>
+                            </div>
+
+                            <div id="dashboardSummary" class="premium-reminders-list">
+                                Cargando recordatorios...
+                            </div>
+                        </div>
+
+                    </div>
+
                 </div>
             </section>
 
@@ -818,7 +920,10 @@
 
                         <div class="form-actions">
                             <button class="btn-primary" onclick="createExpenseCategory()">Guardar categoría</button>
-                            <button class="btn-secondary" onclick="loadExpenseCategories()">Listar categorías</button>
+                            <button id="expenseCategoryToggleBtn" class="btn-secondary"
+                                onclick="showExpenseCategories()">
+                                Listar categorías
+                            </button>
                         </div>
 
                         <div id="expenseCategoryResult" class="result-box finance-result">
@@ -917,105 +1022,104 @@
                 </div>
             </section>
 
-<!-- PRE-RESERVAS DE ATENCIÓN -->
-<section id="leads" class="section">
-    <div class="module-header">
-        <div>
-            <h2 class="section-title">Pre-reservas de atención</h2>
+            <!-- PRE-RESERVAS DE ATENCIÓN -->
+            <section id="leads" class="section">
+                <div class="module-header">
+                    <div>
+                        <h2 class="section-title">Pre-reservas de atención</h2>
 
-            <p class="section-subtitle">
-                Revisa las pre-reservas enviadas desde el portal público y realiza seguimiento.
-            </p>
-        </div>
-    </div>
-
-    <div class="module-grid single-column">
-        <div class="card table-card">
-            <div class="table-header">
-                <div>
-                    <h3>Pre-reservas registradas</h3>
-                    <span>
-                        Seguimiento de personas interesadas, modalidad, psicólogo y horario solicitado
-                    </span>
+                        <p class="section-subtitle">
+                            Revisa las pre-reservas enviadas desde el portal público y realiza seguimiento.
+                        </p>
+                    </div>
                 </div>
-                <input
-                    class="table-search"
-                    type="text"
-                    placeholder="Buscar pre-reserva..."
-                    oninput="filterLeadTable(this.value)">
-            </div>
-            <div id="leadResult" class="result-box compact-result">
-                Pre-reservas cargadas desde el portal público.
-            </div>
-            <div class="table-wrapper">
-                <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nombre</th>
-                        <th>Correo</th>
-                        <th>Teléfono</th>
-                        <th>Tipo de atención</th>
-                        <th>Modalidad</th>
-                        <th>Psicólogo</th>
-                        <th>Fecha</th>
-                        <th>Hora</th>
-                        <th>Adelanto</th>
-                        <th>Pago</th>
-                        <th>Estado</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                    <tbody id="leadTableBody"></tbody>
-                </table>
-            </div>
-            <div class="pagination-bar">
-                <button
-                    class="btn-secondary"
-                    onclick="changeLeadPage(-1)">
-                    Anterior
-                </button>
-                <span id="leadPageInfo">
-                    Página 1 de 1
-                </span>
-                <button
-                    class="btn-secondary"
-                    onclick="changeLeadPage(1)">
-                    Siguiente
-                </button>
-            </div>
-        </div>
-    </div>
-</section>
+
+                <div class="module-grid single-column">
+                    <div class="card table-card">
+                        <div class="table-header">
+                            <div>
+                                <h3>Pre-reservas registradas</h3>
+                                <span>
+                                    Seguimiento de personas interesadas, modalidad, psicólogo y horario solicitado
+                                </span>
+                            </div>
+                            <input class="table-search" type="text" placeholder="Buscar pre-reserva..."
+                                oninput="filterLeadTable(this.value)">
+                        </div>
+                        <div id="leadResult" class="result-box compact-result">
+                            Pre-reservas cargadas desde el portal público.
+                        </div>
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nombre</th>
+                                        <th>Correo</th>
+                                        <th>Teléfono</th>
+                                        <th>Tipo de atención</th>
+                                        <th>Modalidad</th>
+                                        <th>Psicólogo</th>
+                                        <th>Fecha</th>
+                                        <th>Hora</th>
+                                        <th>Adelanto</th>
+                                        <th>Pago</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="leadTableBody"></tbody>
+                            </table>
+                        </div>
+                        <div class="pagination-bar">
+                            <button class="btn-secondary" onclick="changeLeadPage(-1)">
+                                Anterior
+                            </button>
+                            <span id="leadPageInfo">
+                                Página 1 de 1
+                            </span>
+                            <button class="btn-secondary" onclick="changeLeadPage(1)">
+                                Siguiente
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
             <!-- REPORTES -->
-            <section id="reports" class="section">
+            <section id="reports" class="section admin-only">
 
                 <div class="module-header">
                     <div>
-                        <h2 class="section-title">Módulo de Reportes</h2>
-                        <p class="section-subtitle">Análisis mensual del centro psicológico</p>
+                        <h2 class="section-title">Reportes del sistema</h2>
+                        <p class="section-subtitle">
+                            Análisis mensual y exportación de información administrativa, financiera y clínica.
+                        </p>
                     </div>
                 </div>
 
+                <!-- REPORTE MENSUAL -->
                 <div class="module-grid">
                     <div class="card form-card">
                         <div class="card-header">
-                            <h3>Generar reporte</h3>
-                            <span>Selecciona año y mes</span>
+                            <h3>Reporte mensual</h3>
+                            <span>Selecciona año y mes para analizar citas, ingresos y gastos</span>
                         </div>
 
                         <div class="form-grid single-column">
-                            <input type="number" id="reportYear" placeholder="Año">
-                            <input type="number" id="reportMonth" placeholder="Mes">
+                            <input type="number" id="reportYear" placeholder="Año. Ejemplo: 2026">
+                            <input type="number" id="reportMonth" placeholder="Mes. Ejemplo: 6">
                         </div>
 
                         <div class="form-actions">
-                            <button class="btn-primary" onclick="loadMonthlyReport()">Generar reporte</button>
+                            <button class="btn-primary" onclick="loadMonthlyReport()">
+                                Generar reporte mensual
+                            </button>
                         </div>
                     </div>
                 </div>
 
+                <!-- TARJETAS DEL REPORTE MENSUAL -->
                 <div class="dashboard-grid" id="reportCards" style="display:none;">
                     <div class="dashboard-card">
                         <span>Total citas</span>
@@ -1053,6 +1157,7 @@
                     </div>
                 </div>
 
+                <!-- GRÁFICOS DEL REPORTE MENSUAL -->
                 <div class="charts-grid" id="reportCharts" style="display:none;">
                     <div class="card chart-card">
                         <h3>Ingresos vs Gastos</h3>
@@ -1070,6 +1175,189 @@
                     </div>
                 </div>
 
+                <!-- REPORTES EXPORTABLES -->
+                <div class="module-header reports-export-header">
+                    <div>
+                        <h2 class="section-title">Reportes exportables</h2>
+                        <p class="section-subtitle">
+                            Descarga información del sistema en formato CSV o genera una vista imprimible para PDF.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="export-report-grid">
+
+                    <article class="export-report-card">
+                        <div>
+                            <h3>Citas</h3>
+                            <p>Reporte de citas, pacientes, psicólogos, servicios, estados y pagos.</p>
+                        </div>
+
+                        <div class="export-report-actions">
+                            <button class="btn-primary" onclick="exportReportCsv('appointments')">
+                                Excel / CSV
+                            </button>
+                            <button class="btn-secondary" onclick="printExportReport('appointments')">
+                                PDF
+                            </button>
+                        </div>
+                    </article>
+
+                    <article class="export-report-card">
+                        <div>
+                            <h3>Pacientes</h3>
+                            <p>Listado de pacientes registrados, datos de contacto y estado.</p>
+                        </div>
+
+                        <div class="export-report-actions">
+                            <button class="btn-primary" onclick="exportReportCsv('patients')">
+                                Excel / CSV
+                            </button>
+                            <button class="btn-secondary" onclick="printExportReport('patients')">
+                                PDF
+                            </button>
+                        </div>
+                    </article>
+
+                    <article class="export-report-card">
+                        <div>
+                            <h3>Pre-reservas</h3>
+                            <p>Solicitudes del portal público, adelantos, estados y consentimiento registrado.</p>
+                        </div>
+
+                        <div class="export-report-actions">
+                            <button class="btn-primary" onclick="exportReportCsv('leads')">
+                                Excel / CSV
+                            </button>
+                            <button class="btn-secondary" onclick="printExportReport('leads')">
+                                PDF
+                            </button>
+                        </div>
+                    </article>
+
+                    <article class="export-report-card">
+                        <div>
+                            <h3>Ingresos</h3>
+                            <p>Reporte financiero de ingresos registrados manualmente o por pagos.</p>
+                        </div>
+
+                        <div class="export-report-actions">
+                            <button class="btn-primary" onclick="exportReportCsv('incomes')">
+                                Excel / CSV
+                            </button>
+                            <button class="btn-secondary" onclick="printExportReport('incomes')">
+                                PDF
+                            </button>
+                        </div>
+                    </article>
+
+                    <article class="export-report-card">
+                        <div>
+                            <h3>Gastos</h3>
+                            <p>Reporte de gastos, categorías, responsables y montos registrados.</p>
+                        </div>
+
+                        <div class="export-report-actions">
+                            <button class="btn-primary" onclick="exportReportCsv('expenses')">
+                                Excel / CSV
+                            </button>
+                            <button class="btn-secondary" onclick="printExportReport('expenses')">
+                                PDF
+                            </button>
+                        </div>
+                    </article>
+
+                    <article class="export-report-card">
+                        <div>
+                            <h3>Movimientos</h3>
+                            <p>Reporte de auditoría: accesos, acciones, módulos, niveles y revisiones.</p>
+                        </div>
+
+                        <div class="export-report-actions">
+                            <button class="btn-primary" onclick="exportReportCsv('audit')">
+                                Excel / CSV
+                            </button>
+                            <button class="btn-secondary" onclick="printExportReport('audit')">
+                                PDF
+                            </button>
+                        </div>
+                    </article>
+
+                </div>
+
+                <div class="export-report-note">
+                    <strong>Nota:</strong>
+                    El botón <strong>Excel / CSV</strong> descarga un archivo compatible con Excel.
+                    El botón <strong>PDF</strong> abre una vista imprimible; desde el navegador puedes elegir
+                    “Guardar como PDF”.
+                </div>
+
+            </section>
+
+            <section id="auditLogs" class="section admin-only">
+                <div class="module-header">
+                    <div>
+                        <h2 class="section-title">Movimientos del sistema</h2>
+                        <p class="section-subtitle">
+                            Historial de acciones registradas en el sistema: pacientes, citas, pagos, usuarios,
+                            servicios y finanzas.
+                        </p>
+                    </div>
+
+                    <div class="audit-actions">
+                        <select id="auditModuleFilter" onchange="filterAuditLogsByModule()">
+                            <option value="">Todos los módulos</option>
+                            <option value="AUTENTICACIÓN">Autenticación</option>
+                            <option value="SEGURIDAD">Seguridad</option>
+                            <option value="PACIENTES">Pacientes</option>
+                            <option value="CITAS">Citas</option>
+                            <option value="PAGOS">Pagos</option>
+                            <option value="PRE-RESERVAS">Pre-reservas</option>
+                            <option value="USUARIOS">Usuarios</option>
+                            <option value="SERVICIOS">Servicios</option>
+                            <option value="PSICÓLOGOS">Psicólogos</option>
+                            <option value="FINANZAS">Finanzas</option>
+                        </select>
+
+                        <button class="btn-primary" onclick="loadAuditLogs()">
+                            Actualizar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card table-card">
+                    <div class="table-header">
+                        <div>
+                            <h3>Registro de movimientos</h3>
+                            <span>Últimas acciones realizadas por los usuarios del sistema.</span>
+                        </div>
+
+                        <input type="text" id="auditSearchInput" class="table-search" placeholder="Buscar movimiento..."
+                            oninput="renderAuditLogs()">
+                    </div>
+
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Módulo</th>
+                                    <th>Acción</th>
+                                    <th>Descripción</th>
+                                    <th>Usuario</th>
+                                    <th>Rol</th>
+                                    <th>Notificado</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="auditLogsTableBody">
+                                <tr>
+                                    <td colspan="7">Cargando movimientos...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </section>
 
         </main>
@@ -1113,7 +1401,10 @@
 
     <script src="/js/notification.js"></script>
     <script src="/js/auth.js"></script>
+    <script src="/js/profile.js?v=5"></script>
+    <script src="/js/reports-export.js"></script>
     <script src="/js/layout.js"></script>
+    <script src="/js/audit-logs.js"></script>
     <script src="/js/dashboard.js"></script>
     <script src="/js/patients.js"></script>
     <script src="/js/users.js"></script>

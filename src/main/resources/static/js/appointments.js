@@ -113,6 +113,10 @@ function renderAppointmentTable(data) {
         const currentStatus = appointment.status ?? "PROGRAMADA";
         const appointmentJson = JSON.stringify(appointment).replace(/'/g, "&apos;");
 
+        const paymentInfo = getAppointmentPaymentInfo(appointment);
+        const canPay = canRegisterAppointmentPayment(appointment, paymentInfo);
+        const canShowReceipt = paymentInfo.paidAmount > 0 || paymentInfo.status === "PAGADO";
+
         tbody.innerHTML += `
             <tr>
                 <td>${appointment.id ?? ""}</td>
@@ -123,36 +127,49 @@ function renderAppointmentTable(data) {
                 <td>${appointment.startTime ?? ""}</td>
                 <td>${appointment.endTime ?? ""}</td>
                 <td>${statusLabel[currentStatus] ?? currentStatus}</td>
-<td>
-    <span class="status-pill ${getPaymentStatusClass(appointment.paymentStatus)}">
-        ${formatPaymentStatus(appointment.paymentStatus)}
-    </span>
-</td>
-<td>
-    <strong>S/ ${Number(appointment.paidAmount || 0).toFixed(2)}</strong>
-    <br>
-    <small>Saldo: S/ ${Number(appointment.pendingAmount || 0).toFixed(2)}</small>
-</td>
+
                 <td>
-${appointment.paymentStatus === "PAGADO"
-                ? `<button class="btn-primary" onclick='showPaymentReceipt(${appointmentJson})'>Comprobante</button>`
-                : `
-        <button class="btn-primary" onclick="payAppointment(${appointment.id})">
-            Registrar pago
-        </button>
-        ${Number(appointment.paidAmount || 0) > 0
-                    ? `<button class="btn-secondary" onclick='showPaymentReceipt(${appointmentJson})'>Ver pago</button>`
-                    : ""
-                }
-      `
+                    <span class="status-pill ${getPaymentStatusClass(paymentInfo.status)}">
+                        ${formatPaymentStatus(paymentInfo.status)}
+                    </span>
+                </td>
+
+                <td>
+                    <strong>S/ ${paymentInfo.paidAmount.toFixed(2)}</strong>
+                    <br>
+                    <small>Saldo: S/ ${paymentInfo.pendingAmount.toFixed(2)}</small>
+                </td>
+
+                <td>
+                    ${canPay
+                ? `
+                            <button class="btn-primary" onclick="payAppointment(${appointment.id})">
+                                Registrar pago
+                            </button>
+                        `
+                : ""
+            }
+
+                    ${canShowReceipt
+                ? `
+                            <button class="btn-secondary" onclick='showPaymentReceipt(${appointmentJson})'>
+                                ${paymentInfo.status === "PAGADO" ? "Comprobante" : "Ver pago"}
+                            </button>
+                        `
+                : ""
+            }
+
+                    ${!canPay && !canShowReceipt
+                ? `<span class="badge badge-role">Sin pago</span>`
+                : ""
             }
 
                     ${currentStatus === "PROGRAMADA"
                 ? `
-                                <button class="btn-secondary" onclick="updateAppointmentStatus(${appointment.id}, 'ATENDIDA')">Atendida</button>
-                                <button class="btn-secondary" onclick="updateAppointmentStatus(${appointment.id}, 'CANCELADA')">Cancelar</button>
-                                <button class="btn-secondary" onclick="updateAppointmentStatus(${appointment.id}, 'NO_ASISTIO')">No asistió</button>
-                            `
+                            <button class="btn-secondary" onclick="updateAppointmentStatus(${appointment.id}, 'ATENDIDA')">Atendida</button>
+                            <button class="btn-secondary" onclick="updateAppointmentStatus(${appointment.id}, 'CANCELADA')">Cancelar</button>
+                            <button class="btn-secondary" onclick="updateAppointmentStatus(${appointment.id}, 'NO_ASISTIO')">No asistió</button>
+                        `
                 : `<span class="badge badge-role">${statusLabel[currentStatus] ?? currentStatus}</span>`
             }
                 </td>
@@ -169,21 +186,59 @@ ${appointment.paymentStatus === "PAGADO"
 async function payAppointment(id) {
     const appointment = appointmentsData.find(a => a.id === id);
 
-    const totalAmount = Number(appointment?.totalAmount || appointment?.service?.price || 0);
-    const paidAmount = Number(appointment?.paidAmount || 0);
-    const pendingAmount = Number(appointment?.pendingAmount ?? (totalAmount - paidAmount));
+    if (!appointment) {
+        Swal.fire("Error", "No se encontró la cita seleccionada.", "error");
+        return;
+    }
+
+    const paymentInfo = getAppointmentPaymentInfo(appointment);
+
+    if (appointment.status === "CANCELADA" || appointment.status === "NO_ASISTIO") {
+        Swal.fire({
+            icon: "warning",
+            title: "Pago no permitido",
+            text: "No puedes registrar pagos en una cita cancelada o marcada como no asistió."
+        });
+        return;
+    }
+
+    if (paymentInfo.pendingAmount <= 0 || paymentInfo.status === "PAGADO") {
+        Swal.fire({
+            icon: "info",
+            title: "Cita pagada",
+            text: "Esta cita ya no tiene saldo pendiente."
+        });
+        return;
+    }
+
+    if (paymentInfo.totalAmount <= 0) {
+        Swal.fire({
+            icon: "warning",
+            title: "Monto no configurado",
+            text: "La cita no tiene un monto total válido para registrar pago."
+        });
+        return;
+    }
+
+    closeAppointmentListIfOpen();
 
     const { value: formValues } = await Swal.fire({
         title: "Registrar pago de cita",
         html: `
             <div class="payment-modal-form">
                 <div class="payment-summary-box">
-                    <div><span>Total:</span><strong>S/ ${totalAmount.toFixed(2)}</strong></div>
-                    <div><span>Pagado:</span><strong>S/ ${paidAmount.toFixed(2)}</strong></div>
-                    <div><span>Saldo:</span><strong>S/ ${pendingAmount.toFixed(2)}</strong></div>
+                    <div><span>Total:</span><strong>S/ ${paymentInfo.totalAmount.toFixed(2)}</strong></div>
+                    <div><span>Pagado:</span><strong>S/ ${paymentInfo.paidAmount.toFixed(2)}</strong></div>
+                    <div><span>Saldo:</span><strong>S/ ${paymentInfo.pendingAmount.toFixed(2)}</strong></div>
                 </div>
 
-                <input id="paymentAmount" type="number" min="1" max="${pendingAmount}" step="0.01" placeholder="Monto a pagar o adelanto">
+                <input 
+                    id="paymentAmount" 
+                    type="number" 
+                    min="0.01" 
+                    max="${paymentInfo.pendingAmount}" 
+                    step="0.01" 
+                    placeholder="Monto a pagar o adelanto">
 
                 <select id="paymentMethod">
                     <option value="">Seleccione método</option>
@@ -212,7 +267,7 @@ async function payAppointment(id) {
                 return false;
             }
 
-            if (amount > pendingAmount) {
+            if (amount > paymentInfo.pendingAmount) {
                 Swal.showValidationMessage("El monto no puede superar el saldo pendiente");
                 return false;
             }
@@ -258,6 +313,7 @@ async function payAppointment(id) {
         );
 
         await loadAppointments();
+
         if (typeof loadDashboard === "function") await loadDashboard();
         if (typeof loadIncomes === "function") await loadIncomes();
 
@@ -312,51 +368,146 @@ async function updateAppointmentStatus(id, status) {
 }
 
 async function loadAgenda() {
-    const date = document.getElementById("agendaDate").value;
+    const dateInput = document.getElementById("agendaDate");
+    const container = document.getElementById("agendaResult");
+
+    if (!dateInput || !container) {
+        Swal.fire("Error", "No se encontró la agenda diaria.", "error");
+        return;
+    }
+
+    const date = dateInput.value;
 
     if (!date) {
-        Swal.fire("Error", "Selecciona una fecha", "warning");
+        Swal.fire("Fecha requerida", "Selecciona una fecha para consultar la agenda.", "warning");
         return;
     }
 
     try {
+        container.innerHTML = `
+            <div class="agenda-loading">
+                Cargando agenda del día...
+            </div>
+        `;
+
         const url = currentUser.role === "PSICOLOGO"
             ? `${baseUrl}/appointments/my/by-date?date=${date}`
             : `${baseUrl}/appointments/by-date?date=${date}`;
 
         const response = await authFetch(url);
+
         if (!response) return;
 
         const data = await response.json();
 
-        const container = document.getElementById("agendaResult");
-        container.innerHTML = "";
-
-        if (data.length === 0) {
-            container.innerHTML = `<div class="empty-state">No hay citas</div>`;
+        if (!response.ok) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    No se pudo cargar la agenda.
+                </div>
+            `;
             return;
         }
 
-        data.sort((a, b) => a.startTime.localeCompare(b.startTime));
+        container.innerHTML = "";
+
+        if (!data || data.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    No hay citas programadas para esta fecha.
+                </div>
+            `;
+            return;
+        }
+
+        data.sort((a, b) => String(a.startTime).localeCompare(String(b.startTime)));
 
         data.forEach(app => {
             const patientName = app.patient
-                ? `${app.patient.firstName ?? ""} ${app.patient.lastName ?? ""}`
-                : app.patientName ?? "";
+                ? `${app.patient.firstName ?? ""} ${app.patient.lastName ?? ""}`.trim()
+                : app.patientName ?? "Paciente";
 
-            const serviceName = app.service ? app.service.name : app.serviceName ?? "";
+            const psychologistName = app.psychologist
+                ? `${app.psychologist.firstName ?? ""} ${app.psychologist.lastName ?? ""}`.trim()
+                : app.psychologistName ?? "Psicólogo";
+
+            const serviceName = app.service
+                ? app.service.name
+                : app.serviceName ?? "Servicio";
+
+            const status = formatAppointmentStatus(app.status);
 
             container.innerHTML += `
-                <div class="agenda-item">
-                    <div>${app.startTime} - ${app.endTime}</div>
-                    <div>${patientName} - ${serviceName}</div>
+                <div class="agenda-item agenda-item-improved">
+                    <div class="agenda-time">
+                        <strong>${formatAgendaTime(app.startTime)} - ${formatAgendaTime(app.endTime)}</strong>
+                        <span>${status}</span>
+                    </div>
+
+                    <div class="agenda-info">
+                        <strong>${patientName}</strong>
+                        <span>${serviceName}</span>
+                    </div>
+
+                    <div class="agenda-psychologist">
+                        ${psychologistName}
+                    </div>
                 </div>
             `;
         });
 
     } catch (error) {
-        Swal.fire("Error", "Error al cargar agenda", "error");
+        console.error("Error al cargar agenda:", error);
+
+        container.innerHTML = `
+            <div class="empty-state">
+                Error al cargar agenda.
+            </div>
+        `;
     }
+}
+
+function formatAgendaTime(time) {
+    if (!time) return "-";
+    return String(time).substring(0, 5);
+}
+
+function getTodayLocalDate() {
+    const today = new Date();
+
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+}
+
+async function openAppointmentsAgenda(date = null) {
+    showSectionById("appointments");
+
+    const agendaDateInput = document.getElementById("agendaDate");
+
+    if (!agendaDateInput) {
+        Swal.fire("Error", "No se encontró el campo de fecha de la agenda.", "error");
+        return;
+    }
+
+    const selectedDate = date || getTodayLocalDate();
+
+    agendaDateInput.value = selectedDate;
+
+    await loadAgenda();
+
+    setTimeout(() => {
+        const agendaBox = document.getElementById("agendaResult");
+
+        if (agendaBox) {
+            agendaBox.scrollIntoView({
+                behavior: "smooth",
+                block: "center"
+            });
+        }
+    }, 250);
 }
 
 function showPaymentReceipt(appointment) {
@@ -370,9 +521,10 @@ function showPaymentReceipt(appointment) {
 
     const serviceName = appointment.service ? appointment.service.name : "-";
 
-    const totalAmount = Number(appointment.totalAmount || appointment.service?.price || 0).toFixed(2);
-    const paidAmount = Number(appointment.paidAmount || 0).toFixed(2);
-    const pendingAmount = Number(appointment.pendingAmount || 0).toFixed(2);
+    const paymentInfo = getAppointmentPaymentInfo(appointment);
+    const totalAmount = paymentInfo.totalAmount.toFixed(2);
+    const paidAmount = paymentInfo.paidAmount.toFixed(2);
+    const pendingAmount = paymentInfo.pendingAmount.toFixed(2);
 
     const paymentDate = appointment.paymentDateTime
         ? appointment.paymentDateTime.replace("T", " ").substring(0, 16)
@@ -388,7 +540,7 @@ function showPaymentReceipt(appointment) {
                         <h2>CentroPsico</h2>
                         <p>Comprobante de pago</p>
                     </div>
-                    <span class="receipt-status">${formatPaymentStatus(appointment.paymentStatus)}</span>
+                    <span class="receipt-status">${formatPaymentStatus(paymentInfo.status)}</span>
                 </div>
 
                 <div class="receipt-section">
@@ -1117,6 +1269,69 @@ function minutesToTime(totalMinutes) {
     const minutes = totalMinutes % 60;
 
     return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+}
+
+function getAppointmentPaymentInfo(appointment) {
+    const totalAmount = Number(
+        appointment?.totalAmount ??
+        appointment?.service?.price ??
+        0
+    );
+
+    const paidAmount = Number(appointment?.paidAmount || 0);
+
+    let pendingAmount;
+
+    if (appointment?.pendingAmount !== null && appointment?.pendingAmount !== undefined) {
+        pendingAmount = Number(appointment.pendingAmount || 0);
+    } else {
+        pendingAmount = totalAmount - paidAmount;
+    }
+
+    pendingAmount = Math.max(pendingAmount, 0);
+
+    let status = appointment?.paymentStatus || "PENDIENTE";
+
+    if (totalAmount > 0 && pendingAmount <= 0 && paidAmount > 0) {
+        status = "PAGADO";
+    } else if (paidAmount > 0 && pendingAmount > 0) {
+        status = "PARCIAL";
+    } else if (paidAmount <= 0) {
+        status = "PENDIENTE";
+    }
+
+    return {
+        totalAmount,
+        paidAmount,
+        pendingAmount,
+        status
+    };
+}
+
+function canRegisterAppointmentPayment(appointment, paymentInfo) {
+    if (!appointment) return false;
+
+    if (appointment.status === "CANCELADA" || appointment.status === "NO_ASISTIO") {
+        return false;
+    }
+
+    if (!paymentInfo) {
+        paymentInfo = getAppointmentPaymentInfo(appointment);
+    }
+
+    return paymentInfo.totalAmount > 0
+        && paymentInfo.pendingAmount > 0
+        && paymentInfo.status !== "PAGADO";
+}
+
+function closeAppointmentListIfOpen() {
+    const modal = document.getElementById("appointmentListModal");
+
+    if (!modal) return;
+
+    if (!modal.classList.contains("hidden")) {
+        modal.classList.add("hidden");
+    }
 }
 
 function formatPaymentStatus(status) {

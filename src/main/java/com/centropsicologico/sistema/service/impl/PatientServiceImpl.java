@@ -2,11 +2,13 @@ package com.centropsicologico.sistema.service.impl;
 
 import com.centropsicologico.sistema.entity.Patient;
 import com.centropsicologico.sistema.exception.BusinessRuleException;
+import com.centropsicologico.sistema.service.AuditLogService;
 import com.centropsicologico.sistema.exception.ResourceNotFoundException;
 import com.centropsicologico.sistema.repository.PatientRepository;
 import com.centropsicologico.sistema.service.NotificationService;
 import com.centropsicologico.sistema.service.PatientService;
 import org.springframework.stereotype.Service;
+
 
 import java.util.List;
 
@@ -15,14 +17,17 @@ public class PatientServiceImpl implements PatientService {
 
     private final PatientRepository patientRepository;
     private final NotificationService notificationService;
+    private final AuditLogService auditLogService;
 
-    public PatientServiceImpl(
-            PatientRepository patientRepository,
-            NotificationService notificationService) {
+public PatientServiceImpl(
+        PatientRepository patientRepository,
+        NotificationService notificationService,
+        AuditLogService auditLogService) {
 
-        this.patientRepository = patientRepository;
-        this.notificationService = notificationService;
-    }
+    this.patientRepository = patientRepository;
+    this.notificationService = notificationService;
+    this.auditLogService = auditLogService;
+}
 
     @Override
     public Patient save(Patient patient) {
@@ -55,6 +60,17 @@ public class PatientServiceImpl implements PatientService {
                 "RECEPCIONISTA"
         );
 
+        auditLogService.record(
+        "PACIENTES",
+        "REGISTRO DE PACIENTE",
+        "Patient",
+        savedPatient.getId(),
+        "Se registró al paciente "
+                + savedPatient.getFirstName() + " "
+                + savedPatient.getLastName()
+                + " con DNI "
+                + savedPatient.getDni()
+);
         return savedPatient;
     }
 
@@ -114,6 +130,16 @@ public class PatientServiceImpl implements PatientService {
                 "ADMIN"
         );
 
+        auditLogService.record(
+        "PACIENTES",
+        "ACTUALIZACIÓN DE PACIENTE",
+        "Patient",
+        updatedPatient.getId(),
+        "Se actualizaron los datos del paciente "
+                + updatedPatient.getFirstName() + " "
+                + updatedPatient.getLastName()
+);
+
         return updatedPatient;
     }
 
@@ -142,6 +168,18 @@ public class PatientServiceImpl implements PatientService {
                 "ADMIN"
         );
 
+        auditLogService.record(
+        "PACIENTES",
+        "CAMBIO DE ESTADO DE PACIENTE",
+        "Patient",
+        updatedPatient.getId(),
+        "El paciente "
+                + updatedPatient.getFirstName()
+                + " "
+                + updatedPatient.getLastName()
+                + " fue "
+                + status
+);
         return updatedPatient;
     }
 
@@ -164,5 +202,16 @@ public class PatientServiceImpl implements PatientService {
                 "PACIENTE_ELIMINADO",
                 "ADMIN"
         );
+        auditLogService.record(
+        "PACIENTES",
+        "DESACTIVACIÓN DE PACIENTE",
+        "Patient",
+        patient.getId(),
+        "El paciente "
+                + patient.getFirstName()
+                + " "
+                + patient.getLastName()
+                + " fue desactivado"
+);
     }
 }

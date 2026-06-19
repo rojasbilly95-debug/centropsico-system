@@ -15,6 +15,7 @@ import com.centropsicologico.sistema.repository.PatientRepository;
 import com.centropsicologico.sistema.repository.PsychologistRepository;
 import com.centropsicologico.sistema.repository.ServiceRepository;
 import com.centropsicologico.sistema.service.NotificationService;
+import com.centropsicologico.sistema.service.AuditLogService;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -35,24 +36,27 @@ public class LeadController {
     private final AppointmentRepository appointmentRepository;
     private final IncomeRepository incomeRepository;
     private final NotificationService notificationService;
+    private final AuditLogService auditLogService;
 
-    public LeadController(
-            LeadRepository leadRepository,
-            PatientRepository patientRepository,
-            PsychologistRepository psychologistRepository,
-            ServiceRepository serviceRepository,
-            AppointmentRepository appointmentRepository,
-            IncomeRepository incomeRepository,
-            NotificationService notificationService) {
+   public LeadController(
+        LeadRepository leadRepository,
+        PatientRepository patientRepository,
+        PsychologistRepository psychologistRepository,
+        ServiceRepository serviceRepository,
+        AppointmentRepository appointmentRepository,
+        IncomeRepository incomeRepository,
+        NotificationService notificationService,
+        AuditLogService auditLogService) {
 
-        this.leadRepository = leadRepository;
-        this.patientRepository = patientRepository;
-        this.psychologistRepository = psychologistRepository;
-        this.serviceRepository = serviceRepository;
-        this.appointmentRepository = appointmentRepository;
-        this.incomeRepository = incomeRepository;
-        this.notificationService = notificationService;
-    }
+    this.leadRepository = leadRepository;
+    this.patientRepository = patientRepository;
+    this.psychologistRepository = psychologistRepository;
+    this.serviceRepository = serviceRepository;
+    this.appointmentRepository = appointmentRepository;
+    this.incomeRepository = incomeRepository;
+    this.notificationService = notificationService;
+    this.auditLogService = auditLogService;
+}
 
     @GetMapping
     public List<Lead> findAll() {
@@ -99,6 +103,17 @@ public class LeadController {
                 "PRE_RESERVA_ESTADO"
         );
 
+        auditLogService.record(
+        "PRE-RESERVAS",
+        "CAMBIO DE ESTADO DE PRE-RESERVA",
+        "Lead",
+        updatedLead.getId(),
+        "La pre-reserva de "
+                + updatedLead.getFullName()
+                + " fue actualizada al estado "
+                + updatedLead.getStatus()
+);
+
         return updatedLead;
     }
 
@@ -132,6 +147,19 @@ public class LeadController {
                 "PRE_RESERVA_PAGO_VALIDADO"
         );
 
+        auditLogService.record(
+        "PRE-RESERVAS",
+        "VALIDACIÓN DE ADELANTO",
+        "Lead",
+        updatedLead.getId(),
+        "Se validó el adelanto de la pre-reserva de "
+                + updatedLead.getFullName()
+                + ". Monto: S/ "
+                + formatAmount(updatedLead.getAdvanceAmount())
+                + ". Código: "
+                + updatedLead.getOperationCode()
+);
+
         return updatedLead;
     }
 
@@ -152,6 +180,16 @@ public class LeadController {
                         + ". La pre-reserva volvió al estado CONTACTADO.",
                 "PRE_RESERVA_PAGO_RECHAZADO"
         );
+
+        auditLogService.record(
+        "PRE-RESERVAS",
+        "RECHAZO DE ADELANTO",
+        "Lead",
+        updatedLead.getId(),
+        "Se rechazó el adelanto de la pre-reserva de "
+                + updatedLead.getFullName()
+                + ". La pre-reserva volvió al estado CONTACTADO"
+);
 
         return updatedLead;
     }
@@ -294,6 +332,17 @@ public class LeadController {
         leadRepository.save(lead);
 
         notifyAppointmentCreatedFromLead(lead, patient, psychologist, savedAppointment, paidAmount);
+
+        auditLogService.record(
+        "PRE-RESERVAS",
+        "CONVERSIÓN A CITA",
+        "Lead",
+        lead.getId(),
+        "La pre-reserva de "
+                + lead.getFullName()
+                + " fue convertida en la cita #"
+                + savedAppointment.getId()
+);
 
         return Map.of(
                 "success", true,

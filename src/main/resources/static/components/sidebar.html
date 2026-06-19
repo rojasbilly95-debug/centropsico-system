@@ -22,10 +22,10 @@
             <span>Dashboard</span>
         </button>
 
-<button class="sidebar-link admin-recepcion-only" onclick="showSectionById('leads')">
-    <i data-lucide="inbox"></i>
-    <span>Solicitudes</span>
-</button>
+        <button class="sidebar-link admin-recepcion-only" onclick="showSectionById('leads')">
+            <i data-lucide="inbox"></i>
+            <span>Solicitudes</span>
+        </button>
 
         <button class="sidebar-link recepcion-only" onclick="showSectionById('patients')">
             <i data-lucide="users"></i>
@@ -45,6 +45,11 @@
         <button class="sidebar-link admin-only" onclick="showSectionById('reports')">
             <i data-lucide="bar-chart-3"></i>
             <span>Reportes</span>
+        </button>
+
+        <button class="sidebar-link admin-only" onclick="showSectionById('auditLogs'); loadAuditLogs();">
+            <i data-lucide="activity"></i>
+            <span>Movimientos</span>
         </button>
 
         <div class="sidebar-group admin-only">
@@ -86,11 +91,8 @@
 
         <!-- NOTIFICACIONES -->
         <div class="notification-wrapper">
-            <button
-                class="notification-btn"
-                onclick="animateNotificationBell(); toggleNotificationDropdown();"
+            <button type="button" class="notification-btn" onclick="toggleNotificationDropdown();"
                 title="Notificaciones">
-
                 <i data-lucide="bell"></i>
                 <strong id="notificationCount" class="notification-count hidden">0</strong>
             </button>
@@ -113,14 +115,14 @@
             </div>
         </div>
 
-        <div class="sidebar-user">
-            <div class="sidebar-avatar" id="sidebarUserAvatar">AP</div>
+<div class="sidebar-user" id="sidebarUserProfile" onclick="openProfileModal()" title="Abrir mi perfil">
+    <div class="sidebar-avatar" id="sidebarUserAvatar">AP</div>
 
-            <div class="sidebar-user-info">
-                <strong id="sidebarUserName">Admin Principal</strong>
-                <span id="sidebarUserRole">ADMIN</span>
-            </div>
-        </div>
+    <div class="sidebar-user-info">
+        <strong id="sidebarUserName">Admin Principal</strong>
+        <span id="sidebarUserRole">ADMIN</span>
+    </div>
+</div>
 
         <button class="logout-btn" onclick="logout()">
             <i data-lucide="log-out"></i>

@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "usuario")
 @Getter
@@ -32,4 +34,28 @@ public class User {
 
     @Column(name = "estado", nullable = false)
     private Boolean active = true;
+
+    /*
+     * Datos de perfil del usuario autenticado
+     */
+    @Column(name = "telefono", length = 30)
+    private String phone;
+
+    @Column(name = "foto_perfil", length = 255)
+    private String profileImageUrl;
+
+    @Column(name = "fecha_actualizacion")
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.active == null) {
+            this.active = true;
+        }
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 }

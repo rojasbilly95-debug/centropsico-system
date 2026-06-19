@@ -46,8 +46,24 @@ async function authFetch(url, options = {}) {
     return response;
 }
 
-function logout() {
-    localStorage.removeItem("currentUser");
-    localStorage.removeItem("token");
-    window.location.replace("/login.html");
+async function logout() {
+    try {
+        const token = localStorage.getItem("token");
+
+        if (token) {
+            await fetch("/api/auth/logout", {
+                method: "POST",
+                headers: {
+                    "Authorization": "Bearer " + token
+                }
+            });
+        }
+
+    } catch (error) {
+        console.warn("No se pudo registrar cierre de sesión:", error);
+    } finally {
+        localStorage.removeItem("currentUser");
+        localStorage.removeItem("token");
+        window.location.replace("/login.html");
+    }
 }

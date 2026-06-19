@@ -1,12 +1,15 @@
 package com.centropsicologico.sistema.config;
 
 import com.centropsicologico.sistema.repository.UserRepository;
+import com.centropsicologico.sistema.service.AuditLogService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,12 +23,16 @@ public class SecurityConfig {
 
     private final UserRepository userRepository;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final AuditLogService auditLogService;
 
     public SecurityConfig(
             UserRepository userRepository,
-            JwtAuthenticationFilter jwtAuthenticationFilter) {
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            AuditLogService auditLogService) {
+
         this.userRepository = userRepository;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.auditLogService = auditLogService;
     }
 
     @Bean
@@ -39,28 +46,36 @@ public class SecurityConfig {
                 .authenticationProvider(authenticationProvider())
 
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/",
-                                "/index.html",
-                                "/login.html",
-                                "/portal.html",
-                                "/css/**",
-                                "/js/**",
-                                "/components/**",
-                                "/img/**",
-                                "/favicon.ico",
-                                "/api/auth/**",
-                                "/api/public/**",
-                                "/ws/**")
-                        .permitAll()
+                .requestMatchers(
+                        "/",
+                        "/index.html",
+                        "/login.html",
+                        "/portal.html",
+                        "/css/**",
+                        "/js/**",
+                        "/components/**",
+                        "/img/**",
+                        "/uploads/**",
+                        "/favicon.ico",
+                        "/api/auth/**",
+                        "/api/public/**",
+                        "/ws/**")
+                .permitAll()
+
+                        .requestMatchers("/api/profile/**")
+                        .hasAnyAuthority("ADMIN", "RECEPCIONISTA", "PSICOLOGO")
+
                         .requestMatchers("/api/dashboard/**")
                         .hasAnyAuthority("ADMIN", "RECEPCIONISTA", "PSICOLOGO")
+
+                        .requestMatchers("/api/audit-logs/**")
+                        .hasAuthority("ADMIN")
 
                         .requestMatchers("/api/users/**")
                         .hasAuthority("ADMIN")
 
                         .requestMatchers("/api/leads/**")
-                        .hasAuthority("ADMIN")
+                        .hasAnyAuthority("ADMIN", "RECEPCIONISTA")
 
                         .requestMatchers(HttpMethod.GET, "/api/psychologists/**")
                         .hasAnyAuthority("ADMIN", "RECEPCIONISTA", "PSICOLOGO")
@@ -106,9 +121,19 @@ public class SecurityConfig {
 
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
+                            auditUnauthorizedRequest(request);
+
                             response.setStatus(401);
                             response.setContentType("application/json");
                             response.getWriter().write("{\"error\":\"No autorizado\"}");
+                        })
+
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            auditAccessDenied(request);
+
+                            response.setStatus(403);
+                            response.setContentType("application/json");
+                            response.getWriter().write("{\"error\":\"Acceso denegado\"}");
                         }));
 
         return http.build();
@@ -142,5 +167,146 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
+    }
+
+    private void auditUnauthorizedRequest(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+
+        if (!uri.startsWith("/api/")) {
+            return;
+        }
+
+        if (shouldSkipUnauthorizedAudit(uri)) {
+            return;
+        }
+
+        auditLogService.recordSecurity(
+                "SEGURIDAD",
+                "NO AUTORIZADO",
+                "Endpoint",
+                null,
+                "Intento de acceso sin autenticación válida a "
+                        + request.getMethod()
+                        + " "
+                        + uri
+                        + ". "
+                        + getClientInfo(request),
+                "NO_AUTENTICADO",
+                "NO_AUTENTICADO",
+                "WARNING",
+                false
+        );
+    }
+
+    private void auditAccessDenied(HttpServletRequest request) {
+        Authentication authentication = org.springframework.security.core.context.SecurityContextHolder
+                .getContext()
+                .getAuthentication();
+
+        String email = authentication != null && authentication.getName() != null
+                ? authentication.getName()
+                : "desconocido";
+
+        String role = authentication != null && authentication.getAuthorities() != null
+                ? authentication.getAuthorities()
+                .stream()
+                .findFirst()
+                .map(authority -> authority.getAuthority().replace("ROLE_", ""))
+                .orElse("SIN_ROL")
+                : "SIN_ROL";
+
+        String uri = request.getRequestURI();
+        boolean sensitive = isSensitiveEndpoint(uri);
+
+        auditLogService.recordSecurity(
+                "SEGURIDAD",
+                sensitive ? "ACCESO DENEGADO CRÍTICO" : "ACCESO DENEGADO",
+                "Endpoint",
+                null,
+                "El usuario intentó acceder sin permisos a "
+                        + request.getMethod()
+                        + " "
+                        + uri
+                        + ". "
+                        + getClientInfo(request),
+                email,
+                role,
+                sensitive ? "CRITICAL" : "WARNING",
+                sensitive
+        );
+    }
+
+    private boolean shouldSkipUnauthorizedAudit(String uri) {
+        return uri.startsWith("/api/auth/validate")
+                || uri.startsWith("/api/notifications")
+                || uri.startsWith("/api/dashboard");
+    }
+
+    private boolean isSensitiveEndpoint(String uri) {
+        return uri.startsWith("/api/users")
+                || uri.startsWith("/api/finances")
+                || uri.startsWith("/api/reports")
+                || uri.startsWith("/api/audit-logs")
+                || uri.startsWith("/api/profile")
+                || uri.startsWith("/api/services")
+                || uri.startsWith("/api/psychologists")
+                || uri.startsWith("/api/clinical-history");
+    }
+
+    private String getClientInfo(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+
+        if (ip == null || ip.isBlank()) {
+            ip = request.getRemoteAddr();
+        }
+
+        if (ip != null && ip.contains(",")) {
+            ip = ip.split(",")[0].trim();
+        }
+
+        if ("0:0:0:0:0:0:0:1".equals(ip) || "::1".equals(ip)) {
+            ip = "localhost";
+        }
+
+        String userAgent = request.getHeader("User-Agent");
+
+        if (userAgent == null || userAgent.isBlank()) {
+            userAgent = "No identificado";
+        }
+
+        userAgent = simplifyUserAgent(userAgent);
+
+        return "IP: " + ip + ". Navegador: " + userAgent;
+    }
+
+    private String simplifyUserAgent(String userAgent) {
+        String browser = "Navegador desconocido";
+        String os = "Sistema desconocido";
+
+        if (userAgent.contains("Windows NT 10.0")) {
+            os = "Windows 10/11";
+        } else if (userAgent.contains("Windows")) {
+            os = "Windows";
+        } else if (userAgent.contains("Android")) {
+            os = "Android";
+        } else if (userAgent.contains("iPhone") || userAgent.contains("iPad")) {
+            os = "iOS";
+        } else if (userAgent.contains("Mac OS")) {
+            os = "macOS";
+        } else if (userAgent.contains("Linux")) {
+            os = "Linux";
+        }
+
+        if (userAgent.contains("Edg/")) {
+            browser = "Microsoft Edge";
+        } else if (userAgent.contains("Chrome/")) {
+            browser = "Google Chrome";
+        } else if (userAgent.contains("Firefox/")) {
+            browser = "Mozilla Firefox";
+        } else if (userAgent.contains("Safari/")) {
+            browser = "Safari";
+        }
+
+        return browser + " en " + os;
     }
 }

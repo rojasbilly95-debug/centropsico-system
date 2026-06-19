@@ -9,6 +9,7 @@ import com.centropsicologico.sistema.repository.*;
 import com.centropsicologico.sistema.service.AppointmentService;
 import com.centropsicologico.sistema.service.NotificationService;
 import org.springframework.stereotype.Service;
+import com.centropsicologico.sistema.service.AuditLogService;
 
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
@@ -26,23 +27,26 @@ public class AppointmentServiceImpl implements AppointmentService {
     private final IncomeRepository incomeRepository;
     private final PsychologistAvailabilityRepository availabilityRepository;
     private final NotificationService notificationService;
+    private final AuditLogService auditLogService;
 
-    public AppointmentServiceImpl(
-            AppointmentRepository appointmentRepository,
-            PatientRepository patientRepository,
-            PsychologistRepository psychologistRepository,
-            ServiceRepository serviceRepository,
-            IncomeRepository incomeRepository,
-            PsychologistAvailabilityRepository availabilityRepository,
-            NotificationService notificationService) {
-        this.appointmentRepository = appointmentRepository;
-        this.patientRepository = patientRepository;
-        this.psychologistRepository = psychologistRepository;
-        this.serviceRepository = serviceRepository;
-        this.incomeRepository = incomeRepository;
-        this.availabilityRepository = availabilityRepository;
-        this.notificationService = notificationService;
-    }
+public AppointmentServiceImpl(
+        AppointmentRepository appointmentRepository,
+        PatientRepository patientRepository,
+        PsychologistRepository psychologistRepository,
+        ServiceRepository serviceRepository,
+        IncomeRepository incomeRepository,
+        PsychologistAvailabilityRepository availabilityRepository,
+        NotificationService notificationService,
+        AuditLogService auditLogService) {
+    this.appointmentRepository = appointmentRepository;
+    this.patientRepository = patientRepository;
+    this.psychologistRepository = psychologistRepository;
+    this.serviceRepository = serviceRepository;
+    this.incomeRepository = incomeRepository;
+    this.availabilityRepository = availabilityRepository;
+    this.notificationService = notificationService;
+    this.auditLogService = auditLogService;
+}
 
     @Override
     public Appointment save(Appointment appointment) {
@@ -92,6 +96,23 @@ public class AppointmentServiceImpl implements AppointmentService {
         Appointment savedAppointment = appointmentRepository.save(appointment);
 
         createAppointmentCreatedNotifications(savedAppointment);
+
+        auditLogService.record(
+        "CITAS",
+        "REGISTRO DE CITA",
+        "Appointment",
+        savedAppointment.getId(),
+        "Se registró una cita para "
+                + getPatientFullName(savedAppointment)
+                + " con "
+                + getPsychologistFullName(savedAppointment)
+                + " el "
+                + savedAppointment.getDate()
+                + " de "
+                + savedAppointment.getStartTime()
+                + " a "
+                + savedAppointment.getEndTime()
+);
 
         return savedAppointment;
     }
@@ -179,6 +200,19 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         createAppointmentUpdatedNotifications(updatedAppointment);
 
+        auditLogService.record(
+        "CITAS",
+        "ACTUALIZACIÓN DE CITA",
+        "Appointment",
+        updatedAppointment.getId(),
+        "Se actualizó la cita #"
+                + updatedAppointment.getId()
+                + " de "
+                + getPatientFullName(updatedAppointment)
+                + " con "
+                + getPsychologistFullName(updatedAppointment)
+);
+
         return updatedAppointment;
     }
 
@@ -190,6 +224,17 @@ public class AppointmentServiceImpl implements AppointmentService {
         Appointment cancelledAppointment = appointmentRepository.save(appointment);
 
         createAppointmentStatusNotification(cancelledAppointment, AppointmentStatus.CANCELADA);
+
+        auditLogService.record(
+        "CITAS",
+        "CANCELACIÓN DE CITA",
+        "Appointment",
+        cancelledAppointment.getId(),
+        "Se canceló la cita #"
+                + cancelledAppointment.getId()
+                + " de "
+                + getPatientFullName(cancelledAppointment)
+);
     }
 
     @Override
@@ -272,6 +317,22 @@ public class AppointmentServiceImpl implements AppointmentService {
         incomeRepository.save(income);
 
         createPaymentNotification(paidAppointment, amount);
+        auditLogService.record(
+        "PAGOS",
+        "REGISTRO DE PAGO",
+        "Appointment",
+        paidAppointment.getId(),
+        "Se registró un pago de S/ "
+                + amount
+                + " para la cita #"
+                + paidAppointment.getId()
+                + " del paciente "
+                + getPatientFullName(paidAppointment)
+                + ". Estado: "
+                + paidAppointment.getPaymentStatus()
+                + ". Saldo pendiente: S/ "
+                + paidAppointment.getPendingAmount()
+);
 
         return paidAppointment;
     }
@@ -293,6 +354,17 @@ public class AppointmentServiceImpl implements AppointmentService {
         Appointment updatedAppointment = appointmentRepository.save(appointment);
 
         createAppointmentStatusNotification(updatedAppointment, newStatus);
+
+        auditLogService.record(
+        "CITAS",
+        "CAMBIO DE ESTADO DE CITA",
+        "Appointment",
+        updatedAppointment.getId(),
+        "La cita #"
+                + updatedAppointment.getId()
+                + " fue marcada como "
+                + formatStatus(newStatus)
+);
 
         return updatedAppointment;
     }

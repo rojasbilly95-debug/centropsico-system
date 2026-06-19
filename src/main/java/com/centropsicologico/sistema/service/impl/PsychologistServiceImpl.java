@@ -4,6 +4,7 @@ import com.centropsicologico.sistema.entity.Psychologist;
 import com.centropsicologico.sistema.exception.ResourceNotFoundException;
 import com.centropsicologico.sistema.repository.PsychologistAvailabilityRepository;
 import com.centropsicologico.sistema.repository.PsychologistRepository;
+import com.centropsicologico.sistema.service.AuditLogService;
 import com.centropsicologico.sistema.service.NotificationService;
 import com.centropsicologico.sistema.service.PsychologistService;
 import org.springframework.stereotype.Service;
@@ -16,15 +17,18 @@ public class PsychologistServiceImpl implements PsychologistService {
     private final PsychologistRepository psychologistRepository;
     private final PsychologistAvailabilityRepository availabilityRepository;
     private final NotificationService notificationService;
+    private final AuditLogService auditLogService;
 
     public PsychologistServiceImpl(
             PsychologistRepository psychologistRepository,
             PsychologistAvailabilityRepository availabilityRepository,
-            NotificationService notificationService) {
+            NotificationService notificationService,
+            AuditLogService auditLogService) {
 
         this.psychologistRepository = psychologistRepository;
         this.availabilityRepository = availabilityRepository;
         this.notificationService = notificationService;
+        this.auditLogService = auditLogService;
     }
 
     @Override
@@ -39,6 +43,17 @@ public class PsychologistServiceImpl implements PsychologistService {
                 "Se registró al psicólogo " + getFullName(saved)
                         + ". Ahora debe configurarse su disponibilidad.",
                 "PSICOLOGO_CREADO"
+        );
+
+        auditLogService.record(
+                "PSICÓLOGOS",
+                "REGISTRO DE PSICÓLOGO",
+                "Psychologist",
+                saved.getId(),
+                "Se registró al psicólogo "
+                        + getFullName(saved)
+                        + ". Especialidad: "
+                        + safe(saved.getSpecialty(), "No especificada")
         );
 
         return saved;
@@ -90,6 +105,17 @@ public class PsychologistServiceImpl implements PsychologistService {
                 "PSICOLOGO_EDITADO"
         );
 
+        auditLogService.record(
+                "PSICÓLOGOS",
+                "ACTUALIZACIÓN DE PSICÓLOGO",
+                "Psychologist",
+                updated.getId(),
+                "Se actualizaron los datos del psicólogo "
+                        + getFullName(updated)
+                        + ". Especialidad: "
+                        + safe(updated.getSpecialty(), "No especificada")
+        );
+
         return updated;
     }
 
@@ -111,6 +137,17 @@ public class PsychologistServiceImpl implements PsychologistService {
                 "PSICOLOGO_ESTADO"
         );
 
+        auditLogService.record(
+                "PSICÓLOGOS",
+                "CAMBIO DE ESTADO DE PSICÓLOGO",
+                "Psychologist",
+                updated.getId(),
+                "El psicólogo "
+                        + getFullName(updated)
+                        + " fue "
+                        + status
+        );
+
         return updated;
     }
 
@@ -126,6 +163,16 @@ public class PsychologistServiceImpl implements PsychologistService {
                 "Psicólogo desactivado",
                 "El psicólogo " + getFullName(updated) + " fue desactivado.",
                 "PSICOLOGO_ELIMINADO"
+        );
+
+        auditLogService.record(
+                "PSICÓLOGOS",
+                "DESACTIVACIÓN DE PSICÓLOGO",
+                "Psychologist",
+                updated.getId(),
+                "El psicólogo "
+                        + getFullName(updated)
+                        + " fue desactivado"
         );
     }
 
@@ -145,6 +192,14 @@ public class PsychologistServiceImpl implements PsychologistService {
         String fullName = (firstName + " " + lastName).trim();
 
         return fullName.isEmpty() ? "Psicólogo" : fullName;
+    }
+
+    private String safe(String value, String defaultValue) {
+        if (value == null || value.trim().isEmpty()) {
+            return defaultValue;
+        }
+
+        return value.trim();
     }
 
     private void notifyAdmin(String title, String message, String type) {

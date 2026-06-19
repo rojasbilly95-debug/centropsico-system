@@ -76,4 +76,37 @@ public class Lead {
 
     @Column(name = "id_cita")
     private Long appointmentId;
+
+    @Column(name = "consentimiento_aceptado", nullable = false)
+    private Boolean consentAccepted = false;
+
+    @Column(name = "fecha_consentimiento")
+    private LocalDateTime consentDate;
+
+    @Column(name = "version_consentimiento", length = 40)
+    private String consentVersion;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
+
+        if (this.status == null || this.status.isBlank()) {
+            this.status = "NUEVO";
+        }
+
+        if (this.consentAccepted == null) {
+            this.consentAccepted = false;
+        }
+
+        if (Boolean.TRUE.equals(this.consentAccepted) && this.consentDate == null) {
+            this.consentDate = LocalDateTime.now();
+        }
+
+        if (Boolean.TRUE.equals(this.consentAccepted)
+                && (this.consentVersion == null || this.consentVersion.isBlank())) {
+            this.consentVersion = "PORTAL_PRIVACIDAD_V1";
+        }
+    }
 }

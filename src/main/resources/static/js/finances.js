@@ -2,6 +2,7 @@ let incomesData = [];
 let expensesData = [];
 let currentIncomePage = 1;
 let currentExpensePage = 1;
+let expenseCategoryListVisible = false;
 
 const financeRowsPerPage = 10;
 
@@ -121,56 +122,103 @@ function clearIncomeForm() {
 }
 
 async function createExpenseCategory() {
+    const resultBox = document.getElementById("expenseCategoryResult");
+
     const data = {
-        name: document.getElementById("expenseCategoryName").value,
-        description: document.getElementById("expenseCategoryDescription").value,
+        name: document.getElementById("expenseCategoryName").value.trim(),
+        description: document.getElementById("expenseCategoryDescription").value.trim(),
         active: true
     };
+
+    if (!data.name) {
+        resultBox.style.display = "block";
+        resultBox.innerHTML = `
+            <div class="finance-inline-message error">
+                Ingresa el nombre de la categoría.
+            </div>
+        `;
+        return;
+    }
 
     try {
         const response = await authFetch(`${baseUrl}/finances/expense-categories`, {
             method: "POST",
             body: JSON.stringify(data)
         });
+
         if (!response) return;
 
         const result = await response.json();
 
         if (!response.ok) {
-            document.getElementById("expenseCategoryResult").textContent =
-                result.message || "Error al guardar categoría";
+            resultBox.style.display = "block";
+            resultBox.innerHTML = `
+                <div class="finance-inline-message error">
+                    ${result.message || "Error al guardar categoría."}
+                </div>
+            `;
             return;
         }
 
-        document.getElementById("expenseCategoryResult").textContent =
-            "Categoría guardada correctamente";
+        resultBox.style.display = "block";
+        resultBox.innerHTML = `
+            <div class="finance-inline-message success">
+                Categoría guardada correctamente.
+            </div>
+        `;
 
         clearExpenseCategoryForm();
-        loadExpenseCategories();
-        loadExpenseCategoryOptions();
+
+        await loadExpenseCategoryOptions();
+
+        if (expenseCategoryListVisible) {
+            await loadExpenseCategories();
+        }
 
     } catch (error) {
-        document.getElementById("expenseCategoryResult").textContent =
-            "Error de conexión con el servidor";
+        resultBox.style.display = "block";
+        resultBox.innerHTML = `
+            <div class="finance-inline-message error">
+                Error de conexión con el servidor.
+            </div>
+        `;
     }
 }
 
 async function loadExpenseCategories() {
+    const resultBox = document.getElementById("expenseCategoryResult");
+
+    if (!resultBox) return;
+
+    if (!expenseCategoryListVisible) {
+        resultBox.style.display = "none";
+        resultBox.innerHTML = "";
+        return;
+    }
+
     try {
+        resultBox.style.display = "block";
+
         const response = await authFetch(`${baseUrl}/finances/expense-categories`);
         if (!response) return;
 
-        const resultBox = document.getElementById("expenseCategoryResult");
-
         if (!response.ok) {
-            resultBox.textContent = "Error al listar categorías";
+            resultBox.innerHTML = `
+                <div class="finance-inline-message error">
+                    Error al listar categorías.
+                </div>
+            `;
             return;
         }
 
         const data = await response.json();
 
         if (!data || data.length === 0) {
-            resultBox.innerHTML = `<div class="empty-state">No hay categorías registradas.</div>`;
+            resultBox.innerHTML = `
+                <div class="finance-inline-message">
+                    No hay categorías registradas.
+                </div>
+            `;
             return;
         }
 
@@ -190,10 +238,39 @@ async function loadExpenseCategories() {
         resultBox.innerHTML = html;
 
     } catch (error) {
-        document.getElementById("expenseCategoryResult").textContent =
-            "Error al listar categorías";
+        resultBox.innerHTML = `
+            <div class="finance-inline-message error">
+                Error al listar categorías.
+            </div>
+        `;
         console.error(error);
     }
+}
+
+async function showExpenseCategories() {
+    const resultBox = document.getElementById("expenseCategoryResult");
+    const button = document.getElementById("expenseCategoryToggleBtn");
+
+    if (!resultBox) return;
+
+    expenseCategoryListVisible = !expenseCategoryListVisible;
+
+    if (!expenseCategoryListVisible) {
+        resultBox.style.display = "none";
+        resultBox.innerHTML = "";
+
+        if (button) {
+            button.textContent = "Listar categorías";
+        }
+
+        return;
+    }
+
+    if (button) {
+        button.textContent = "Ocultar categorías";
+    }
+
+    await loadExpenseCategories();
 }
 
 async function loadExpenseCategoryOptions() {
@@ -350,29 +427,173 @@ function clearExpenseForm() {
 async function loadFinanceSummary() {
     const year = document.getElementById("summaryYear").value;
     const month = document.getElementById("summaryMonth").value;
+    const resultBox = document.getElementById("financeSummaryResult");
 
     if (!year || !month) {
-        document.getElementById("financeSummaryResult").textContent =
-            "Ingresa año y mes";
+        resultBox.innerHTML = `
+            <div class="finance-summary-empty">
+                Ingresa el año y mes para consultar el resumen financiero.
+            </div>
+        `;
         return;
     }
 
     try {
+        resultBox.innerHTML = `
+            <div class="finance-summary-loading">
+                Calculando resumen financiero...
+            </div>
+        `;
+
         const response = await authFetch(`${baseUrl}/finances/summary?year=${year}&month=${month}`);
+
         if (!response) return;
 
         const data = await response.json();
 
-        document.getElementById("financeSummaryResult").textContent =
-            `Total ingresos: S/ ${data.totalIncome}\n` +
-            `Total gastos: S/ ${data.totalExpense}\n` +
-            `Resultado: S/ ${data.profit}\n` +
-            `Estado: ${data.result}`;
+        if (!response.ok) {
+            resultBox.innerHTML = `
+                <div class="finance-summary-empty">
+                    ${data.message || "No se pudo obtener el resumen financiero."}
+                </div>
+            `;
+            return;
+        }
+
+        renderFinancialSummary(data, year, month);
 
     } catch (error) {
-        document.getElementById("financeSummaryResult").textContent =
-            "Error al obtener resumen financiero";
+        resultBox.innerHTML = `
+            <div class="finance-summary-empty error">
+                Error al obtener resumen financiero.
+            </div>
+        `;
     }
+}
+
+function renderFinancialSummary(data, year, month) {
+    const resultBox = document.getElementById("financeSummaryResult");
+
+    const totalIncome = Number(data.totalIncome || 0);
+    const totalExpense = Number(data.totalExpense || 0);
+    const profit = Number(data.profit || 0);
+
+    const status = data.result || (profit >= 0 ? "GANANCIA" : "PÉRDIDA");
+    const statusClass = profit >= 0 ? "gain" : "loss";
+
+    const monthName = getFinanceMonthName(month);
+
+    const percentageExpense = totalIncome > 0
+        ? ((totalExpense / totalIncome) * 100).toFixed(1)
+        : "0.0";
+
+    const percentageProfit = totalIncome > 0
+        ? ((profit / totalIncome) * 100).toFixed(1)
+        : "0.0";
+
+    const analysisMessage = profit >= 0
+        ? `Durante ${monthName} de ${year}, el centro obtuvo un resultado positivo. Los ingresos superaron a los gastos registrados, generando una ganancia de S/ ${formatFinanceMoney(profit)}.`
+        : `Durante ${monthName} de ${year}, el centro presenta un resultado negativo. Se recomienda revisar los gastos y reforzar el registro de ingresos.`;
+
+    resultBox.innerHTML = `
+        <div class="finance-summary-container">
+
+            <div class="finance-summary-title">
+                <div>
+                    <h3>Resumen financiero de ${monthName} ${year}</h3>
+                    <p>Comparación mensual de ingresos, gastos y resultado económico.</p>
+                </div>
+
+                <span class="finance-summary-badge ${statusClass}">
+                    ${status}
+                </span>
+            </div>
+
+            <div class="finance-summary-grid">
+
+                <div class="finance-summary-card income">
+                    <span>Total ingresos</span>
+                    <strong>S/ ${formatFinanceMoney(totalIncome)}</strong>
+                    <small>Dinero registrado como entrada</small>
+                </div>
+
+                <div class="finance-summary-card expense">
+                    <span>Total gastos</span>
+                    <strong>S/ ${formatFinanceMoney(totalExpense)}</strong>
+                    <small>Dinero registrado como salida</small>
+                </div>
+
+                <div class="finance-summary-card result ${statusClass}">
+                    <span>Resultado</span>
+                    <strong>S/ ${formatFinanceMoney(profit)}</strong>
+                    <small>Ingresos menos gastos</small>
+                </div>
+
+                <div class="finance-summary-card status ${statusClass}">
+                    <span>Estado financiero</span>
+                    <strong>${status}</strong>
+                    <small>Balance del periodo consultado</small>
+                </div>
+
+            </div>
+
+            <div class="finance-summary-analysis">
+                <strong>Análisis del periodo</strong>
+                <p>${analysisMessage}</p>
+            </div>
+
+            <div class="finance-summary-bars">
+
+                <div class="finance-bar-item">
+                    <div class="finance-bar-label">
+                        <span>Gastos sobre ingresos</span>
+                        <strong>${percentageExpense}%</strong>
+                    </div>
+                    <div class="finance-bar-track">
+                        <div class="finance-bar-fill expense" style="width:${Math.min(percentageExpense, 100)}%;"></div>
+                    </div>
+                </div>
+
+                <div class="finance-bar-item">
+                    <div class="finance-bar-label">
+                        <span>Rentabilidad aproximada</span>
+                        <strong>${percentageProfit}%</strong>
+                    </div>
+                    <div class="finance-bar-track">
+                        <div class="finance-bar-fill income" style="width:${Math.max(Math.min(percentageProfit, 100), 0)}%;"></div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    `;
+}
+
+function formatFinanceMoney(value) {
+    return Number(value || 0).toLocaleString("es-PE", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+function getFinanceMonthName(month) {
+    const months = {
+        1: "enero",
+        2: "febrero",
+        3: "marzo",
+        4: "abril",
+        5: "mayo",
+        6: "junio",
+        7: "julio",
+        8: "agosto",
+        9: "septiembre",
+        10: "octubre",
+        11: "noviembre",
+        12: "diciembre"
+    };
+
+    return months[Number(month)] || `mes ${month}`;
 }
 
 function getFilteredIncomes() {

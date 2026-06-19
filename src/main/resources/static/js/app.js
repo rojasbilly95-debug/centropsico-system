@@ -1,5 +1,4 @@
 const baseUrl = "/api";
-
 /* =========================
    INIT PRINCIPAL
 ========================= */
@@ -7,10 +6,18 @@ const baseUrl = "/api";
 window.onload = async () => {
     if (!validateSession()) return;
 
-    await loadSidebar();
+await loadSidebar();
 
-    applyRoleVisibility();
-    loadDashboard();
+if (typeof refreshSidebarUser === "function") {
+    refreshSidebarUser();
+}
+
+if (typeof initProfileSidebarClick === "function") {
+    initProfileSidebarClick();
+}
+
+applyRoleVisibility();
+loadDashboard();
 
     // ADMIN y RECEPCIONISTA
     if (currentUser.role === "ADMIN" || currentUser.role === "RECEPCIONISTA") {

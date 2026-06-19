@@ -14,6 +14,10 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
         List<Appointment> findByDate(LocalDate date);
 
+        List<Appointment> findByDateBetween(LocalDate startDate, LocalDate endDate);
+
+        List<Appointment> findByDateGreaterThanEqualOrderByDateAscStartTimeAsc(LocalDate date);
+
         boolean existsByPsychologistAndDateAndStartTimeLessThanAndEndTimeGreaterThan(
                         Psychologist psychologist,
                         LocalDate date,

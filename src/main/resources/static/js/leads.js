@@ -51,29 +51,34 @@ function renderLeadTable() {
     }
 
     leadsToRender.forEach((lead) => {
+        const leadJson = JSON.stringify(lead)
+            .replace(/'/g, "&apos;")
+            .replace(/</g, "\\u003c")
+            .replace(/>/g, "\\u003e");
+
         tbody.innerHTML += `
             <tr>
                 <td>#${lead.id}</td>
 
                 <td>
                     <div class="table-user">
-                        <strong>${lead.fullName || "-"}</strong>
+                        <strong>${escapeLeadHtml(lead.fullName || "-")}</strong>
                     </div>
                 </td>
 
-                <td>${lead.email || "-"}</td>
-                <td>${lead.phone || "-"}</td>
+                <td>${escapeLeadHtml(lead.email || "-")}</td>
+                <td>${escapeLeadHtml(lead.phone || "-")}</td>
 
-                <td>
-                    <span class="lead-service-text">
-                        ${lead.serviceInterest || "-"}
-                    </span>
-                </td>
+<td>
+    <span class="lead-service-text">
+        ${escapeLeadHtml(lead.serviceInterest || "-")}
+    </span>
+</td>
 
-                <td>${lead.modality || "-"}</td>
-                <td>${lead.psychologistName || "-"}</td>
-                <td>${lead.preferredDate || "-"}</td>
-                <td>${lead.preferredTime || "-"}</td>
+                <td>${escapeLeadHtml(lead.modality || "-")}</td>
+                <td>${escapeLeadHtml(lead.psychologistName || "-")}</td>
+                <td>${escapeLeadHtml(lead.preferredDate || "-")}</td>
+                <td>${escapeLeadHtml(lead.preferredTime || "-")}</td>
 
                 <td>
                     S/ ${formatMoney(lead.advanceAmount)}
@@ -82,7 +87,10 @@ function renderLeadTable() {
                 <td>
                     ${formatPaymentLeadStatus(lead.paymentStatus)}
                     <br>
-                    <small>${lead.paymentMethod || "-"} / ${lead.operationCode || "-"}</small>
+                    <small>
+                        ${escapeLeadHtml(lead.paymentMethod || "-")} / 
+                        ${escapeLeadHtml(lead.operationCode || "-")}
+                    </small>
                 </td>
 
                 <td>
@@ -106,7 +114,7 @@ function renderLeadTable() {
 
                         <button
                             class="table-btn"
-                            onclick='createPatientFromLead(${JSON.stringify(lead).replace(/'/g, "&apos;")})'>
+                            onclick='createPatientFromLead(${leadJson})'>
                             Crear paciente
                         </button>
 
@@ -139,7 +147,7 @@ function renderLeadTable() {
 
                         <button
                             class="table-btn ${lead.status === "AGENDADO" ? "active-action" : ""}"
-                            onclick='openConvertLeadModal(${JSON.stringify(lead).replace(/'/g, "&apos;")})'
+                            onclick='openConvertLeadModal(${leadJson})'
                             ${lead.status === "AGENDADO" ? "disabled" : ""}>
                             Convertir a cita
                         </button>
@@ -217,8 +225,8 @@ async function showLeadDetail(id) {
         const lead = await response.json();
 
         Swal.fire({
-            title: lead.fullName,
-            width: 760,
+            title: escapeLeadHtml(lead.fullName || "Detalle de pre-reserva"),
+            width: 820,
             html: `
                 <div class="lead-detail-modal">
 
@@ -226,32 +234,32 @@ async function showLeadDetail(id) {
 
                         <div>
                             <strong>Correo</strong>
-                            <span>${lead.email || "-"}</span>
+                            <span>${escapeLeadHtml(lead.email || "-")}</span>
                         </div>
 
                         <div>
                             <strong>Teléfono</strong>
-                            <span>${lead.phone || "-"}</span>
+                            <span>${escapeLeadHtml(lead.phone || "-")}</span>
                         </div>
 
                         <div>
                             <strong>Tipo de atención</strong>
-                            <span>${lead.serviceInterest || "-"}</span>
+                            <span>${escapeLeadHtml(lead.serviceInterest || "-")}</span>
                         </div>
 
                         <div>
                             <strong>Modalidad</strong>
-                            <span>${lead.modality || "-"}</span>
+                            <span>${escapeLeadHtml(lead.modality || "-")}</span>
                         </div>
 
                         <div>
                             <strong>Psicólogo</strong>
-                            <span>${lead.psychologistName || "-"}</span>
+                            <span>${escapeLeadHtml(lead.psychologistName || "-")}</span>
                         </div>
 
                         <div>
                             <strong>Horario solicitado</strong>
-                            <span>${lead.preferredDate || "-"} ${lead.preferredTime || ""}</span>
+                            <span>${escapeLeadHtml(lead.preferredDate || "-")} ${escapeLeadHtml(lead.preferredTime || "")}</span>
                         </div>
 
                         <div>
@@ -276,12 +284,12 @@ async function showLeadDetail(id) {
 
                         <div>
                             <strong>Método de pago</strong>
-                            <span>${lead.paymentMethod || "-"}</span>
+                            <span>${escapeLeadHtml(lead.paymentMethod || "-")}</span>
                         </div>
 
                         <div>
                             <strong>Código de operación</strong>
-                            <span>${lead.operationCode || "-"}</span>
+                            <span>${escapeLeadHtml(lead.operationCode || "-")}</span>
                         </div>
 
                         <div>
@@ -289,11 +297,26 @@ async function showLeadDetail(id) {
                             <span>${formatPaymentLeadStatus(lead.paymentStatus)}</span>
                         </div>
 
+                        <div>
+                            <strong>Consentimiento</strong>
+                            <span>${lead.consentAccepted ? "Aceptado" : "No registrado"}</span>
+                        </div>
+
+                        <div>
+                            <strong>Fecha consentimiento</strong>
+                            <span>${formatLeadDate(lead.consentDate)}</span>
+                        </div>
+
+                        <div>
+                            <strong>Versión consentimiento</strong>
+                            <span>${escapeLeadHtml(lead.consentVersion || "-")}</span>
+                        </div>
+
                     </div>
 
                     <div class="lead-message-box">
                         <strong>Mensaje</strong>
-                        <p>${lead.message || "Sin mensaje"}</p>
+                        <p>${escapeLeadHtml(lead.message || "Sin mensaje")}</p>
                     </div>
 
                 </div>
@@ -472,10 +495,10 @@ function showLeadPaymentReceipt(lead) {
                 <div class="receipt-section">
                     <div class="receipt-section-title">Datos de la pre-reserva</div>
                     <div class="receipt-row"><span>N°:</span><strong>#${lead.id}</strong></div>
-                    <div class="receipt-row"><span>Persona:</span><strong>${lead.fullName || "-"}</strong></div>
-                    <div class="receipt-row"><span>Servicio:</span><strong>${lead.serviceInterest || "-"}</strong></div>
-                    <div class="receipt-row"><span>Psicólogo:</span><strong>${lead.psychologistName || "-"}</strong></div>
-                    <div class="receipt-row"><span>Fecha:</span><strong>${lead.preferredDate || "-"} ${lead.preferredTime || ""}</strong></div>
+                    <div class="receipt-row"><span>Persona:</span><strong>${escapeLeadHtml(lead.fullName || "-")}</strong></div>
+                    <div class="receipt-row"><span>Servicio:</span><strong>${escapeLeadHtml(lead.serviceInterest || "-")}</strong></div>
+                    <div class="receipt-row"><span>Psicólogo:</span><strong>${escapeLeadHtml(lead.psychologistName || "-")}</strong></div>
+                    <div class="receipt-row"><span>Fecha:</span><strong>${escapeLeadHtml(lead.preferredDate || "-")} ${escapeLeadHtml(lead.preferredTime || "")}</strong></div>
                 </div>
 
                 <div class="receipt-section">
@@ -483,8 +506,8 @@ function showLeadPaymentReceipt(lead) {
                     <div class="receipt-row"><span>Precio servicio:</span><strong>S/ ${formatMoney(lead.servicePrice)}</strong></div>
                     <div class="receipt-row"><span>Adelanto:</span><strong>S/ ${formatMoney(lead.advanceAmount)}</strong></div>
                     <div class="receipt-row"><span>Porcentaje:</span><strong>${lead.advancePercent || 0}%</strong></div>
-                    <div class="receipt-row"><span>Método:</span><strong>${lead.paymentMethod || "-"}</strong></div>
-                    <div class="receipt-row"><span>Código operación:</span><strong>${lead.operationCode || "-"}</strong></div>
+                    <div class="receipt-row"><span>Método:</span><strong>${escapeLeadHtml(lead.paymentMethod || "-")}</strong></div>
+                    <div class="receipt-row"><span>Código operación:</span><strong>${escapeLeadHtml(lead.operationCode || "-")}</strong></div>
                     <div class="receipt-row"><span>Estado:</span><strong>${formatPaymentLeadStatus(lead.paymentStatus)}</strong></div>
                 </div>
 
@@ -531,7 +554,7 @@ async function openConvertLeadModal(lead) {
         .filter(patient => patient.active)
         .map(patient => `
             <option value="${patient.id}">
-                ${patient.firstName} ${patient.lastName} - DNI: ${patient.dni}
+                ${escapeLeadHtml(patient.firstName)} ${escapeLeadHtml(patient.lastName)} - DNI: ${escapeLeadHtml(patient.dni)}
             </option>
         `)
         .join("");
@@ -546,7 +569,7 @@ async function openConvertLeadModal(lead) {
                     ${patientOptions}
                 </select>
 
-                <input id="convertReason" placeholder="Motivo de consulta" value="${lead.serviceInterest || ""}">
+                <input id="convertReason" placeholder="Motivo de consulta" value="${escapeLeadAttr(lead.serviceInterest || "")}">
 
                 <textarea id="convertObservation" placeholder="Observación opcional">Cita creada desde pre-reserva #${lead.id}</textarea>
             </div>
@@ -605,4 +628,17 @@ async function openConvertLeadModal(lead) {
     } catch (error) {
         Swal.fire("Error", "Error de conexión al convertir la pre-reserva.", "error");
     }
+}
+
+function escapeLeadHtml(value) {
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+function escapeLeadAttr(value) {
+    return escapeLeadHtml(value);
 }

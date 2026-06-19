@@ -4,6 +4,7 @@ import com.centropsicologico.sistema.entity.ServiceEntity;
 import com.centropsicologico.sistema.exception.BusinessRuleException;
 import com.centropsicologico.sistema.exception.ResourceNotFoundException;
 import com.centropsicologico.sistema.repository.ServiceRepository;
+import com.centropsicologico.sistema.service.AuditLogService;
 import com.centropsicologico.sistema.service.NotificationService;
 import com.centropsicologico.sistema.service.ServiceEntityService;
 import org.springframework.stereotype.Service;
@@ -15,13 +16,16 @@ public class ServiceEntityServiceImpl implements ServiceEntityService {
 
     private final ServiceRepository serviceRepository;
     private final NotificationService notificationService;
+    private final AuditLogService auditLogService;
 
     public ServiceEntityServiceImpl(
             ServiceRepository serviceRepository,
-            NotificationService notificationService) {
+            NotificationService notificationService,
+            AuditLogService auditLogService) {
 
         this.serviceRepository = serviceRepository;
         this.notificationService = notificationService;
+        this.auditLogService = auditLogService;
     }
 
     @Override
@@ -40,6 +44,20 @@ public class ServiceEntityServiceImpl implements ServiceEntityService {
                         + " con costo S/ " + formatPrice(saved.getPrice())
                         + " y duración de " + saved.getDurationMinutes() + " minutos.",
                 "SERVICIO_CREADO"
+        );
+
+        auditLogService.record(
+                "SERVICIOS",
+                "REGISTRO DE SERVICIO",
+                "ServiceEntity",
+                saved.getId(),
+                "Se registró el servicio "
+                        + getServiceName(saved)
+                        + " con costo S/ "
+                        + formatPrice(saved.getPrice())
+                        + " y duración de "
+                        + saved.getDurationMinutes()
+                        + " minutos"
         );
 
         return saved;
@@ -86,6 +104,20 @@ public class ServiceEntityServiceImpl implements ServiceEntityService {
                 "SERVICIO_EDITADO"
         );
 
+        auditLogService.record(
+                "SERVICIOS",
+                "ACTUALIZACIÓN DE SERVICIO",
+                "ServiceEntity",
+                updated.getId(),
+                "Se actualizaron los datos del servicio "
+                        + getServiceName(updated)
+                        + ". Costo actual: S/ "
+                        + formatPrice(updated.getPrice())
+                        + ". Duración: "
+                        + updated.getDurationMinutes()
+                        + " minutos"
+        );
+
         return updated;
     }
 
@@ -106,6 +138,17 @@ public class ServiceEntityServiceImpl implements ServiceEntityService {
                 "SERVICIO_ESTADO"
         );
 
+        auditLogService.record(
+                "SERVICIOS",
+                "CAMBIO DE ESTADO DE SERVICIO",
+                "ServiceEntity",
+                updated.getId(),
+                "El servicio "
+                        + getServiceName(updated)
+                        + " fue "
+                        + status
+        );
+
         return updated;
     }
 
@@ -120,6 +163,16 @@ public class ServiceEntityServiceImpl implements ServiceEntityService {
                 "Servicio desactivado",
                 "El servicio " + getServiceName(updated) + " fue desactivado.",
                 "SERVICIO_ELIMINADO"
+        );
+
+        auditLogService.record(
+                "SERVICIOS",
+                "DESACTIVACIÓN DE SERVICIO",
+                "ServiceEntity",
+                updated.getId(),
+                "El servicio "
+                        + getServiceName(updated)
+                        + " fue desactivado"
         );
     }
 

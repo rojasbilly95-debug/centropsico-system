@@ -4,6 +4,7 @@ import com.centropsicologico.sistema.entity.User;
 import com.centropsicologico.sistema.exception.BusinessRuleException;
 import com.centropsicologico.sistema.exception.ResourceNotFoundException;
 import com.centropsicologico.sistema.repository.UserRepository;
+import com.centropsicologico.sistema.service.AuditLogService;
 import com.centropsicologico.sistema.service.NotificationService;
 import com.centropsicologico.sistema.service.UserService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,14 +18,18 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final NotificationService notificationService;
+    private final AuditLogService auditLogService;
 
     public UserServiceImpl(
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
-            NotificationService notificationService) {
+            NotificationService notificationService,
+            AuditLogService auditLogService) {
+
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.notificationService = notificationService;
+        this.auditLogService = auditLogService;
     }
 
     @Override
@@ -45,6 +50,17 @@ public class UserServiceImpl implements UserService {
                 "Se registró el usuario " + getFullName(saved) + " con rol " + saved.getRole() + ".",
                 "USUARIO_CREADO",
                 "ADMIN"
+        );
+
+        auditLogService.record(
+                "USUARIOS",
+                "REGISTRO DE USUARIO",
+                "User",
+                saved.getId(),
+                "Se registró el usuario "
+                        + getFullName(saved)
+                        + " con rol "
+                        + saved.getRole()
         );
 
         return saved;
@@ -95,6 +111,15 @@ public class UserServiceImpl implements UserService {
                 "ADMIN"
         );
 
+        auditLogService.record(
+                "USUARIOS",
+                "ACTUALIZACIÓN DE USUARIO",
+                "User",
+                updated.getId(),
+                "Se actualizaron los datos del usuario "
+                        + getFullName(updated)
+        );
+
         return updated;
     }
 
@@ -110,6 +135,16 @@ public class UserServiceImpl implements UserService {
                 "El usuario " + getFullName(user) + " fue desactivado.",
                 "USUARIO_ELIMINADO",
                 "ADMIN"
+        );
+
+        auditLogService.record(
+                "USUARIOS",
+                "DESACTIVACIÓN DE USUARIO",
+                "User",
+                user.getId(),
+                "El usuario "
+                        + getFullName(user)
+                        + " fue desactivado"
         );
     }
 
@@ -127,6 +162,17 @@ public class UserServiceImpl implements UserService {
                 "El usuario " + getFullName(updated) + " fue " + status + ".",
                 "USUARIO_ESTADO",
                 "ADMIN"
+        );
+
+        auditLogService.record(
+                "USUARIOS",
+                "CAMBIO DE ESTADO DE USUARIO",
+                "User",
+                updated.getId(),
+                "El usuario "
+                        + getFullName(updated)
+                        + " fue "
+                        + status
         );
 
         return updated;

@@ -29,12 +29,13 @@
         <button class="portal-menu-btn" onclick="togglePortalMenu()">
             ☰
         </button>
-        
+
         <nav class="portal-nav">
             <a href="#solution">Nosotros</a>
             <a href="#modules">Servicios</a>
             <a href="#plans">Promociones</a>
             <a href="#quote">Pre-reservar</a>
+            <a href="#privacy">Privacidad</a>
         </nav>
 
         <a href="/login.html" class="portal-login">Acceso interno</a>
@@ -417,17 +418,17 @@
                     <span>Completa tus datos, selecciona horario y registra tu adelanto</span>
                 </div>
 
-                <input id="leadFullName" type="text" placeholder="Nombre completo">
-                <input id="leadEmail" type="email" placeholder="Correo electrónico">
-                <input id="leadPhone" type="text" placeholder="Teléfono o WhatsApp">
+                <input id="leadFullName" type="text" placeholder="Nombre completo" required>
+                <input id="leadEmail" type="email" placeholder="Correo electrónico" required>
+                <input id="leadPhone" type="text" placeholder="Teléfono o WhatsApp" required>
 
-                <select id="leadServiceInterest" onchange="handleServiceSelection()">
+                <select id="leadServiceInterest" onchange="handleServiceSelection()" required>
                     <option value="">Tipo de atención que necesitas</option>
                 </select>
 
                 <div id="advancePaymentInfo" class="advance-payment-info"></div>
 
-                <input id="availabilityDate" type="date">
+                <input id="availabilityDate" type="date" required>
 
                 <button type="button" class="availability-button" onclick="loadPublicAvailability()">
                     Ver horarios disponibles
@@ -435,15 +436,15 @@
 
                 <div id="publicAvailabilityResult" class="public-availability-result"></div>
 
-                <select id="leadPaymentMethod">
+                <select id="leadPaymentMethod" required>
                     <option value="">Método de pago del adelanto</option>
                     <option value="YAPE">Yape</option>
                     <option value="TRANSFERENCIA">Transferencia</option>
                 </select>
 
-                <input id="leadOperationCode" type="text" placeholder="Código de operación / número de transferencia">
+                <input id="leadOperationCode" type="text" placeholder="Código de operación / número de transferencia" required>
 
-                <select id="leadModality">
+                <select id="leadModality" required>
                     <option value="">Modalidad de preferencia</option>
                     <option value="Presencial">Presencial</option>
                     <option value="Virtual">Virtual</option>
@@ -453,10 +454,57 @@
                 <textarea id="leadMessage"
                     placeholder="Cuéntanos brevemente qué necesitas o qué te gustaría consultar"></textarea>
 
+                <label class="privacy-consent">
+                    <input id="leadConsent" type="checkbox" required>
+                    <span>
+                        Acepto que CentroPsico utilice mis datos personales para gestionar mi pre-reserva,
+                        validar la información registrada y comunicarse conmigo sobre la atención solicitada.
+                        <a href="#privacy">Ver política de privacidad</a>
+                    </span>
+                </label>
+
                 <button type="submit">Enviar pre-reserva</button>
 
                 <div id="quoteResult" class="quote-result"></div>
             </form>
+        </section>
+
+        <section id="privacy" class="privacy-section portal-section reveal">
+            <div class="section-heading">
+                <span>Privacidad y datos personales</span>
+                <h2>Tratamiento de información registrada en la pre-reserva.</h2>
+                <p>
+                    La información enviada mediante este portal será utilizada únicamente
+                    para gestionar la pre-reserva, validar la atención solicitada y permitir
+                    que el equipo de recepción pueda comunicarse contigo.
+                </p>
+            </div>
+
+            <div class="privacy-grid">
+                <article>
+                    <h3>Datos solicitados</h3>
+                    <p>
+                        Podemos solicitar nombre, correo, teléfono, servicio de interés,
+                        horario elegido, modalidad de atención, método de pago y código de operación.
+                    </p>
+                </article>
+
+                <article>
+                    <h3>Finalidad</h3>
+                    <p>
+                        Los datos serán usados para revisar la solicitud, validar disponibilidad,
+                        confirmar el adelanto registrado y coordinar la atención psicológica.
+                    </p>
+                </article>
+
+                <article>
+                    <h3>Confidencialidad</h3>
+                    <p>
+                        La información será revisada únicamente por el personal autorizado
+                        del centro para fines administrativos y de coordinación de la atención.
+                    </p>
+                </article>
+            </div>
         </section>
 
     </main>
@@ -467,7 +515,10 @@
             <span>Centro de atención psicológica integral</span>
         </div>
 
-        <a href="/login.html">Acceso interno del equipo</a>
+        <div class="footer-links">
+            <a href="#privacy">Privacidad</a>
+            <a href="/login.html">Acceso interno del equipo</a>
+        </div>
     </footer>
 
     <script src="/js/portal.js"></script>

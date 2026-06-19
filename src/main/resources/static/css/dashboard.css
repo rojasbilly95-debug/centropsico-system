@@ -1,0 +1,929 @@
+/* =========================================================
+   CENTROPSICO - DASHBOARD ADMIN CLEAN EXECUTIVE
+   Inspirado en dashboards SaaS limpios.
+   No modifica el sidebar.
+========================================================= */
+
+:root {
+    --dash-bg: #edf2f7;
+    --dash-bg-soft: #f6f8fb;
+
+    --dash-card: #ffffff;
+    --dash-card-soft: #fbfcfe;
+
+    --dash-border: #dde4ee;
+    --dash-border-soft: #e8edf4;
+
+    --dash-text: #111827;
+    --dash-text-soft: #344054;
+    --dash-muted: #667085;
+    --dash-muted-light: #98a2b3;
+
+    --dash-primary: #24364b;
+    --dash-primary-soft: #f2f5f8;
+
+    --dash-blue: #2563eb;
+    --dash-green: #047857;
+    --dash-red: #b42318;
+    --dash-amber: #b54708;
+    --dash-gray: #475467;
+
+    --dash-shadow-card:
+        0 1px 2px rgba(16, 24, 40, 0.05),
+        0 10px 24px rgba(16, 24, 40, 0.075);
+
+    --dash-shadow-hover:
+        0 2px 5px rgba(16, 24, 40, 0.06),
+        0 18px 36px rgba(16, 24, 40, 0.11);
+}
+
+/* =========================
+   BASE
+========================= */
+
+body:not(.login-body) {
+    background: var(--dash-bg) !important;
+    color: var(--dash-text) !important;
+}
+
+.main-content {
+    background: var(--dash-bg) !important;
+}
+
+.admin-dashboard {
+    min-height: 100vh;
+    padding: 32px 36px 42px !important;
+    background:
+        linear-gradient(180deg, #f8fafc 0%, #edf2f7 100%) !important;
+    font-family: "Segoe UI", Arial, sans-serif !important;
+}
+
+/* =========================
+   TOPBAR
+========================= */
+
+.admin-dashboard-topbar {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-end !important;
+    gap: 24px !important;
+    margin-bottom: 24px !important;
+}
+
+.dashboard-eyebrow {
+    display: inline-flex !important;
+    align-items: center !important;
+    margin-bottom: 10px !important;
+    padding: 6px 10px !important;
+    border-radius: 5px !important;
+    background: #eef3f8 !important;
+    color: #24364b !important;
+    border: 1px solid #d7e0ea !important;
+    font-size: 10.5px !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.9px !important;
+    text-transform: uppercase !important;
+}
+
+.admin-dashboard-topbar h1 {
+    margin: 0 !important;
+    color: var(--dash-text) !important;
+    font-size: 32px !important;
+    font-weight: 900 !important;
+    letter-spacing: -0.8px !important;
+    line-height: 1.1 !important;
+}
+
+.admin-dashboard-topbar p {
+    margin: 7px 0 0 !important;
+    color: var(--dash-muted) !important;
+    font-size: 13.5px !important;
+}
+
+/* =========================
+   FILTRO SUPERIOR
+========================= */
+
+.dashboard-period-box {
+    width: 178px !important;
+    display: grid !important;
+    gap: 6px !important;
+}
+
+.dashboard-period-box label {
+    color: var(--dash-text-soft) !important;
+    font-size: 11.5px !important;
+    font-weight: 850 !important;
+}
+
+.dashboard-period-box select {
+    width: 100% !important;
+    height: 40px !important;
+    margin: 0 !important;
+    padding: 0 13px !important;
+    border-radius: 7px !important;
+    border: 1px solid #c9d3df !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+    font-size: 12.5px !important;
+    font-weight: 750 !important;
+    box-shadow:
+        0 1px 2px rgba(16, 24, 40, 0.05),
+        0 5px 14px rgba(16, 24, 40, 0.05) !important;
+}
+
+.dashboard-period-box select:focus {
+    outline: none !important;
+    border-color: #64748b !important;
+    box-shadow:
+        0 0 0 3px rgba(36, 54, 75, 0.11),
+        0 5px 14px rgba(16, 24, 40, 0.05) !important;
+}
+
+/* Ocultar filtros inferiores */
+.premium-panel-header .panel-filter {
+    display: none !important;
+}
+
+/* =========================
+   KPI CARDS
+========================= */
+
+.premium-kpi-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(210px, 1fr)) !important;
+    gap: 18px !important;
+    margin-bottom: 20px !important;
+}
+
+.premium-kpi-card {
+    position: relative !important;
+    overflow: hidden !important;
+    min-height: 150px !important;
+    padding: 20px 21px 19px 22px !important;
+    border-radius: 10px !important;
+    background:
+        linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%) !important;
+    border: 1px solid var(--dash-border-soft) !important;
+    box-shadow: var(--dash-shadow-card) !important;
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        border-color 0.18s ease !important;
+}
+
+.premium-kpi-card::after {
+    display: none !important;
+}
+
+/* Quita look infantil de colores grandes */
+.premium-kpi-card::before {
+    content: "" !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 18px !important;
+    bottom: 18px !important;
+    width: 3px !important;
+    border-radius: 0 999px 999px 0 !important;
+    background: #64748b !important;
+}
+
+.kpi-purple::before {
+    background: #475467 !important;
+}
+
+.kpi-blue::before {
+    background: #2563eb !important;
+}
+
+.kpi-green::before {
+    background: #047857 !important;
+}
+
+.kpi-orange::before {
+    background: #b54708 !important;
+}
+
+.premium-kpi-card:hover {
+    transform: translateY(-2px) !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: var(--dash-shadow-hover) !important;
+}
+
+/* KPI iconos minimalistas */
+.kpi-icon {
+    width: 40px !important;
+    height: 40px !important;
+    margin-bottom: 14px !important;
+    border-radius: 8px !important;
+    display: grid !important;
+    place-items: center !important;
+    background: #f7f9fc !important;
+    border: 1px solid #e4e9f0 !important;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04) !important;
+}
+
+.kpi-icon svg {
+    width: 19px !important;
+    height: 19px !important;
+    stroke-width: 2.2 !important;
+}
+
+.kpi-purple .kpi-icon {
+    color: #475467 !important;
+}
+
+.kpi-blue .kpi-icon {
+    color: #2563eb !important;
+}
+
+.kpi-green .kpi-icon {
+    color: #047857 !important;
+}
+
+.kpi-orange .kpi-icon {
+    color: #b54708 !important;
+}
+
+/* KPI texto */
+.kpi-content span {
+    display: block !important;
+    color: #344054 !important;
+    font-size: 12px !important;
+    font-weight: 850 !important;
+    margin-bottom: 8px !important;
+}
+
+.kpi-content strong {
+    display: block !important;
+    color: var(--dash-text) !important;
+    font-size: 28px !important;
+    line-height: 1 !important;
+    font-weight: 950 !important;
+    letter-spacing: -0.6px !important;
+}
+
+.kpi-content small {
+    display: block !important;
+    color: var(--dash-muted) !important;
+    font-size: 11.5px !important;
+    margin-top: 8px !important;
+}
+
+/* Etiquetas de estado KPI */
+.kpi-trend {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    margin-top: 14px !important;
+    padding: 5px 9px !important;
+    border-radius: 6px !important;
+    background: #f8fafc !important;
+    color: #475467 !important;
+    border: 1px solid #e5ebf2 !important;
+    font-size: 10.5px !important;
+    font-weight: 850 !important;
+}
+
+.kpi-trend svg {
+    width: 13px !important;
+    height: 13px !important;
+}
+
+.kpi-trend.positive,
+.kpi-trend.green {
+    background: #f3fbf7 !important;
+    color: #047857 !important;
+    border-color: #d5f2df !important;
+}
+
+.kpi-trend.warning {
+    background: #fff9ef !important;
+    color: #b54708 !important;
+    border-color: #f6d9aa !important;
+}
+
+/* =========================
+   PANELES PRINCIPALES
+========================= */
+
+.premium-dashboard-grid,
+.premium-bottom-grid {
+    gap: 20px !important;
+}
+
+.premium-dashboard-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1.05fr !important;
+    margin-bottom: 20px !important;
+}
+
+.premium-bottom-grid {
+    display: grid !important;
+    grid-template-columns: 1.25fr 0.95fr !important;
+}
+
+.premium-panel {
+    background:
+        linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%) !important;
+    border: 1px solid var(--dash-border-soft) !important;
+    border-radius: 10px !important;
+    padding: 22px !important;
+    box-shadow: var(--dash-shadow-card) !important;
+}
+
+.premium-panel-header {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 16px !important;
+    margin-bottom: 20px !important;
+}
+
+.premium-panel-header h3 {
+    margin: 0 !important;
+    color: var(--dash-text) !important;
+    font-size: 17px !important;
+    font-weight: 900 !important;
+    letter-spacing: -0.15px !important;
+}
+
+.premium-panel-header span {
+    display: block !important;
+    margin-top: 5px !important;
+    color: var(--dash-muted) !important;
+    font-size: 11.5px !important;
+}
+
+/* Botón Ver todas */
+.panel-link {
+    height: 36px !important;
+    padding: 0 12px !important;
+    border-radius: 7px !important;
+    background: #ffffff !important;
+    border: 1px solid #d8dee8 !important;
+    color: #24364b !important;
+    font-size: 11.5px !important;
+    font-weight: 850 !important;
+    box-shadow:
+        0 1px 2px rgba(16, 24, 40, 0.05),
+        0 5px 14px rgba(16, 24, 40, 0.05) !important;
+}
+
+.panel-link:hover {
+    background: #f8fafc !important;
+    border-color: #bfc9d7 !important;
+}
+
+/* =========================
+   CITAS POR ESTADO
+========================= */
+
+.appointments-status-layout {
+    display: grid !important;
+    grid-template-columns: 220px 1fr !important;
+    align-items: center !important;
+    gap: 28px !important;
+}
+
+.donut-wrapper {
+    position: relative !important;
+    height: 220px !important;
+}
+
+.donut-center {
+    position: absolute !important;
+    inset: 0 !important;
+    display: grid !important;
+    place-items: center !important;
+    align-content: center !important;
+    pointer-events: none !important;
+}
+
+.donut-center span {
+    color: var(--dash-muted) !important;
+    font-size: 11.5px !important;
+    font-weight: 750 !important;
+}
+
+.donut-center strong {
+    color: var(--dash-text) !important;
+    font-size: 29px !important;
+    font-weight: 950 !important;
+}
+
+/* Leyenda */
+.status-legend {
+    display: grid !important;
+    gap: 12px !important;
+}
+
+.status-legend-item {
+    display: grid !important;
+    grid-template-columns: 1fr 42px 56px !important;
+    align-items: center !important;
+    gap: 12px !important;
+    font-size: 12.5px !important;
+}
+
+.status-legend-name {
+    display: flex !important;
+    align-items: center !important;
+    gap: 9px !important;
+    color: #344054 !important;
+    font-weight: 850 !important;
+}
+
+.status-legend-name span {
+    width: 9px !important;
+    height: 9px !important;
+    border-radius: 999px !important;
+    box-shadow:
+        0 0 0 3px rgba(52, 64, 84, 0.07),
+        0 1px 2px rgba(16, 24, 40, 0.10) !important;
+}
+
+.status-legend-item strong {
+    color: var(--dash-text) !important;
+    font-weight: 900 !important;
+    text-align: right !important;
+}
+
+.status-legend-item em {
+    color: var(--dash-muted) !important;
+    font-style: normal !important;
+    font-weight: 700 !important;
+    text-align: right !important;
+}
+
+/* =========================
+   GRÁFICO BARRAS
+========================= */
+
+.bar-chart-wrapper {
+    height: 278px !important;
+}
+
+/* =========================
+   CITAS PRÓXIMAS
+========================= */
+
+.premium-appointments-list {
+    display: grid !important;
+}
+
+.premium-appointment-row {
+    display: grid !important;
+    grid-template-columns: minmax(230px, 1fr) auto auto !important;
+    align-items: center !important;
+    gap: 18px !important;
+    padding: 15px 0 !important;
+    border-bottom: 1px solid #edf1f5 !important;
+}
+
+.premium-appointment-row:last-child {
+    border-bottom: none !important;
+}
+
+.appointment-person {
+    display: flex !important;
+    align-items: center !important;
+    gap: 13px !important;
+}
+
+.appointment-avatar {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 8px !important;
+    background: linear-gradient(135deg, #111827, #475467) !important;
+    color: #ffffff !important;
+    display: grid !important;
+    place-items: center !important;
+    font-size: 11.5px !important;
+    font-weight: 900 !important;
+    box-shadow: 0 7px 16px rgba(16, 24, 40, 0.15) !important;
+}
+
+.appointment-person strong {
+    display: block !important;
+    color: var(--dash-text) !important;
+    font-size: 13.5px !important;
+    font-weight: 900 !important;
+}
+
+.appointment-person span {
+    display: block !important;
+    margin-top: 4px !important;
+    color: var(--dash-muted) !important;
+    font-size: 11.5px !important;
+}
+
+.appointment-meta {
+    display: flex !important;
+    align-items: center !important;
+    gap: 15px !important;
+    color: var(--dash-muted) !important;
+    font-size: 11.5px !important;
+    font-weight: 750 !important;
+}
+
+.appointment-meta span {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+.appointment-meta svg {
+    width: 14px !important;
+    height: 14px !important;
+    color: var(--dash-muted) !important;
+}
+
+/* Badges */
+.premium-status-pill {
+    display: inline-flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 6px 10px !important;
+    border-radius: 6px !important;
+    border: 1px solid transparent !important;
+    font-size: 10.5px !important;
+    font-weight: 900 !important;
+}
+
+.premium-status-pill.confirmed {
+    background: #f3fbf7 !important;
+    color: #047857 !important;
+    border-color: #d5f2df !important;
+}
+
+.premium-status-pill.pending {
+    background: #fff9ef !important;
+    color: #b54708 !important;
+    border-color: #f6d9aa !important;
+}
+
+/* =========================
+   RECORDATORIOS
+========================= */
+
+.premium-reminders-list {
+    display: grid !important;
+}
+
+.premium-reminder-row {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 44px 1fr 18px !important;
+    align-items: center !important;
+    gap: 13px !important;
+    padding: 15px 0 !important;
+    border: none !important;
+    border-bottom: 1px solid #edf1f5 !important;
+    background: transparent !important;
+    text-align: left !important;
+    font-family: inherit !important;
+}
+
+.premium-reminder-row:last-child {
+    border-bottom: none !important;
+}
+
+.clickable-reminder {
+    cursor: pointer !important;
+}
+
+.clickable-reminder:hover {
+    background: #f6f8fb !important;
+    border-radius: 9px !important;
+    padding-left: 9px !important;
+    padding-right: 9px !important;
+}
+
+.clickable-reminder > svg {
+    color: #98a2b3 !important;
+    transition: transform 0.18s ease, color 0.18s ease !important;
+}
+
+.clickable-reminder:hover > svg {
+    transform: translateX(3px) !important;
+    color: #344054 !important;
+}
+
+.reminder-icon {
+    width: 39px !important;
+    height: 39px !important;
+    border-radius: 8px !important;
+    display: grid !important;
+    place-items: center !important;
+    border: 1px solid #e4e9f0 !important;
+    background: #f8fafc !important;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04) !important;
+}
+
+.reminder-icon svg {
+    width: 18px !important;
+    height: 18px !important;
+}
+
+.premium-reminder-row.purple .reminder-icon {
+    color: #475467 !important;
+}
+
+.premium-reminder-row.orange .reminder-icon {
+    color: #b54708 !important;
+    background: #fff9ef !important;
+    border-color: #f6d9aa !important;
+}
+
+.premium-reminder-row.blue .reminder-icon {
+    color: #2563eb !important;
+    background: #f3f7ff !important;
+    border-color: #d9e6ff !important;
+}
+
+.premium-reminder-row strong {
+    display: block !important;
+    color: var(--dash-text) !important;
+    font-size: 12.5px !important;
+    font-weight: 900 !important;
+}
+
+.premium-reminder-row span {
+    display: block !important;
+    color: var(--dash-muted) !important;
+    font-size: 11.5px !important;
+    margin-top: 4px !important;
+}
+
+/* =========================
+   EMPTY STATE
+========================= */
+
+.premium-empty-state {
+    min-height: 145px !important;
+    display: grid !important;
+    place-items: center !important;
+    align-content: center !important;
+    gap: 10px !important;
+    color: var(--dash-muted) !important;
+    text-align: center !important;
+    font-weight: 850 !important;
+}
+
+.premium-empty-state svg {
+    width: 32px !important;
+    height: 32px !important;
+    color: var(--dash-muted-light) !important;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 1200px) {
+    .premium-kpi-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    .premium-dashboard-grid,
+    .premium-bottom-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+@media (max-width: 760px) {
+    .admin-dashboard {
+        padding: 24px 18px 34px !important;
+    }
+
+    .admin-dashboard-topbar {
+        align-items: stretch !important;
+        flex-direction: column !important;
+    }
+
+    .dashboard-period-box {
+        width: 100% !important;
+    }
+
+    .premium-kpi-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .appointments-status-layout {
+        grid-template-columns: 1fr !important;
+    }
+
+    .premium-appointment-row {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+
+    .appointment-meta {
+        flex-wrap: wrap !important;
+    }
+
+    .premium-reminder-row {
+        grid-template-columns: 40px 1fr 16px !important;
+    }
+}
+
+/* =========================================================
+   AJUSTE FINAL DE TIPOGRAFÍA DASHBOARD
+   Reduce negrita excesiva y mejora lectura
+========================================================= */
+
+/* Suavizado general */
+.admin-dashboard,
+.admin-dashboard * {
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+}
+
+/* Texto base del dashboard */
+.admin-dashboard {
+    color: #1e293b !important;
+    font-family: "Segoe UI", Arial, sans-serif !important;
+}
+
+/* Etiqueta superior: DASHBOARD ADMINISTRATIVO */
+.dashboard-eyebrow {
+    font-size: 10.5px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.75px !important;
+    color: #334155 !important;
+}
+
+/* Título principal: Bienvenido */
+.admin-dashboard-topbar h1 {
+    font-size: 31px !important;
+    font-weight: 750 !important;
+    letter-spacing: -0.65px !important;
+    color: #0f172a !important;
+}
+
+/* Subtítulo debajo del título */
+.admin-dashboard-topbar p {
+    font-size: 13.5px !important;
+    font-weight: 400 !important;
+    color: #64748b !important;
+}
+
+/* Label del periodo */
+.dashboard-period-box label {
+    font-size: 11.5px !important;
+    font-weight: 650 !important;
+    color: #475569 !important;
+}
+
+/* Select del periodo */
+.dashboard-period-box select {
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    color: #1e293b !important;
+}
+
+/* Títulos pequeños de las tarjetas KPI */
+.kpi-content span {
+    font-size: 12px !important;
+    font-weight: 650 !important;
+    color: #334155 !important;
+}
+
+/* Números grandes KPI */
+.kpi-content strong {
+    font-size: 28px !important;
+    font-weight: 750 !important;
+    letter-spacing: -0.55px !important;
+    color: #0f172a !important;
+}
+
+/* Texto secundario KPI */
+.kpi-content small {
+    font-size: 11.5px !important;
+    font-weight: 400 !important;
+    color: #667085 !important;
+}
+
+/* Etiquetas de tendencia */
+.kpi-trend {
+    font-size: 10.5px !important;
+    font-weight: 650 !important;
+}
+
+/* Títulos de paneles: Citas por estado, Ingresos vs Gastos, etc. */
+.premium-panel-header h3 {
+    font-size: 17px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.12px !important;
+    color: #0f172a !important;
+}
+
+/* Subtítulos de paneles */
+.premium-panel-header span {
+    font-size: 11.5px !important;
+    font-weight: 400 !important;
+    color: #667085 !important;
+}
+
+/* Botón Ver todas */
+.panel-link {
+    font-size: 11.5px !important;
+    font-weight: 650 !important;
+}
+
+/* Centro del gráfico dona */
+.donut-center span {
+    font-size: 11.5px !important;
+    font-weight: 500 !important;
+    color: #667085 !important;
+}
+
+.donut-center strong {
+    font-size: 28px !important;
+    font-weight: 750 !important;
+    color: #0f172a !important;
+}
+
+/* Leyenda de citas por estado */
+.status-legend-item {
+    font-size: 12.5px !important;
+}
+
+.status-legend-name {
+    font-weight: 650 !important;
+    color: #334155 !important;
+}
+
+.status-legend-item strong {
+    font-weight: 700 !important;
+    color: #0f172a !important;
+}
+
+.status-legend-item em {
+    font-weight: 500 !important;
+    color: #64748b !important;
+}
+
+/* Citas próximas */
+.appointment-avatar {
+    font-weight: 700 !important;
+}
+
+.appointment-person strong {
+    font-size: 13.5px !important;
+    font-weight: 650 !important;
+    color: #0f172a !important;
+}
+
+.appointment-person span {
+    font-size: 11.5px !important;
+    font-weight: 400 !important;
+    color: #667085 !important;
+}
+
+.appointment-meta {
+    font-size: 11.5px !important;
+    font-weight: 500 !important;
+    color: #667085 !important;
+}
+
+/* Badges de estado */
+.premium-status-pill {
+    font-size: 10.5px !important;
+    font-weight: 650 !important;
+}
+
+/* Recordatorios */
+.premium-reminder-row strong {
+    font-size: 12.5px !important;
+    font-weight: 650 !important;
+    color: #0f172a !important;
+}
+
+.premium-reminder-row span {
+    font-size: 11.5px !important;
+    font-weight: 400 !important;
+    color: #667085 !important;
+}
+
+/* Estado vacío */
+.premium-empty-state {
+    font-weight: 600 !important;
+    color: #667085 !important;
+}
+
+/* Mejora visual suave de tarjetas */
+.premium-kpi-card,
+.premium-panel {
+    border-radius: 14px !important;
+    box-shadow:
+        0 1px 2px rgba(16, 24, 40, 0.04),
+        0 8px 22px rgba(16, 24, 40, 0.06) !important;
+}
+
+/* Evita sensación de texto muy cargado */
+.premium-panel,
+.premium-kpi-card {
+    color: #1e293b !important;
+}
