@@ -927,3 +927,328 @@ body:not(.login-body) {
 .premium-kpi-card {
     color: #1e293b !important;
 }
+
+
+
+/* =========================
+   HISTORIAL MENSUAL DE GASTOS
+========================= */
+
+.finance-monthly-history-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 22px;
+    padding: 22px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+    margin-top: 22px;
+}
+
+.finance-monthly-history-header {
+    margin-bottom: 18px;
+}
+
+.section-chip {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #0f766e;
+    background: #ecfeff;
+    border: 1px solid #bae6fd;
+    border-radius: 999px;
+    padding: 6px 10px;
+    margin-bottom: 10px;
+}
+
+.finance-monthly-history-header h3 {
+    margin: 0 0 6px;
+    font-size: 20px;
+    font-weight: 800;
+    color: #0f2f57;
+}
+
+.finance-monthly-history-header p {
+    margin: 0;
+    font-size: 14px;
+    color: #5f6f86;
+    line-height: 1.5;
+}
+
+.finance-monthly-filter-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 14px;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.finance-monthly-filter-bar input,
+.finance-monthly-filter-bar select {
+    height: 46px;
+    border: 1px solid #cfd8e3;
+    border-radius: 14px;
+    padding: 0 14px;
+    font-size: 14px;
+    outline: none;
+    background: #ffffff;
+}
+
+.finance-monthly-filter-bar input:focus,
+.finance-monthly-filter-bar select:focus {
+    border-color: #1d4ed8;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
+}
+
+.finance-empty-history {
+    border: 1px dashed #cbd5e1;
+    border-radius: 16px;
+    padding: 22px;
+    text-align: center;
+    color: #64748b;
+    background: #f8fafc;
+    font-weight: 600;
+}
+
+.monthly-expense-history-result {
+    margin-top: 18px;
+}
+
+.monthly-history-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 18px;
+}
+
+.monthly-history-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: #64748b;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+}
+
+.monthly-history-top h2 {
+    margin: 0;
+    font-size: 34px;
+    font-weight: 800;
+    color: #0f2f57;
+}
+
+.monthly-total-box {
+    min-width: 190px;
+    background: #ffffff;
+    border: 1px solid #d7e0ea;
+    border-radius: 18px;
+    padding: 14px 18px;
+    text-align: right;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+}
+
+.monthly-total-box span {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 6px;
+    font-weight: 700;
+}
+
+.monthly-total-box strong {
+    font-size: 20px;
+    color: #dc2626;
+    font-weight: 800;
+}
+
+.monthly-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.summary-mini-card {
+    background: #f8fbff;
+    border: 1px solid #dbe7f3;
+    border-radius: 18px;
+    padding: 18px;
+    min-height: 110px;
+}
+
+.summary-mini-card span {
+    display: block;
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 8px;
+    font-weight: 700;
+}
+
+.summary-mini-card strong {
+    display: block;
+    font-size: 18px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 6px;
+}
+
+.summary-mini-card small {
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+.monthly-history-content-grid {
+    display: grid;
+    grid-template-columns: 360px minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+}
+
+.history-panel {
+    background: #ffffff;
+    border: 1px solid #dbe5ef;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+}
+
+.history-panel-header {
+    padding: 16px 18px;
+    border-bottom: 1px solid #e5edf5;
+    background: #f8fbff;
+}
+
+.history-panel-header h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 800;
+    color: #123d6a;
+}
+
+.category-history-list {
+    padding: 12px;
+    max-height: 560px;
+    overflow-y: auto;
+}
+
+.category-history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border: 1px solid #e4ebf3;
+    border-radius: 14px;
+    background: #ffffff;
+    margin-bottom: 10px;
+}
+
+.category-history-item:last-child {
+    margin-bottom: 0;
+}
+
+.category-history-info strong {
+    display: block;
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 4px;
+}
+
+.category-history-info span {
+    font-size: 12px;
+    color: #64748b;
+}
+
+.category-history-amount {
+    font-size: 18px;
+    font-weight: 800;
+    color: #dc2626;
+    white-space: nowrap;
+}
+
+.history-detail-table-wrapper {
+    max-height: 560px;
+    overflow: auto;
+}
+
+.history-detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 820px;
+}
+
+.history-detail-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #123f70;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: left;
+    padding: 14px 12px;
+}
+
+.history-detail-table tbody td {
+    padding: 13px 12px;
+    border-bottom: 1px solid #edf2f7;
+    font-size: 13px;
+    color: #1f2937;
+    vertical-align: middle;
+}
+
+.history-detail-table tbody tr:nth-child(even) {
+    background: #fbfdff;
+}
+
+.history-detail-table tbody tr:hover {
+    background: #f1f7ff;
+}
+
+.history-detail-table .btn-delete-expense {
+    border: 1px solid #f8caca;
+    background: #fff5f5;
+    color: #dc2626;
+    border-radius: 10px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: .2s ease;
+}
+
+.history-detail-table .btn-delete-expense:hover {
+    background: #fee2e2;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1200px) {
+    .monthly-history-content-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 900px) {
+    .finance-monthly-filter-bar {
+        grid-template-columns: 1fr;
+    }
+
+    .monthly-history-top {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .monthly-summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .monthly-history-top h2 {
+        font-size: 28px;
+    }
+
+    .monthly-total-box {
+        text-align: left;
+    }
+}

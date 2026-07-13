@@ -176,6 +176,19 @@ function renderPsychologistTable(data) {
                     ${psychologist.active ? "Desactivar" : "Reactivar"}
                 </button>
 
+                    ${
+                        psychologist.active
+                            ? `
+                                <button 
+                                    type="button"
+                                    class="table-action-btn info"
+                                    onclick="openPsychologistNotificationModal(${psychologist.id})">
+                                    Notificar
+                                </button>
+                            `
+                            : ""
+                    }
+
             </td>
         </tr>
     `;
@@ -404,4 +417,153 @@ function goToAvailabilityForPsychologist(psychologistId) {
             box.classList.add("message-info");
         }
     }, 300);
+}
+
+async function openPsychologistNotificationModal(psychologistId) {
+    if (!psychologistId) return;
+
+    const psychologist = typeof psychologistsData !== "undefined"
+        ? psychologistsData.find(item => Number(item.id) === Number(psychologistId))
+        : null;
+
+    const psychologistName = getPsychologistNotificationDisplayName(psychologist);
+    const psychologistEmail = psychologist?.email || "";
+    const psychologistSpecialty = psychologist?.specialty || "Especialidad no registrada";
+
+    const result = await Swal.fire({
+        title: "Enviar notificación",
+        html: `
+            <div class="admin-notify-modal">
+
+                <div class="admin-notify-user-card">
+                    <strong>${escapePsychologistNotificationHtml(psychologistName)}</strong>
+                    <span>Psicólogo</span>
+                    <small>${escapePsychologistNotificationHtml(psychologistSpecialty)}</small>
+                    <small>${escapePsychologistNotificationHtml(psychologistEmail)}</small>
+                </div>
+
+                <label>Asunto</label>
+                <input 
+                    id="adminNotifyTitle" 
+                    class="swal2-input admin-notify-input" 
+                    maxlength="120"
+                    placeholder="Ejemplo: Recordatorio de citas">
+
+                <label>Mensaje</label>
+                <textarea 
+                    id="adminNotifyMessage" 
+                    class="admin-notify-textarea"
+                    maxlength="700"
+                    placeholder="Escribe el mensaje que recibirá el psicólogo en su campana."></textarea>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: "Enviar notificación",
+        cancelButtonText: "Cancelar",
+        confirmButtonColor: "#0f3d66",
+        width: 620,
+        focusConfirm: false,
+        preConfirm: () => {
+            const title = document.getElementById("adminNotifyTitle").value.trim();
+            const message = document.getElementById("adminNotifyMessage").value.trim();
+
+            if (!title) {
+                Swal.showValidationMessage("Ingresa el asunto de la notificación.");
+                return false;
+            }
+
+            if (title.length < 4) {
+                Swal.showValidationMessage("El asunto debe tener al menos 4 caracteres.");
+                return false;
+            }
+
+            if (!message) {
+                Swal.showValidationMessage("Ingresa el mensaje de la notificación.");
+                return false;
+            }
+
+            if (message.length < 8) {
+                Swal.showValidationMessage("El mensaje debe tener al menos 8 caracteres.");
+                return false;
+            }
+
+            return {
+                title,
+                message
+            };
+        }
+    });
+
+    if (!result.isConfirmed || !result.value) return;
+
+    try {
+        const response = await authFetch(`${baseUrl}/admin-notifications/psychologists/${psychologistId}`, {
+            method: "POST",
+            body: JSON.stringify(result.value)
+        });
+
+        if (!response) return;
+
+        let data = {};
+
+        try {
+            data = await response.json();
+        } catch (error) {
+            data = {};
+        }
+
+        if (!response.ok) {
+            Swal.fire(
+                "Error",
+                data.message || "No se pudo enviar la notificación.",
+                "error"
+            );
+            return;
+        }
+
+        Swal.fire({
+            icon: "success",
+            title: "Notificación enviada",
+            text: data.message || "El psicólogo recibirá el mensaje en su campana.",
+            timer: 1800,
+            showConfirmButton: false
+        });
+
+        if (typeof loadNotifications === "function") {
+            await loadNotifications(false);
+        }
+
+        if (typeof loadAuditLogs === "function") {
+            await loadAuditLogs();
+        }
+
+    } catch (error) {
+        console.error("Error enviando notificación al psicólogo:", error);
+
+        Swal.fire(
+            "Error",
+            "Error de conexión con el servidor.",
+            "error"
+        );
+    }
+}
+
+function getPsychologistNotificationDisplayName(psychologist) {
+    if (!psychologist) return "Psicólogo seleccionado";
+
+    const firstName = psychologist.firstName || psychologist.names || psychologist.name || "";
+    const lastName = psychologist.lastName || psychologist.surnames || "";
+
+    const fullName = `${firstName} ${lastName}`.trim();
+
+    return fullName || psychologist.email || "Psicólogo seleccionado";
+}
+
+function escapePsychologistNotificationHtml(value) {
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
 }

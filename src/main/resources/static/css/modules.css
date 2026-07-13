@@ -1350,3 +1350,1678 @@
             width: 100%;
         }
     }
+
+    /* =========================================================
+   BOTÓN ELIMINAR EN TABLAS
+========================================================= */
+
+.table-action-btn {
+    border: none;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.table-action-btn:hover {
+    transform: translateY(-1px);
+}
+
+.table-action-btn.danger {
+    background: #fef2f2;
+    color: #b42318;
+    border: 1px solid #fecaca;
+}
+
+.table-action-btn.danger:hover {
+    background: #dc2626;
+    color: #ffffff;
+    box-shadow: 0 8px 18px rgba(220, 38, 38, 0.22);
+}
+
+.empty-table-message {
+    text-align: center;
+    padding: 18px;
+    color: #64748b;
+    font-weight: 600;
+}
+
+/* =========================================================
+   HISTORIAL MENSUAL DE GASTOS
+========================================================= */
+
+.finance-monthly-history {
+    margin-top: 24px;
+    padding: 22px;
+    border-radius: 24px;
+    background: #ffffff;
+    border: 1px solid #dbe7f3;
+    box-shadow: 0 16px 36px rgba(15, 61, 102, 0.08);
+}
+
+.finance-monthly-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: flex-start;
+    margin-bottom: 18px;
+}
+
+.finance-monthly-header span {
+    display: block;
+    color: #0f766e;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+}
+
+.finance-monthly-header h3 {
+    margin: 0;
+    color: #0f3d66;
+    font-size: 22px;
+    font-weight: 850;
+}
+
+.finance-monthly-header p {
+    margin: 6px 0 0;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.finance-monthly-filters {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.finance-monthly-filters input,
+.finance-monthly-filters select {
+    height: 44px;
+    border: 1px solid #d7e2ec;
+    border-radius: 14px;
+    padding: 0 14px;
+    background: #ffffff;
+    color: #334155;
+    font-size: 14px;
+    outline: none;
+}
+
+.finance-monthly-filters input:focus,
+.finance-monthly-filters select:focus {
+    border-color: #0f3d66;
+    box-shadow: 0 0 0 3px rgba(15, 61, 102, 0.10);
+}
+
+.monthly-expense-result {
+    margin-top: 14px;
+}
+
+.monthly-expense-loading,
+.monthly-expense-empty {
+    padding: 18px;
+    border-radius: 18px;
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    color: #64748b;
+    font-weight: 650;
+    text-align: center;
+}
+
+.monthly-expense-empty.error {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #b42318;
+}
+
+.monthly-expense-card {
+    padding: 20px;
+    border-radius: 22px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+.monthly-expense-title {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: flex-start;
+    margin-bottom: 18px;
+}
+
+.monthly-expense-title span {
+    display: block;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.monthly-expense-title h3 {
+    margin: 4px 0 0;
+    color: #0f3d66;
+    font-size: 24px;
+    font-weight: 850;
+}
+
+.monthly-expense-total {
+    padding: 12px 16px;
+    border-radius: 18px;
+    background: #ffffff;
+    border: 1px solid #dbe7f3;
+    min-width: 180px;
+    text-align: right;
+}
+
+.monthly-expense-total small {
+    display: block;
+    color: #64748b;
+    font-size: 12px;
+    margin-bottom: 5px;
+}
+
+.monthly-expense-total strong {
+    color: #dc2626;
+    font-size: 22px;
+    font-weight: 900;
+}
+
+.monthly-expense-kpis {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.monthly-expense-kpis div {
+    padding: 16px;
+    border-radius: 18px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+}
+
+.monthly-expense-kpis span {
+    display: block;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.monthly-expense-kpis strong {
+    display: block;
+    color: #0f172a;
+    font-size: 20px;
+    font-weight: 850;
+}
+
+.monthly-expense-kpis small {
+    display: block;
+    margin-top: 5px;
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+.monthly-expense-section {
+    margin-top: 18px;
+}
+
+.monthly-expense-section h4 {
+    margin: 0 0 12px;
+    color: #0f3d66;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.monthly-category-list {
+    display: grid;
+    gap: 10px;
+}
+
+.monthly-category-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    align-items: center;
+    padding: 14px;
+    border-radius: 16px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+}
+
+.monthly-category-item div strong {
+    display: block;
+    color: #0f172a;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.monthly-category-item div span {
+    display: block;
+    margin-top: 4px;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.monthly-category-item > strong {
+    color: #dc2626;
+    font-size: 15px;
+    font-weight: 900;
+}
+
+@media (max-width: 900px) {
+    .finance-monthly-filters {
+        grid-template-columns: 1fr;
+    }
+
+    .monthly-expense-title {
+        flex-direction: column;
+    }
+
+    .monthly-expense-total {
+        width: 100%;
+        text-align: left;
+    }
+
+    .monthly-expense-kpis {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* =========================================================
+   REPORTE POR PSICÓLOGO
+========================================================= */
+
+.psychologist-report-header {
+    margin-top: 32px;
+}
+
+.psychologist-report-filter-card {
+    margin-bottom: 20px;
+}
+
+.report-psychologist-filter-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.psychologist-performance-result {
+    margin-top: 20px;
+}
+
+.psychologist-report-loading,
+.psychologist-report-empty {
+    padding: 20px;
+    border-radius: 18px;
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    color: #64748b;
+    text-align: center;
+    font-weight: 650;
+}
+
+.psychologist-report-empty.error {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #b42318;
+}
+
+.psychologist-report-container {
+    display: grid;
+    gap: 18px;
+}
+
+.psychologist-report-summary {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: flex-start;
+    padding: 22px;
+    border-radius: 24px;
+    background: #ffffff;
+    border: 1px solid #dbe7f3;
+    box-shadow: 0 14px 32px rgba(15, 61, 102, 0.08);
+}
+
+.psychologist-report-summary span {
+    display: block;
+    color: #0f766e;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+}
+
+.psychologist-report-summary h3 {
+    margin: 0;
+    color: #0f3d66;
+    font-size: 24px;
+    font-weight: 850;
+}
+
+.psychologist-report-summary p {
+    margin: 8px 0 0;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.psychologist-report-totals {
+    display: flex;
+    gap: 12px;
+}
+
+.psychologist-report-totals div {
+    min-width: 150px;
+    padding: 14px;
+    border-radius: 18px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    text-align: right;
+}
+
+.psychologist-report-totals div span {
+    color: #64748b;
+    font-size: 11px;
+    margin-bottom: 5px;
+}
+
+.psychologist-report-totals div strong {
+    color: #0f172a;
+    font-size: 24px;
+    font-weight: 900;
+}
+
+.psychologist-report-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.psychologist-report-card {
+    padding: 20px;
+    border-radius: 24px;
+    background: #ffffff;
+    border: 1px solid #dbe7f3;
+    box-shadow: 0 14px 30px rgba(15, 61, 102, 0.07);
+}
+
+.psychologist-report-card-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.psychologist-report-card-header span {
+    display: block;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.psychologist-report-card-header h4 {
+    margin: 0;
+    color: #0f3d66;
+    font-size: 19px;
+    font-weight: 850;
+}
+
+.psychologist-report-badge {
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: #ecfeff;
+    color: #0e7490;
+    font-size: 12px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.psychologist-report-kpis {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.psychologist-report-kpis div {
+    padding: 14px;
+    border-radius: 16px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+.psychologist-report-kpis span {
+    display: block;
+    color: #64748b;
+    font-size: 12px;
+    margin-bottom: 6px;
+}
+
+.psychologist-report-kpis strong {
+    color: #0f172a;
+    font-size: 22px;
+    font-weight: 900;
+}
+
+.therapy-summary-box {
+    padding-top: 12px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.therapy-summary-box h5 {
+    margin: 0 0 10px;
+    color: #0f3d66;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.therapy-summary-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 8px;
+}
+
+.therapy-summary-row span {
+    color: #334155;
+    font-size: 13px;
+}
+
+.therapy-summary-row strong {
+    color: #0f172a;
+    font-size: 14px;
+    font-weight: 900;
+}
+
+@media (max-width: 950px) {
+    .report-psychologist-filter-grid,
+    .psychologist-report-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .psychologist-report-summary {
+        flex-direction: column;
+    }
+
+    .psychologist-report-totals {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .psychologist-report-totals div {
+        text-align: left;
+    }
+}
+
+
+/* =========================================================
+   MODAL FINANZAS FINAL - SCROLL GENERAL PROFESIONAL
+========================================================= */
+
+body.modal-open {
+    overflow: hidden !important;
+}
+
+/* Fondo del modal */
+.floating-modal {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 9999 !important;
+
+    background: rgba(15, 23, 42, 0.58) !important;
+    backdrop-filter: blur(6px);
+
+    display: flex !important;
+    justify-content: center !important;
+    align-items: flex-start !important;
+
+    padding: 32px 22px !important;
+
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+.floating-modal.hidden {
+    display: none !important;
+}
+
+/* Caja principal del modal */
+.finance-modal-content {
+    width: min(94vw, 1450px) !important;
+    max-width: 1450px !important;
+
+    height: auto !important;
+    max-height: none !important;
+
+    margin: 0 auto 36px auto !important;
+
+    background: #ffffff !important;
+    border-radius: 24px !important;
+    border: 1px solid #dbe7f3 !important;
+    box-shadow: 0 30px 80px rgba(15, 23, 42, 0.35) !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+
+    overflow: visible !important;
+}
+
+/* Cabecera */
+.finance-modal-content .floating-modal-header {
+    padding: 18px 24px !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    background: #ffffff !important;
+
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+}
+
+.finance-modal-content .floating-modal-header h3 {
+    margin: 0 !important;
+    color: #0f3d66 !important;
+    font-size: 22px !important;
+    font-weight: 850 !important;
+}
+
+.finance-modal-content .floating-modal-header span {
+    display: block !important;
+    margin-top: 4px !important;
+    color: #64748b !important;
+    font-size: 13px !important;
+}
+
+.finance-modal-content .modal-close-btn {
+    width: 38px !important;
+    height: 38px !important;
+
+    border: none !important;
+    border-radius: 50% !important;
+
+    background: #f1f5f9 !important;
+    color: #334155 !important;
+
+    font-size: 24px !important;
+    font-weight: 800 !important;
+    cursor: pointer !important;
+}
+
+.finance-modal-content .modal-close-btn:hover {
+    background: #fee2e2 !important;
+    color: #b42318 !important;
+}
+
+/* Filtros */
+.finance-modal-content .floating-modal-tools {
+    margin: 18px 24px 12px !important;
+}
+
+.finance-modal-content .finance-filter-tools {
+    display: grid !important;
+    grid-template-columns: 150px 170px 220px 190px 180px 170px 170px !important;
+    gap: 10px !important;
+    align-items: center !important;
+}
+
+.finance-modal-content .finance-filter-tools input,
+.finance-modal-content .finance-filter-tools select {
+    height: 42px !important;
+    border: 1px solid #d7e2ec !important;
+    border-radius: 12px !important;
+    padding: 0 12px !important;
+    background: #ffffff !important;
+    color: #334155 !important;
+    font-size: 13px !important;
+    outline: none !important;
+}
+
+.finance-modal-content .finance-filter-tools input:focus,
+.finance-modal-content .finance-filter-tools select:focus {
+    border-color: #0f3d66 !important;
+    box-shadow: 0 0 0 3px rgba(15, 61, 102, 0.10) !important;
+}
+
+.finance-modal-content .finance-filter-tools button {
+    height: 42px !important;
+    border-radius: 12px !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
+}
+
+.finance-modal-content .finance-filter-tools .table-search {
+    grid-column: 1 / 4 !important;
+    width: 100% !important;
+    max-width: none !important;
+}
+
+/* Separador debajo de filtros */
+.finance-modal-content .finance-filter-tools::after {
+    content: "" !important;
+    grid-column: 1 / -1 !important;
+    height: 1px !important;
+    background: #e2e8f0 !important;
+    margin-top: 4px !important;
+}
+
+/* Contenedor del resultado */
+.finance-modal-results {
+    overflow: visible !important;
+
+    padding: 0 24px 18px !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+}
+
+/* Resumen del filtro */
+.finance-modal-results .finance-filter-summary {
+    margin: 0 !important;
+}
+
+.finance-modal-results .expense-filter-summary-card {
+    padding: 14px !important;
+    border-radius: 18px !important;
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+.finance-modal-results .expense-filter-summary-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 16px !important;
+    margin-bottom: 10px !important;
+}
+
+.finance-modal-results .expense-filter-summary-header strong {
+    display: block !important;
+    color: #0f3d66 !important;
+    font-size: 15px !important;
+    font-weight: 850 !important;
+}
+
+.finance-modal-results .expense-filter-summary-header span {
+    display: block !important;
+    margin-top: 4px !important;
+    color: #64748b !important;
+    font-size: 12px !important;
+}
+
+.finance-modal-results .expense-filter-total {
+    min-width: 160px !important;
+    padding: 10px 14px !important;
+    border-radius: 14px !important;
+    background: #ffffff !important;
+    border: 1px solid #dbe7f3 !important;
+    text-align: right !important;
+}
+
+.finance-modal-results .expense-filter-total small {
+    display: block !important;
+    color: #64748b !important;
+    font-size: 11px !important;
+    margin-bottom: 4px !important;
+}
+
+.finance-modal-results .expense-filter-total strong {
+    color: #dc2626 !important;
+    font-size: 19px !important;
+    font-weight: 900 !important;
+}
+
+.finance-modal-results .expense-filter-category-list {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+}
+
+.finance-modal-results .expense-filter-category-row {
+    padding: 9px 11px !important;
+    border-radius: 12px !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+.finance-modal-results .expense-filter-category-row span {
+    color: #334155 !important;
+    font-size: 12px !important;
+    font-weight: 650 !important;
+}
+
+.finance-modal-results .expense-filter-category-row strong {
+    color: #0f172a !important;
+    font-size: 12px !important;
+    font-weight: 850 !important;
+    white-space: nowrap !important;
+}
+
+/* Mensaje */
+.finance-modal-results .compact-result {
+    min-height: auto !important;
+    padding: 10px 14px !important;
+    margin: 0 !important;
+
+    border-radius: 14px !important;
+    background: #eef6ff !important;
+    border-left: 4px solid #0f3d66 !important;
+    color: #334155 !important;
+}
+
+/* Tabla */
+.finance-modal-results .floating-table-wrapper {
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+
+    border: 1px solid #dbe7f3 !important;
+    border-radius: 16px !important;
+    background: #ffffff !important;
+}
+
+.finance-modal-results table {
+    width: 100% !important;
+    min-width: 1120px !important;
+    border-collapse: collapse !important;
+}
+
+.finance-modal-results table thead th {
+    background: #0f3d66 !important;
+    color: #ffffff !important;
+
+    padding: 13px 12px !important;
+
+    font-size: 13px !important;
+    font-weight: 800 !important;
+    text-align: left !important;
+    white-space: nowrap !important;
+}
+
+.finance-modal-results table tbody td {
+    padding: 13px 12px !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+
+    color: #0f172a !important;
+    font-size: 13px !important;
+    vertical-align: middle !important;
+}
+
+.finance-modal-results table tbody tr:nth-child(even) {
+    background: #f8fafc !important;
+}
+
+.finance-modal-results table tbody tr:hover {
+    background: #eef6ff !important;
+}
+
+/* Columnas */
+.finance-modal-results table th:nth-child(1),
+.finance-modal-results table td:nth-child(1) {
+    width: 60px !important;
+    text-align: center !important;
+}
+
+.finance-modal-results table th:nth-child(2),
+.finance-modal-results table td:nth-child(2) {
+    width: 160px !important;
+}
+
+.finance-modal-results table th:nth-child(3),
+.finance-modal-results table td:nth-child(3) {
+    min-width: 320px !important;
+}
+
+.finance-modal-results table th:nth-child(4),
+.finance-modal-results table td:nth-child(4) {
+    width: 120px !important;
+    font-weight: 800 !important;
+}
+
+.finance-modal-results table th:nth-child(5),
+.finance-modal-results table td:nth-child(5) {
+    width: 130px !important;
+}
+
+.finance-modal-results table th:nth-child(6),
+.finance-modal-results table td:nth-child(6) {
+    width: 170px !important;
+}
+
+.finance-modal-results table th:nth-child(7),
+.finance-modal-results table td:nth-child(7) {
+    width: 120px !important;
+    text-align: center !important;
+}
+
+.finance-modal-results table th:nth-child(8),
+.finance-modal-results table td:nth-child(8) {
+    width: 150px !important;
+    text-align: center !important;
+}
+
+/* Botón eliminar */
+.finance-modal-results .expense-delete-btn {
+    min-width: 92px !important;
+    height: 34px !important;
+    padding: 0 14px !important;
+
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    border-radius: 999px !important;
+    border: 1px solid #fecaca !important;
+
+    background: #fef2f2 !important;
+    color: #b42318 !important;
+
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    white-space: nowrap !important;
+
+    cursor: pointer !important;
+}
+
+.finance-modal-results .expense-delete-btn:hover {
+    background: #dc2626 !important;
+    color: #ffffff !important;
+    border-color: #dc2626 !important;
+}
+
+.expense-deleted-label {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    min-width: 86px !important;
+    height: 30px !important;
+    padding: 0 12px !important;
+
+    border-radius: 999px !important;
+    background: #f1f5f9 !important;
+    color: #64748b !important;
+
+    font-size: 12px !important;
+    font-weight: 800 !important;
+}
+
+/* Paginación */
+.finance-modal-results .pagination-bar {
+    padding: 14px 0 0 !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 14px !important;
+}
+
+.finance-modal-results .pagination-bar span {
+    color: #334155 !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .finance-modal-content .finance-filter-tools {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    }
+
+    .finance-modal-content .finance-filter-tools .table-search {
+        grid-column: 1 / -1 !important;
+    }
+
+    .finance-modal-results .expense-filter-category-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+}
+
+@media (max-width: 800px) {
+    .floating-modal {
+        padding: 12px !important;
+    }
+
+    .finance-modal-content {
+        width: 98vw !important;
+        border-radius: 18px !important;
+    }
+
+    .finance-modal-content .finance-filter-tools {
+        grid-template-columns: 1fr !important;
+    }
+
+    .finance-modal-content .finance-filter-tools .table-search {
+        grid-column: 1 / -1 !important;
+    }
+
+    .finance-modal-results .expense-filter-summary-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+
+    .finance-modal-results .expense-filter-total {
+        width: 100% !important;
+        text-align: left !important;
+    }
+
+    .finance-modal-results .expense-filter-category-list {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* =========================
+   MENSAJES INTERNOS
+========================= */
+
+.internal-message-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
+    align-items: start;
+}
+
+.internal-message-main-card,
+.internal-message-info-card,
+.internal-message-tip-card {
+    border-radius: 22px;
+}
+
+.internal-message-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+
+.internal-message-form-grid .full-width {
+    grid-column: 1 / -1;
+}
+
+.internal-message-form-grid label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #123e6b;
+}
+
+.internal-message-form-grid input,
+.internal-message-form-grid select,
+.internal-message-form-grid textarea {
+    width: 100%;
+    border: 1px solid #cfdbea;
+    border-radius: 14px;
+    padding: 14px 16px;
+    font-size: 14px;
+    background: #fff;
+    color: #1d2b3a;
+    outline: none;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.internal-message-form-grid textarea {
+    resize: vertical;
+    min-height: 160px;
+}
+
+.internal-message-form-grid input:focus,
+.internal-message-form-grid select:focus,
+.internal-message-form-grid textarea:focus {
+    border-color: #0e4b84;
+    box-shadow: 0 0 0 3px rgba(14, 75, 132, 0.10);
+}
+
+.internal-message-form-grid small {
+    display: block;
+    margin-top: 6px;
+    color: #6d7f93;
+    font-size: 12px;
+}
+
+.internal-message-actions {
+    margin-top: 18px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.internal-message-side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.internal-message-info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.internal-message-info-list .info-item {
+    padding: 14px 16px;
+    border: 1px solid #d9e4f0;
+    border-radius: 16px;
+    background: #f8fbff;
+}
+
+.internal-message-info-list .info-item strong {
+    display: block;
+    margin-bottom: 6px;
+    color: #123e6b;
+    font-size: 14px;
+}
+
+.internal-message-info-list .info-item p {
+    margin: 0;
+    color: #5f7388;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.internal-message-tips {
+    margin: 0;
+    padding-left: 18px;
+    color: #5f7388;
+    font-size: 13px;
+    line-height: 1.8;
+}
+
+#internalMessageResult {
+    margin-top: 18px;
+}
+
+@media (max-width: 1100px) {
+    .internal-message-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .internal-message-form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* =========================================================
+   MENSAJES INTERNOS - DISEÑO PROFESIONAL
+========================================================= */
+
+.internal-message-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(320px, 0.85fr);
+    gap: 24px;
+    align-items: start;
+}
+
+.internal-message-main-card,
+.internal-message-info-card,
+.internal-message-tip-card {
+    border-radius: 24px;
+    border: 1px solid #dbe7f3;
+    box-shadow: 0 16px 36px rgba(15, 61, 102, 0.08);
+}
+
+.internal-message-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 20px;
+}
+
+.internal-message-card-header h3 {
+    margin: 0;
+    color: #0f3d66;
+    font-size: 20px;
+    font-weight: 850;
+}
+
+.internal-message-card-header p {
+    margin: 6px 0 0;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.internal-message-badge {
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: #eef6ff;
+    color: #0f3d66;
+    border: 1px solid #cfe0f3;
+    font-size: 11px;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+.internal-message-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.internal-message-form-grid .full-width {
+    grid-column: 1 / -1;
+}
+
+.internal-message-form-grid label {
+    display: block;
+    margin-bottom: 8px;
+    color: #0f3d66;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.internal-message-form-grid input,
+.internal-message-form-grid select,
+.internal-message-form-grid textarea {
+    width: 100%;
+    border: 1px solid #cfdbea;
+    border-radius: 14px;
+    padding: 13px 15px;
+    font-size: 14px;
+    background: #ffffff;
+    color: #0f172a;
+    outline: none;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+.internal-message-form-grid select {
+    height: 46px;
+}
+
+.internal-message-form-grid textarea {
+    min-height: 165px;
+    resize: vertical;
+    line-height: 1.5;
+}
+
+.internal-message-form-grid input:focus,
+.internal-message-form-grid select:focus,
+.internal-message-form-grid textarea:focus {
+    border-color: #0f3d66;
+    box-shadow: 0 0 0 3px rgba(15, 61, 102, 0.12);
+}
+
+.internal-message-form-grid small {
+    display: block;
+    margin-top: 6px;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.internal-message-actions {
+    margin-top: 18px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.internal-message-result-box {
+    margin-top: 18px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: #eef6ff;
+    border-left: 4px solid #0f3d66;
+    color: #334155;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.internal-message-result-box.success {
+    background: #ecfdf3;
+    border-left-color: #059669;
+    color: #047857;
+}
+
+.internal-message-result-box.error {
+    background: #fef3f2;
+    border-left-color: #dc2626;
+    color: #b42318;
+}
+
+.internal-message-result-box.loading {
+    background: #fffbeb;
+    border-left-color: #d97706;
+    color: #92400e;
+}
+
+.internal-message-side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.internal-message-info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.internal-message-info-list .info-item {
+    padding: 14px;
+    border-radius: 16px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+.internal-message-info-list .info-item strong {
+    display: block;
+    margin-bottom: 5px;
+    color: #0f3d66;
+    font-size: 14px;
+    font-weight: 850;
+}
+
+.internal-message-info-list .info-item p {
+    margin: 0;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.internal-message-tips {
+    margin: 0;
+    padding-left: 18px;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.8;
+}
+
+@media (max-width: 1100px) {
+    .internal-message-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 760px) {
+    .internal-message-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .internal-message-actions {
+        flex-direction: column;
+    }
+
+    .internal-message-actions button {
+        width: 100%;
+    }
+
+    .internal-message-card-header {
+        flex-direction: column;
+    }
+}
+
+/* =========================================================
+   NOTIFICAR USUARIO DESDE ADMINISTRACIÓN
+========================================================= */
+
+.table-action-btn.info {
+    background: #eff8ff;
+    color: #175cd3;
+    border: 1px solid #b2ddff;
+}
+
+.table-action-btn.info:hover {
+    background: #175cd3;
+    color: #ffffff;
+    box-shadow: 0 8px 18px rgba(23, 92, 211, 0.22);
+}
+
+.admin-notify-modal {
+    text-align: left;
+}
+
+.admin-notify-user-card {
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: #eef6ff;
+    border: 1px solid #cfe0f3;
+    margin-bottom: 16px;
+}
+
+.admin-notify-user-card strong {
+    display: block;
+    color: #0f3d66;
+    font-size: 16px;
+    font-weight: 850;
+}
+
+.admin-notify-user-card span {
+    display: inline-flex;
+    margin-top: 6px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #0f3d66;
+    border: 1px solid #dbe7f3;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.admin-notify-user-card small {
+    display: block;
+    margin-top: 6px;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.admin-notify-modal label {
+    display: block;
+    margin: 12px 0 6px;
+    color: #0f3d66;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.admin-notify-modal .admin-notify-input {
+    width: 100% !important;
+    height: 44px !important;
+    margin: 0 !important;
+    border-radius: 12px !important;
+    border: 1px solid #cfdbea !important;
+    padding: 0 12px !important;
+    font-size: 14px !important;
+    box-sizing: border-box !important;
+}
+
+.admin-notify-textarea {
+    width: 100%;
+    min-height: 140px;
+    resize: vertical;
+    border-radius: 12px;
+    border: 1px solid #cfdbea;
+    padding: 12px;
+    font-size: 14px;
+    outline: none;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+.admin-notify-textarea:focus,
+.admin-notify-modal .admin-notify-input:focus {
+    border-color: #0f3d66 !important;
+    box-shadow: 0 0 0 3px rgba(15, 61, 102, 0.12) !important;
+}
+
+/* =========================================================
+   SWEETALERT SOBRE MODALES
+   Soluciona cuando Notificar sale detrás o dentro del modal
+========================================================= */
+
+.swal2-container {
+    z-index: 30000 !important;
+}
+
+.swal2-popup {
+    z-index: 30001 !important;
+}
+
+.swal2-backdrop-show {
+    z-index: 30000 !important;
+}
+
+.admin-notify-modal {
+    text-align: left;
+}
+
+.admin-notify-user-card {
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: #eef6ff;
+    border: 1px solid #cfe0f3;
+    margin-bottom: 16px;
+}
+
+.admin-notify-user-card strong {
+    display: block;
+    color: #0f3d66;
+    font-size: 16px;
+    font-weight: 850;
+}
+
+.admin-notify-user-card span {
+    display: inline-flex;
+    margin-top: 6px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #0f3d66;
+    border: 1px solid #dbe7f3;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.admin-notify-user-card small {
+    display: block;
+    margin-top: 6px;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.admin-notify-modal label {
+    display: block;
+    margin: 12px 0 6px;
+    color: #0f3d66;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.admin-notify-modal .admin-notify-input {
+    width: 100% !important;
+    height: 44px !important;
+    margin: 0 !important;
+    border-radius: 12px !important;
+    border: 1px solid #cfdbea !important;
+    padding: 0 12px !important;
+    font-size: 14px !important;
+    box-sizing: border-box !important;
+}
+
+.admin-notify-textarea {
+    width: 100%;
+    min-height: 150px;
+    resize: vertical;
+    border-radius: 12px;
+    border: 1px solid #cfdbea;
+    padding: 12px;
+    font-size: 14px;
+    outline: none;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+.admin-notify-textarea:focus,
+.admin-notify-modal .admin-notify-input:focus {
+    border-color: #0f3d66 !important;
+    box-shadow: 0 0 0 3px rgba(15, 61, 102, 0.12) !important;
+}
+/* =========================================================
+   NOTIFICACIONES - DISEÑO PROFESIONAL FINAL
+========================================================= */
+
+.notification-dropdown {
+    width: 390px !important;
+    max-width: calc(100vw - 32px) !important;
+    max-height: 520px !important;
+    overflow: hidden !important;
+    border-radius: 18px !important;
+}
+
+.notification-list {
+    max-height: 430px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+.notification-item {
+    padding: 14px !important;
+    border-bottom: 1px solid #e6edf5 !important;
+    cursor: pointer !important;
+    background: #ffffff !important;
+    transition: all 0.2s ease !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+}
+
+.notification-item:hover {
+    background: #f8fbff !important;
+}
+
+.notification-item.unread {
+    background: rgba(37, 99, 235, 0.08) !important;
+    border-left: 4px solid #2563eb !important;
+}
+
+.notification-item.unread:hover {
+    background: rgba(37, 99, 235, 0.13) !important;
+}
+
+.notification-item-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+}
+
+.notification-item-header strong {
+    color: #0f3d66 !important;
+    font-size: 14px !important;
+    font-weight: 850 !important;
+    line-height: 1.3 !important;
+
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+}
+
+.notification-new-badge {
+    flex-shrink: 0 !important;
+    padding: 4px 8px !important;
+    border-radius: 999px !important;
+    background: #2563eb !important;
+    color: #ffffff !important;
+    font-size: 10px !important;
+    font-weight: 900 !important;
+}
+
+.notification-preview {
+    margin: 7px 0 0 !important;
+    color: #334155 !important;
+    font-size: 13px !important;
+    line-height: 1.45 !important;
+
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+    white-space: normal !important;
+}
+
+.notification-full-message {
+    display: none !important;
+}
+
+.notification-item.expanded .notification-full-message {
+    display: none !important;
+}
+
+.notification-item-footer {
+    margin-top: 8px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 12px !important;
+}
+
+.notification-item-footer small {
+    color: #64748b !important;
+    font-size: 11px !important;
+}
+
+.notification-open-btn,
+.notification-expand-btn {
+    border: none !important;
+    background: transparent !important;
+    color: #0f3d66 !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+}
+
+.notification-open-btn:hover,
+.notification-expand-btn:hover {
+    text-decoration: underline !important;
+}
+
+/* Modal de lectura completa */
+.notification-detail-popup {
+    border-radius: 22px !important;
+}
+
+.notification-detail-modal {
+    text-align: left !important;
+}
+
+.notification-detail-meta {
+    display: flex !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    align-items: center !important;
+
+    margin-bottom: 14px !important;
+    padding: 12px 14px !important;
+
+    border-radius: 14px !important;
+    background: #eef6ff !important;
+    border: 1px solid #cfe0f3 !important;
+}
+
+.notification-detail-meta span {
+    color: #0f3d66 !important;
+    font-size: 13px !important;
+    font-weight: 850 !important;
+}
+
+.notification-detail-meta small {
+    color: #64748b !important;
+    font-size: 12px !important;
+}
+
+.notification-detail-message {
+    max-height: 320px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+
+    padding: 16px !important;
+    border-radius: 16px !important;
+
+    background: #ffffff !important;
+    border: 1px solid #dbe7f3 !important;
+
+    color: #1e293b !important;
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+
+    white-space: pre-wrap !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+}

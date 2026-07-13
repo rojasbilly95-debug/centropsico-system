@@ -8,6 +8,7 @@ import com.centropsicologico.sistema.service.FinanceService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/finances")
@@ -47,6 +48,27 @@ public class FinanceController {
     @GetMapping("/expenses")
     public List<Expense> findAllExpenses() {
         return financeService.findAllExpenses();
+    }
+
+    @GetMapping("/expenses/filter")
+    public List<Expense> filterExpenses(
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) Boolean active,
+            @RequestParam(required = false) String responsible
+    ) {
+        return financeService.filterExpenses(year, month, categoryId, active, responsible);
+    }
+
+    @DeleteMapping("/expenses/{id}")
+    public Map<String, Object> deleteExpense(@PathVariable Long id) {
+        financeService.deleteExpense(id);
+
+        return Map.of(
+                "success", true,
+                "message", "Gasto eliminado correctamente"
+        );
     }
 
     @GetMapping("/summary")

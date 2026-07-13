@@ -118,6 +118,9 @@ async function loadUsers() {
 
 function renderUserTable(data) {
     const tbody = document.getElementById("userTableBody");
+
+    if (!tbody) return;
+
     tbody.innerHTML = "";
 
     const totalPages = Math.ceil(data.length / usersPerPage) || 1;
@@ -136,6 +139,13 @@ function renderUserTable(data) {
                 </td>
             </tr>
         `;
+
+        const pageInfo = document.getElementById("userPageInfo");
+
+        if (pageInfo) {
+            pageInfo.textContent = `Página 1 de 1`;
+        }
+
         return;
     }
 
@@ -143,33 +153,65 @@ function renderUserTable(data) {
         tbody.innerHTML += `
             <tr>
                 <td>${user.id ?? ""}</td>
-                <td>${user.firstName ?? ""}</td>
-                <td>${user.lastName ?? ""}</td>
-                <td>${user.email ?? ""}</td>
-                <td><span class="badge badge-role">${user.role ?? ""}</span></td>
+                <td>${escapeUserTableHtml(user.firstName ?? "")}</td>
+                <td>${escapeUserTableHtml(user.lastName ?? "")}</td>
+                <td>${escapeUserTableHtml(user.email ?? "")}</td>
+                <td>
+                    <span class="badge badge-role">
+                        ${escapeUserTableHtml(user.role ?? "")}
+                    </span>
+                </td>
                 <td>
                     <span class="status-pill ${user.active ? "active" : "inactive"}">
                         ${user.active ? "Activo" : "Inactivo"}
                     </span>
                 </td>
                 <td>
-                    <button class="btn-secondary" onclick="startEditUser(${user.id})">
+                    <button 
+                        type="button"
+                        class="btn-secondary"
+                        onclick="startEditUser(${user.id})">
                         Editar
                     </button>
 
-                    <button class="${user.active ? "btn-danger-soft" : "btn-secondary"}"
-                            onclick="toggleUserStatus(${user.id}, ${user.active})">
+                    <button 
+                        type="button"
+                        class="${user.active ? "btn-danger-soft" : "btn-secondary"}"
+                        onclick="toggleUserStatus(${user.id}, ${user.active})">
                         ${user.active ? "Desactivar" : "Activar"}
                     </button>
+
+                    ${
+                        user.active
+                            ? `
+                                <button 
+                                    type="button"
+                                    class="table-action-btn info"
+                                    onclick="openUserNotificationModal(${user.id})">
+                                    Notificar
+                                </button>
+                            `
+                            : ""
+                    }
                 </td>
             </tr>
         `;
     });
 
     const pageInfo = document.getElementById("userPageInfo");
+
     if (pageInfo) {
         pageInfo.textContent = `Página ${currentUserPage} de ${totalPages}`;
     }
+}
+
+function escapeUserTableHtml(value) {
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
 }
 
 function getFilteredUsers() {
@@ -329,4 +371,162 @@ function showUserMessage(message, type = "info") {
     } else {
         box.classList.add("message-info");
     }
+}
+
+async function openUserNotificationModal(userId) {
+    if (!userId) return;
+
+    const user = typeof usersData !== "undefined"
+        ? usersData.find(item => Number(item.id) === Number(userId))
+        : null;
+
+    const userName = getUserNotificationDisplayName(user);
+    const userRole = user?.role || "SIN_ROL";
+    const userEmail = user?.email || "";
+
+    const result = await Swal.fire({
+        title: "Enviar notificación",
+        html: `
+            <div class="admin-notify-modal">
+
+                <div class="admin-notify-user-card">
+                    <strong>${escapeUserNotificationHtml(userName)}</strong>
+                    <span>${escapeUserNotificationHtml(formatUserNotificationRole(userRole))}</span>
+                    <small>${escapeUserNotificationHtml(userEmail)}</small>
+                </div>
+
+                <label>Asunto</label>
+                <input 
+                    id="adminNotifyTitle" 
+                    class="swal2-input admin-notify-input" 
+                    maxlength="120"
+                    placeholder="Ejemplo: Recordatorio de citas">
+
+                <label>Mensaje</label>
+                <textarea 
+                    id="adminNotifyMessage" 
+                    class="admin-notify-textarea"
+                    maxlength="700"
+                    placeholder="Escribe el mensaje que recibirá el usuario en su campana."></textarea>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: "Enviar notificación",
+        cancelButtonText: "Cancelar",
+        confirmButtonColor: "#0f3d66",
+        width: 620,
+        focusConfirm: false,
+        preConfirm: () => {
+            const title = document.getElementById("adminNotifyTitle").value.trim();
+            const message = document.getElementById("adminNotifyMessage").value.trim();
+
+            if (!title) {
+                Swal.showValidationMessage("Ingresa el asunto de la notificación.");
+                return false;
+            }
+
+            if (title.length < 4) {
+                Swal.showValidationMessage("El asunto debe tener al menos 4 caracteres.");
+                return false;
+            }
+
+            if (!message) {
+                Swal.showValidationMessage("Ingresa el mensaje de la notificación.");
+                return false;
+            }
+
+            if (message.length < 8) {
+                Swal.showValidationMessage("El mensaje debe tener al menos 8 caracteres.");
+                return false;
+            }
+
+            return {
+                title,
+                message
+            };
+        }
+    });
+
+    if (!result.isConfirmed || !result.value) return;
+
+    try {
+        const response = await authFetch(`${baseUrl}/admin-notifications/users/${userId}`, {
+            method: "POST",
+            body: JSON.stringify(result.value)
+        });
+
+        if (!response) return;
+
+        let data = {};
+
+        try {
+            data = await response.json();
+        } catch (error) {
+            data = {};
+        }
+
+        if (!response.ok) {
+            Swal.fire(
+                "Error",
+                data.message || "No se pudo enviar la notificación.",
+                "error"
+            );
+            return;
+        }
+
+        Swal.fire({
+            icon: "success",
+            title: "Notificación enviada",
+            text: data.message || "El usuario recibirá el mensaje en su campana.",
+            timer: 1800,
+            showConfirmButton: false
+        });
+
+        if (typeof loadNotifications === "function") {
+            await loadNotifications(false);
+        }
+
+        if (typeof loadAuditLogs === "function") {
+            await loadAuditLogs();
+        }
+
+    } catch (error) {
+        console.error("Error enviando notificación:", error);
+
+        Swal.fire(
+            "Error",
+            "Error de conexión con el servidor.",
+            "error"
+        );
+    }
+}
+
+function getUserNotificationDisplayName(user) {
+    if (!user) return "Usuario seleccionado";
+
+    const firstName = user.firstName || user.names || user.name || "";
+    const lastName = user.lastName || user.surnames || "";
+
+    const fullName = `${firstName} ${lastName}`.trim();
+
+    return fullName || user.email || "Usuario seleccionado";
+}
+
+function formatUserNotificationRole(role) {
+    const roles = {
+        ADMIN: "Administrador",
+        RECEPCIONISTA: "Recepción",
+        PSICOLOGO: "Psicólogo"
+    };
+
+    return roles[role] || role || "Sin rol";
+}
+
+function escapeUserNotificationHtml(value) {
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
 }

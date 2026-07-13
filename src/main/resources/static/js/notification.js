@@ -2,6 +2,7 @@ let stompClient = null;
 let notificationData = [];
 let notificationsDropdownOpen = false;
 let markingNotificationsAsRead = false;
+let expandedNotificationIds = new Set();
 
 /* =========================
    CARGA DE NOTIFICACIONES
@@ -41,6 +42,16 @@ async function loadNotifications(showAlert = true) {
 
     } catch (error) {
         console.error("Error cargando notificaciones:", error);
+
+        const list = document.getElementById("notificationList");
+
+        if (list) {
+            list.innerHTML = `
+                <div class="notification-empty">
+                    No se pudieron cargar las notificaciones.
+                </div>
+            `;
+        }
     }
 }
 
@@ -49,7 +60,7 @@ function mergeNotifications(roleNotifications = [], userNotifications = []) {
 
     [...roleNotifications, ...userNotifications].forEach(notification => {
         if (notification && notification.id != null) {
-            map.set(notification.id, notification);
+            map.set(Number(notification.id), notification);
         }
     });
 
@@ -63,6 +74,7 @@ function mergeNotifications(roleNotifications = [], userNotifications = []) {
 
 function renderNotifications() {
     const list = document.getElementById("notificationList");
+
     if (!list) return;
 
     list.innerHTML = "";
@@ -76,25 +88,135 @@ function renderNotifications() {
         return;
     }
 
-    notificationData.slice(0, 10).forEach(notification => {
-        const unreadClass = notification.read ? "" : "unread";
+    notificationData.slice(0, 15).forEach(notification => {
+        const notificationId = Number(notification.id);
+        const isUnread = !notification.read;
+        const preview = getNotificationPreview(notification.message || "", 14);
 
         list.innerHTML += `
-            <div class="notification-item ${unreadClass}"
-                 onclick="markNotificationAsRead(${notification.id})">
-                <strong>${escapeNotificationHtml(notification.title || "Notificación")}</strong>
-                <p>${escapeNotificationHtml(notification.message || "")}</p>
-                <small>${formatNotificationDate(notification.createdAt)}</small>
+            <div class="notification-item ${isUnread ? "unread" : ""}"
+                 onclick="openNotificationDetail(${notificationId})">
+
+                <div class="notification-item-header">
+                    <strong>${escapeNotificationHtml(notification.title || "Notificación")}</strong>
+
+                    ${
+                        isUnread
+                            ? `<span class="notification-new-badge">Nuevo</span>`
+                            : ""
+                    }
+                </div>
+
+                <p class="notification-preview">
+                    ${escapeNotificationHtml(preview)}
+                </p>
+
+                <div class="notification-item-footer">
+                    <small>${formatNotificationDate(notification.createdAt)}</small>
+
+                    <button 
+                        type="button"
+                        class="notification-open-btn"
+                        onclick="event.stopPropagation(); openNotificationDetail(${notificationId})">
+                        Abrir
+                    </button>
+                </div>
             </div>
         `;
     });
 }
 
+async function openNotificationDetail(id) {
+    const notificationId = Number(id);
+
+    if (!notificationId) return;
+
+    const notification = notificationData.find(item => Number(item.id) === notificationId);
+
+    if (!notification) return;
+
+    // Cerrar/minimizar el panel de notificaciones antes de mostrar el mensaje
+    closeNotificationDropdown();
+
+    if (!notification.read) {
+        await markNotificationAsRead(notificationId);
+    }
+
+    await Swal.fire({
+        title: escapeNotificationHtml(notification.title || "Notificación"),
+        html: `
+            <div class="notification-detail-modal">
+
+                <div class="notification-detail-meta">
+                    <span>Mensaje recibido</span>
+                    <small>${formatNotificationDate(notification.createdAt)}</small>
+                </div>
+
+                <div class="notification-detail-message">
+                    ${escapeNotificationHtml(notification.message || "Sin detalle")}
+                </div>
+
+            </div>
+        `,
+        confirmButtonText: "Cerrar mensaje",
+        confirmButtonColor: "#0f3d66",
+        width: 560,
+        backdrop: true,
+        allowOutsideClick: true,
+        heightAuto: false,
+        customClass: {
+            popup: "notification-detail-popup"
+        }
+    });
+
+    renderNotifications();
+    updateNotificationCount();
+}
+
+async function toggleNotificationItem(id) {
+    const notificationId = Number(id);
+
+    if (!notificationId) return;
+
+    const notification = notificationData.find(item => Number(item.id) === notificationId);
+
+    if (!notification) return;
+
+    if (expandedNotificationIds.has(notificationId)) {
+        expandedNotificationIds.delete(notificationId);
+    } else {
+        expandedNotificationIds.add(notificationId);
+
+        if (!notification.read) {
+            await markNotificationAsRead(notificationId);
+            return;
+        }
+    }
+
+    renderNotifications();
+    updateNotificationCount();
+}
+
+function getNotificationPreview(message, maxWords = 14) {
+    const text = String(message || "").trim();
+
+    if (!text) return "Sin detalle";
+
+    const words = text.split(/\s+/);
+
+    if (words.length <= maxWords) {
+        return text.length > 90 ? text.substring(0, 90) + "..." : text;
+    }
+
+    return words.slice(0, maxWords).join(" ") + "...";
+}
+
 function updateNotificationCount() {
-    const count = notificationData.filter(notification => !notification.read).length;
     const badge = document.getElementById("notificationCount");
 
     if (!badge) return;
+
+    const count = notificationData.filter(notification => !notification.read).length;
 
     if (count > 0) {
         badge.textContent = count;
@@ -107,7 +229,6 @@ function updateNotificationCount() {
 
 /* =========================
    DROPDOWN
-   Al abrir, marca como leído.
 ========================= */
 
 async function toggleNotificationDropdown() {
@@ -129,9 +250,8 @@ async function toggleNotificationDropdown() {
         dropdown.style.display = "block";
         notificationsDropdownOpen = true;
 
+        await loadNotifications(false);
         renderNotifications();
-
-        await markVisibleNotificationsAsRead();
 
     } else {
         closeNotificationDropdown();
@@ -140,6 +260,7 @@ async function toggleNotificationDropdown() {
 
 function closeNotificationDropdown() {
     const dropdown = document.getElementById("notificationDropdown");
+
     if (!dropdown) return;
 
     dropdown.classList.add("hidden");
@@ -151,63 +272,20 @@ function closeNotificationDropdown() {
    MARCAR COMO LEÍDO
 ========================= */
 
-async function markVisibleNotificationsAsRead() {
+async function markNotificationAsRead(id) {
     try {
-        if (markingNotificationsAsRead) return;
-        if (!currentUser || !currentUser.role) return;
+        const notificationId = Number(id);
 
-        const hasUnread = notificationData.some(notification => !notification.read);
+        const notification = notificationData.find(item => Number(item.id) === notificationId);
 
-        if (!hasUnread) {
+        if (notification && notification.read) {
+            renderNotifications();
             updateNotificationCount();
             return;
         }
 
-        markingNotificationsAsRead = true;
-
-        // Cambio visual inmediato
-        notificationData = notificationData.map(notification => ({
-            ...notification,
-            read: true
-        }));
-
-        renderNotifications();
-        updateNotificationCount();
-
-        // Cambio real en backend
-        await Promise.all([
-            authFetch(`${baseUrl}/notifications/role/${currentUser.role}/read-all`, {
-                method: "PATCH"
-            }),
-            authFetch(`${baseUrl}/notifications/me/read-all`, {
-                method: "PATCH"
-            })
-        ]);
-
-        // Recarga sin volver a mostrar alerta
-        await loadNotifications(false);
-
-    } catch (error) {
-        console.error("Error marcando notificaciones visibles como leídas:", error);
-
-        // Si falla, recargamos para no dejar una vista falsa
-        await loadNotifications(false);
-
-    } finally {
-        markingNotificationsAsRead = false;
-    }
-}
-
-async function markNotificationAsRead(id) {
-    try {
-        const notification = notificationData.find(item => item.id === id);
-
-        if (notification && notification.read) {
-            return;
-        }
-
         notificationData = notificationData.map(item => {
-            if (item.id === id) {
+            if (Number(item.id) === notificationId) {
                 return {
                     ...item,
                     read: true
@@ -220,7 +298,7 @@ async function markNotificationAsRead(id) {
         renderNotifications();
         updateNotificationCount();
 
-        const response = await authFetch(`${baseUrl}/notifications/${id}/read`, {
+        const response = await authFetch(`${baseUrl}/notifications/${notificationId}/read`, {
             method: "PATCH"
         });
 
@@ -263,6 +341,48 @@ async function markAllNotificationsAsRead() {
     }
 }
 
+async function markVisibleNotificationsAsRead() {
+    try {
+        if (markingNotificationsAsRead) return;
+        if (!currentUser || !currentUser.role) return;
+
+        const hasUnread = notificationData.some(notification => !notification.read);
+
+        if (!hasUnread) {
+            updateNotificationCount();
+            return;
+        }
+
+        markingNotificationsAsRead = true;
+
+        notificationData = notificationData.map(notification => ({
+            ...notification,
+            read: true
+        }));
+
+        renderNotifications();
+        updateNotificationCount();
+
+        await Promise.all([
+            authFetch(`${baseUrl}/notifications/role/${currentUser.role}/read-all`, {
+                method: "PATCH"
+            }),
+            authFetch(`${baseUrl}/notifications/me/read-all`, {
+                method: "PATCH"
+            })
+        ]);
+
+        await loadNotifications(false);
+
+    } catch (error) {
+        console.error("Error marcando notificaciones visibles como leídas:", error);
+        await loadNotifications(false);
+
+    } finally {
+        markingNotificationsAsRead = false;
+    }
+}
+
 /* =========================
    WEBSOCKET
 ========================= */
@@ -299,7 +419,7 @@ function connectNotificationWebSocket() {
 }
 
 async function handleRealtimeNotification(notification) {
-    const exists = notificationData.some(item => item.id === notification.id);
+    const exists = notificationData.some(item => Number(item.id) === Number(notification.id));
 
     if (!exists) {
         notificationData.unshift(notification);
@@ -310,12 +430,6 @@ async function handleRealtimeNotification(notification) {
     animateNotificationBell();
     showRealtimeToast(notification);
     refreshRealtimeModules();
-
-    // Si el panel está abierto cuando llega una notificación,
-    // se considera vista y se marca como leída automáticamente.
-    if (notificationsDropdownOpen) {
-        await markVisibleNotificationsAsRead();
-    }
 }
 
 function showRealtimeToast(notification) {
@@ -326,7 +440,7 @@ function showRealtimeToast(notification) {
         position: "top-end",
         icon: "info",
         title: notification.title,
-        text: notification.message,
+        text: getNotificationPreview(notification.message, 14),
         timer: 3500,
         showConfirmButton: false
     });
@@ -416,7 +530,7 @@ function formatNotificationDate(value) {
 }
 
 function escapeNotificationHtml(value) {
-    return String(value)
+    return String(value ?? "")
         .replaceAll("&", "&amp;")
         .replaceAll("<", "&lt;")
         .replaceAll(">", "&gt;")

@@ -1,6 +1,7 @@
 package com.centropsicologico.sistema.controller;
 
 import com.centropsicologico.sistema.dto.MonthlyReportDto;
+import com.centropsicologico.sistema.dto.PsychologistPerformanceReportDto;
 import com.centropsicologico.sistema.entity.Appointment;
 import com.centropsicologico.sistema.entity.Expense;
 import com.centropsicologico.sistema.entity.Income;
@@ -15,7 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/reports")
@@ -86,5 +91,114 @@ public class ReportController {
                 profit,
                 result
         );
+    }
+
+    @GetMapping("/psychologist-performance")
+    public List<PsychologistPerformanceReportDto> getPsychologistPerformanceReport(
+            @RequestParam Integer year,
+            @RequestParam Integer month,
+            @RequestParam(required = false) Long psychologistId
+    ) {
+        if (year == null || month == null) {
+            throw new RuntimeException("Debe ingresar año y mes");
+        }
+
+        if (month < 1 || month > 12) {
+            throw new RuntimeException("El mes debe estar entre 1 y 12");
+        }
+
+        LocalDate startDate = LocalDate.of(year, month, 1);
+        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+
+        List<Appointment> attendedAppointments;
+
+        if (psychologistId != null) {
+            attendedAppointments = appointmentRepository
+                    .findByStatusAndDateBetweenAndPsychologistId(
+                            AppointmentStatus.ATENDIDA,
+                            startDate,
+                            endDate,
+                            psychologistId
+                    );
+        } else {
+            attendedAppointments = appointmentRepository
+                    .findByStatusAndDateBetween(
+                            AppointmentStatus.ATENDIDA,
+                            startDate,
+                            endDate
+                    );
+        }
+
+        attendedAppointments = attendedAppointments.stream()
+                .filter(a -> a.getPsychologist() != null)
+                .sorted(Comparator
+                        .comparing((Appointment a) -> safe(a.getPsychologist().getLastName()))
+                        .thenComparing(a -> safe(a.getPsychologist().getFirstName()))
+                        .thenComparing(Appointment::getDate)
+                )
+                .toList();
+
+        Map<Long, List<Appointment>> appointmentsByPsychologist = attendedAppointments.stream()
+                .collect(Collectors.groupingBy(
+                        appointment -> appointment.getPsychologist().getId(),
+                        LinkedHashMap::new,
+                        Collectors.toList()
+                ));
+
+        return appointmentsByPsychologist.values().stream()
+                .map(this::buildPsychologistPerformance)
+                .toList();
+    }
+
+    private PsychologistPerformanceReportDto buildPsychologistPerformance(List<Appointment> appointments) {
+        Appointment firstAppointment = appointments.get(0);
+
+        Long psychologistId = firstAppointment.getPsychologist().getId();
+
+        String psychologistName = safe(firstAppointment.getPsychologist().getFirstName())
+                + " "
+                + safe(firstAppointment.getPsychologist().getLastName());
+
+        psychologistName = psychologistName.trim();
+
+        Long totalPatients = appointments.stream()
+                .filter(a -> a.getPatient() != null)
+                .map(a -> a.getPatient().getId())
+                .distinct()
+                .count();
+
+        Long totalAppointments = (long) appointments.size();
+
+        List<PsychologistPerformanceReportDto.TherapySummaryDto> therapies = appointments.stream()
+                .filter(a -> a.getService() != null)
+                .collect(Collectors.groupingBy(
+                        a -> safe(a.getService().getName()).isBlank()
+                                ? "Servicio sin nombre"
+                                : safe(a.getService().getName()),
+                        LinkedHashMap::new,
+                        Collectors.counting()
+                ))
+                .entrySet()
+                .stream()
+                .map(entry -> new PsychologistPerformanceReportDto.TherapySummaryDto(
+                        entry.getKey(),
+                        entry.getValue()
+                ))
+                .sorted(Comparator.comparing(
+                        PsychologistPerformanceReportDto.TherapySummaryDto::getTotal
+                ).reversed())
+                .toList();
+
+        return new PsychologistPerformanceReportDto(
+                psychologistId,
+                psychologistName,
+                totalPatients,
+                totalAppointments,
+                therapies
+        );
+    }
+
+    private String safe(String value) {
+        return value == null ? "" : value.trim();
     }
 }

@@ -28,8 +28,8 @@ public class SecurityConfig {
     public SecurityConfig(
             UserRepository userRepository,
             JwtAuthenticationFilter jwtAuthenticationFilter,
-            AuditLogService auditLogService) {
-
+            AuditLogService auditLogService
+    ) {
         this.userRepository = userRepository;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.auditLogService = auditLogService;
@@ -46,74 +46,103 @@ public class SecurityConfig {
                 .authenticationProvider(authenticationProvider())
 
                 .authorizeHttpRequests(auth -> auth
-                .requestMatchers(
-                        "/",
-                        "/index.html",
-                        "/login.html",
-                        "/portal.html",
-                        "/css/**",
-                        "/js/**",
-                        "/components/**",
-                        "/img/**",
-                        "/uploads/**",
-                        "/favicon.ico",
-                        "/api/auth/**",
-                        "/api/public/**",
-                        "/ws/**")
-                .permitAll()
 
+                        // RUTAS PÚBLICAS
+                        .requestMatchers(
+                                "/",
+                                "/index.html",
+                                "/login.html",
+                                "/portal.html",
+                                "/css/**",
+                                "/js/**",
+                                "/components/**",
+                                "/img/**",
+                                "/uploads/**",
+                                "/favicon.ico",
+                                "/api/auth/**",
+                                "/api/public/**",
+                                "/ws/**"
+                        )
+                        .permitAll()
+
+                        // PERFIL
                         .requestMatchers("/api/profile/**")
                         .hasAnyAuthority("ADMIN", "RECEPCIONISTA", "PSICOLOGO")
 
+                        // DASHBOARD
                         .requestMatchers("/api/dashboard/**")
                         .hasAnyAuthority("ADMIN", "RECEPCIONISTA", "PSICOLOGO")
 
+                        // AUDITORÍA / MOVIMIENTOS
                         .requestMatchers("/api/audit-logs/**")
                         .hasAuthority("ADMIN")
 
+                        // USUARIOS
                         .requestMatchers("/api/users/**")
                         .hasAuthority("ADMIN")
 
+                        // NOTIFICACIONES DIRECTAS DEL ADMIN A USUARIOS
+                        .requestMatchers("/api/admin-notifications/**")
+                        .hasAuthority("ADMIN")
+
+                        // PROMOCIONES DEL PORTAL
+                        .requestMatchers("/api/promotions/**")
+                        .hasAuthority("ADMIN")
+
+                        // PRE-RESERVAS
                         .requestMatchers("/api/leads/**")
                         .hasAnyAuthority("ADMIN", "RECEPCIONISTA")
 
+                        // PSICÓLOGOS - CONSULTA
                         .requestMatchers(HttpMethod.GET, "/api/psychologists/**")
                         .hasAnyAuthority("ADMIN", "RECEPCIONISTA", "PSICOLOGO")
 
+                        // SERVICIOS - CONSULTA
                         .requestMatchers(HttpMethod.GET, "/api/services/**")
                         .hasAnyAuthority("ADMIN", "RECEPCIONISTA", "PSICOLOGO")
 
+                        // PSICÓLOGOS - ADMINISTRACIÓN
                         .requestMatchers("/api/psychologists/**")
                         .hasAuthority("ADMIN")
 
+                        // SERVICIOS - ADMINISTRACIÓN
                         .requestMatchers("/api/services/**")
                         .hasAuthority("ADMIN")
 
+                        // FINANZAS
                         .requestMatchers("/api/finances/**")
                         .hasAuthority("ADMIN")
 
+                        // REPORTES
                         .requestMatchers("/api/reports/**")
                         .hasAuthority("ADMIN")
 
+                        // PACIENTES
                         .requestMatchers("/api/patients/**")
                         .hasAnyAuthority("ADMIN", "RECEPCIONISTA")
 
+                        // DISPONIBILIDAD - CONSULTA
                         .requestMatchers(HttpMethod.GET, "/api/psychologist-availabilities/**")
                         .hasAnyAuthority("ADMIN", "RECEPCIONISTA", "PSICOLOGO")
 
+                        // DISPONIBILIDAD - ADMINISTRACIÓN
                         .requestMatchers("/api/psychologist-availabilities/**")
                         .hasAuthority("ADMIN")
 
+                        // NOTIFICACIONES
                         .requestMatchers("/api/notifications/**")
                         .hasAnyAuthority("ADMIN", "RECEPCIONISTA", "PSICOLOGO")
 
+                        // CITAS
                         .requestMatchers("/api/appointments/**")
                         .hasAnyAuthority("ADMIN", "RECEPCIONISTA", "PSICOLOGO")
 
+                        // HISTORIA CLÍNICA
                         .requestMatchers("/api/clinical-history/**")
                         .hasAnyAuthority("ADMIN", "PSICOLOGO")
 
-                        .anyRequest().authenticated())
+                        .anyRequest().authenticated()
+                )
 
                 .httpBasic(httpBasic -> httpBasic.disable())
 
@@ -134,7 +163,8 @@ public class SecurityConfig {
                             response.setStatus(403);
                             response.setContentType("application/json");
                             response.getWriter().write("{\"error\":\"Acceso denegado\"}");
-                        }));
+                        })
+                );
 
         return http.build();
     }
@@ -152,15 +182,18 @@ public class SecurityConfig {
                     true,
                     true,
                     true,
-                    List.of(new SimpleGrantedAuthority(user.getRole())));
+                    List.of(new SimpleGrantedAuthority(user.getRole()))
+            );
         };
     }
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+
         authProvider.setUserDetailsService(userDetailsService());
         authProvider.setPasswordEncoder(passwordEncoder());
+
         return authProvider;
     }
 
@@ -209,10 +242,10 @@ public class SecurityConfig {
 
         String role = authentication != null && authentication.getAuthorities() != null
                 ? authentication.getAuthorities()
-                .stream()
-                .findFirst()
-                .map(authority -> authority.getAuthority().replace("ROLE_", ""))
-                .orElse("SIN_ROL")
+                        .stream()
+                        .findFirst()
+                        .map(authority -> authority.getAuthority().replace("ROLE_", ""))
+                        .orElse("SIN_ROL")
                 : "SIN_ROL";
 
         String uri = request.getRequestURI();
@@ -244,6 +277,8 @@ public class SecurityConfig {
 
     private boolean isSensitiveEndpoint(String uri) {
         return uri.startsWith("/api/users")
+                || uri.startsWith("/api/admin-notifications")
+                || uri.startsWith("/api/promotions")
                 || uri.startsWith("/api/finances")
                 || uri.startsWith("/api/reports")
                 || uri.startsWith("/api/audit-logs")

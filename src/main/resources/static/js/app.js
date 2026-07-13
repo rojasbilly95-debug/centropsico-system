@@ -1,4 +1,5 @@
 const baseUrl = "/api";
+
 /* =========================
    INIT PRINCIPAL
 ========================= */
@@ -6,64 +7,99 @@ const baseUrl = "/api";
 window.onload = async () => {
     if (!validateSession()) return;
 
-await loadSidebar();
+    await safeRun(loadSidebar);
 
-if (typeof refreshSidebarUser === "function") {
-    refreshSidebarUser();
-}
+    if (typeof refreshSidebarUser === "function") {
+        refreshSidebarUser();
+    }
 
-if (typeof initProfileSidebarClick === "function") {
-    initProfileSidebarClick();
-}
+    if (typeof initProfileSidebarClick === "function") {
+        initProfileSidebarClick();
+    }
 
-applyRoleVisibility();
-loadDashboard();
+    applyRoleVisibility();
+
+    await safeRun(loadDashboard);
 
     // ADMIN y RECEPCIONISTA
     if (currentUser.role === "ADMIN" || currentUser.role === "RECEPCIONISTA") {
-        loadPatients();
-        loadPatientOptions();
-        loadPsychologistOptions();
-        loadServiceOptions();
-
-        if (typeof loadLeads === "function") {
-            loadLeads();
-        }
+        await safeRun(loadPatients);
+        await safeRun(loadPatientOptions);
+        await safeRun(loadPsychologistOptions);
+        await safeRun(loadServiceOptions);
+        await safeRun(loadLeads);
     }
 
     // SOLO ADMIN
     if (currentUser.role === "ADMIN") {
-        loadUsers();
+        await safeRun(loadUsers);
 
-        loadPsychologists();
-        loadAvailabilityPsychologistOptions();
+        await safeRun(loadPsychologists);
+        await safeRun(loadAvailabilityPsychologistOptions);
 
-        loadServices();
+        await safeRun(loadServices);
 
-        loadIncomes();
-        loadExpenseCategories();
-        loadExpenseCategoryOptions();
-        loadExpenses();
+        await safeRun(loadIncomes);
+        await safeRun(loadExpenseCategories);
+        await safeRun(loadExpenseCategoryOptions);
+        await safeRun(loadExpenses);
+
+        // Responsables para filtro de gastos
+        await safeRun(loadExpenseResponsibleOptions);
+
+        // Promociones del portal
+        await safeRun(loadPromotions);
+
+        // Reporte por psicólogo
+        await safeRun(loadReportPsychologistOptions);
     }
 
     // TODOS LOS ROLES
-    loadAppointments();
-    initAppointmentAvailabilityEvents();
+    await safeRun(loadAppointments);
 
-    // PSICOLOGO
-    if (currentUser.role === "PSICOLOGO") {
-        loadPsychologistOptions();
-        loadServiceOptions();
+    if (typeof initAppointmentAvailabilityEvents === "function") {
+        initAppointmentAvailabilityEvents();
     }
 
-    await loadNotifications();
-    connectNotificationWebSocket();
+    // PSICÓLOGO
+    if (currentUser.role === "PSICOLOGO") {
+        await safeRun(loadPsychologistOptions);
+        await safeRun(loadServiceOptions);
+    }
+
+    // NOTIFICACIONES
+    await safeRun(loadNotifications);
+
+    if (typeof connectNotificationWebSocket === "function") {
+        connectNotificationWebSocket();
+    }
 
     // RECORDATORIOS INTERNOS
-    if (typeof loadReminders === "function") {
-        loadReminders();
+    await safeRun(loadReminders);
+
+    // Refrescar íconos Lucide después de cargar sidebar y módulos
+    if (typeof lucide !== "undefined") {
+        lucide.createIcons();
     }
 };
+
+/* =========================
+   EJECUCIÓN SEGURA
+========================= */
+
+async function safeRun(fn) {
+    if (typeof fn !== "function") return;
+
+    try {
+        await fn();
+    } catch (error) {
+        console.warn(`Error ejecutando ${fn.name || "función"}:`, error);
+    }
+}
+
+/* =========================
+   VISIBILIDAD POR ROL
+========================= */
 
 function applyRoleVisibility() {
     if (!currentUser) return;

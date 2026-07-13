@@ -12,10 +12,68 @@ const CONSENT_VERSION = "PORTAL_PRIVACIDAD_V1";
 
 window.addEventListener("DOMContentLoaded", () => {
     loadPublicPlans();
+    loadPublicPromotions();
     loadPublicServices();
     initPortalEffects();
     initPortalEvents();
 });
+
+async function loadPublicPromotions() {
+    const container = document.getElementById("promotionsContainer");
+
+    if (!container) return;
+
+    try {
+        const response = await fetch("/api/public/promotions");
+        const promotions = await response.json();
+
+        if (!response.ok) {
+            container.innerHTML = "";
+            return;
+        }
+
+        if (!promotions || promotions.length === 0) {
+            container.innerHTML = `
+                <div class="loading-card">
+                    No hay promociones activas por el momento.
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = promotions.map(promotion => {
+            const discount = promotion.discountPercent != null
+                ? `${promotion.discountPercent}% de descuento`
+                : "Promoción especial";
+
+            return `
+                <article class="promotion-card">
+                    <div class="promotion-badge">
+                        ${escapeHtml(discount)}
+                    </div>
+
+                    <h3>${escapeHtml(promotion.title || "Promoción")}</h3>
+
+                    <p>${escapeHtml(promotion.description || "")}</p>
+
+                    <div class="promotion-dates">
+                        ${promotion.startDate ? `Desde ${escapeHtml(promotion.startDate)}` : ""}
+                        ${promotion.endDate ? ` hasta ${escapeHtml(promotion.endDate)}` : ""}
+                    </div>
+
+                    <a href="#quote" class="promotion-action">
+                        Solicitar pre-reserva
+                    </a>
+                </article>
+            `;
+        }).join("");
+
+    } catch (error) {
+        console.error("Error cargando promociones:", error);
+
+        container.innerHTML = "";
+    }
+}
 
 function initPortalEvents() {
     const dateInput = document.getElementById("availabilityDate");
@@ -278,7 +336,7 @@ async function submitLead(event) {
 
     const data = {
         fullName: getValue("leadFullName"),
-        email: getValue("leadEmail"),
+        email: getValue("leadEmail") || null,
         phone: getValue("leadPhone"),
 
         serviceInterest: getSelectedServiceName(),
@@ -367,8 +425,11 @@ async function submitLead(event) {
 
 function validateLeadForm(data) {
     if (!data.fullName) return "Ingresa tu nombre completo.";
-    if (!data.email) return "Ingresa un correo electrónico.";
-    if (!isValidEmail(data.email)) return "Ingresa un correo electrónico válido.";
+
+    if (data.email && !isValidEmail(data.email)) {
+        return "Ingresa un correo electrónico válido.";
+    }
+
     if (!data.phone) return "Ingresa un teléfono o WhatsApp.";
     if (!data.serviceInterest) return "Selecciona el tipo de atención que necesitas.";
     if (!data.modality) return "Selecciona una modalidad de atención.";

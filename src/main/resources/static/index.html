@@ -833,8 +833,9 @@
                 <div class="module-header">
                     <div>
                         <h2 class="section-title">Módulo de Finanzas</h2>
-                        <p class="section-subtitle">Registra ingresos, gastos, categorías y analiza el resultado
-                            mensual.</p>
+                        <p class="section-subtitle">
+                            Registra ingresos, gastos, categorías y analiza el resultado mensual del centro psicológico.
+                        </p>
                     </div>
                 </div>
 
@@ -895,7 +896,7 @@
 
                         <div class="form-grid single-column">
                             <input type="number" id="summaryYear" placeholder="Año, ejemplo: 2026">
-                            <input type="number" id="summaryMonth" placeholder="Mes, ejemplo: 4">
+                            <input type="number" id="summaryMonth" placeholder="Mes, ejemplo: 6">
                         </div>
 
                         <div class="form-actions">
@@ -920,8 +921,7 @@
 
                         <div class="form-actions">
                             <button class="btn-primary" onclick="createExpenseCategory()">Guardar categoría</button>
-                            <button id="expenseCategoryToggleBtn" class="btn-secondary"
-                                onclick="showExpenseCategories()">
+                            <button id="expenseCategoryToggleBtn" class="btn-secondary" onclick="showExpenseCategories()">
                                 Listar categorías
                             </button>
                         </div>
@@ -932,94 +932,193 @@
                     </div>
                 </div>
 
-                <div id="incomeListModal" class="floating-modal hidden">
-                    <div class="floating-modal-content finance-modal-content">
-                        <div class="floating-modal-header">
-                            <div>
-                                <h3>Ingresos registrados</h3>
-                                <span>Historial de entradas de dinero</span>
+                        <!-- HISTORIAL MENSUAL DE GASTOS -->
+                        <div class="finance-monthly-history monthly-history-professional">
+
+                            <div class="finance-monthly-header professional-history-header">
+                                <div>
+                                    <span>Historial mensual</span>
+                                    <h3>Gastos por mes</h3>
+                                    <p>
+                                        Consulta el total gastado, las categorías utilizadas y el detalle de gastos
+                                        registrados en un periodo específico.
+                                    </p>
+                                </div>
                             </div>
-                            <button class="modal-close-btn" onclick="closeIncomeList()">×</button>
-                        </div>
 
-                        <div class="floating-modal-tools">
-                            <input class="table-search" type="text" placeholder="Buscar ingreso..."
-                                oninput="filterIncomeTable(this.value)">
-                        </div>
+                            <div class="finance-monthly-filters professional-history-filters">
+                                <input id="monthlyExpenseYear" type="number" placeholder="Año. Ejemplo: 2026">
 
-                        <div id="incomeResult" class="result-box compact-result">
-                            Mensajes de ingresos...
-                        </div>
+                                <select id="monthlyExpenseMonth">
+                                    <option value="">Seleccione mes</option>
+                                    <option value="1">Enero</option>
+                                    <option value="2">Febrero</option>
+                                    <option value="3">Marzo</option>
+                                    <option value="4">Abril</option>
+                                    <option value="5">Mayo</option>
+                                    <option value="6">Junio</option>
+                                    <option value="7">Julio</option>
+                                    <option value="8">Agosto</option>
+                                    <option value="9">Septiembre</option>
+                                    <option value="10">Octubre</option>
+                                    <option value="11">Noviembre</option>
+                                    <option value="12">Diciembre</option>
+                                </select>
 
-                        <div class="table-wrapper floating-table-wrapper">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Descripción</th>
-                                        <th>Monto</th>
-                                        <th>Fecha</th>
-                                        <th>Método</th>
-                                        <th>Estado</th>
-                                        <th>Acción</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="incomeTableBody"></tbody>
-                            </table>
-                        </div>
-
-                        <div class="pagination-bar">
-                            <button class="btn-secondary" onclick="changeIncomePage(-1)">Anterior</button>
-                            <span id="incomePageInfo">Página 1 de 1</span>
-                            <button class="btn-secondary" onclick="changeIncomePage(1)">Siguiente</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="expenseListModal" class="floating-modal hidden">
-                    <div class="floating-modal-content finance-modal-content">
-                        <div class="floating-modal-header">
-                            <div>
-                                <h3>Gastos registrados</h3>
-                                <span>Historial de gastos del centro</span>
+                                <button class="btn-primary" onclick="viewMonthlyExpenses()">
+                                    Ver gastos
+                                </button>
                             </div>
-                            <button class="modal-close-btn" onclick="closeExpenseList()">×</button>
+
+                            <div id="monthlyExpenseResult" class="monthly-expense-result professional-monthly-result">
+                                <div class="monthly-expense-empty">
+                                    Selecciona un año y mes para visualizar el historial mensual de gastos.
+                                </div>
+                            </div>
+
                         </div>
 
-                        <div class="floating-modal-tools">
-                            <input class="table-search" type="text" placeholder="Buscar gasto..."
-                                oninput="filterExpenseTable(this.value)">
+                        <!-- MODAL INGRESOS -->
+                        <div id="incomeListModal" class="floating-modal hidden">
+                            <div class="finance-modal-content">
+                                <div class="floating-modal-header">
+                                    <div>
+                                        <h3>Ingresos registrados</h3>
+                                        <span>Historial de entradas de dinero</span>
+                                    </div>
+
+                                    <button class="modal-close-btn" onclick="closeIncomeList()">×</button>
+                                </div>
+
+                                <div class="floating-modal-tools">
+                                    <input class="table-search" type="text" placeholder="Buscar ingreso..."
+                                        oninput="filterIncomeTable()">
+                                </div>
+
+                                <div id="incomeResult" class="result-box compact-result">
+                                    Mensajes de ingresos...
+                                </div>
+
+                                <div class="table-wrapper floating-table-wrapper">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Descripción</th>
+                                                <th>Monto</th>
+                                                <th>Fecha</th>
+                                                <th>Método</th>
+                                                <th>Estado</th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody id="incomeTableBody"></tbody>
+                                    </table>
+                                </div>
+
+                                <div class="pagination-bar">
+                                    <button class="btn-secondary" onclick="changeIncomePage(-1)">Anterior</button>
+                                    <span id="incomePageInfo">Página 1 de 1</span>
+                                    <button class="btn-secondary" onclick="changeIncomePage(1)">Siguiente</button>
+                                </div>
+                            </div>
                         </div>
 
-                        <div id="expenseResult" class="result-box compact-result">
-                            Mensajes de gastos...
-                        </div>
+                        <!-- MODAL GASTOS -->
+                        <div id="expenseListModal" class="floating-modal hidden">
+                            <div class="finance-modal-content">
 
-                        <div class="table-wrapper floating-table-wrapper">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Categoría</th>
-                                        <th>Descripción</th>
-                                        <th>Monto</th>
-                                        <th>Fecha</th>
-                                        <th>Responsable</th>
-                                        <th>Estado</th>
-                                        <th>Acción</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="expenseTableBody"></tbody>
-                            </table>
-                        </div>
+                                <div class="floating-modal-header">
+                                    <div>
+                                        <h3>Gastos registrados</h3>
+                                        <span>Historial de gastos del centro</span>
+                                    </div>
 
-                        <div class="pagination-bar">
-                            <button class="btn-secondary" onclick="changeExpensePage(-1)">Anterior</button>
-                            <span id="expensePageInfo">Página 1 de 1</span>
-                            <button class="btn-secondary" onclick="changeExpensePage(1)">Siguiente</button>
+                                    <button class="modal-close-btn" onclick="closeExpenseList()">×</button>
+                                </div>
+
+                                <div class="floating-modal-tools finance-filter-tools">
+                                    <input type="number" id="expenseFilterYear" placeholder="Año. Ejemplo: 2026">
+
+                                    <select id="expenseFilterMonth">
+                                        <option value="">Todos los meses</option>
+                                        <option value="1">Enero</option>
+                                        <option value="2">Febrero</option>
+                                        <option value="3">Marzo</option>
+                                        <option value="4">Abril</option>
+                                        <option value="5">Mayo</option>
+                                        <option value="6">Junio</option>
+                                        <option value="7">Julio</option>
+                                        <option value="8">Agosto</option>
+                                        <option value="9">Septiembre</option>
+                                        <option value="10">Octubre</option>
+                                        <option value="11">Noviembre</option>
+                                        <option value="12">Diciembre</option>
+                                    </select>
+
+                                    <select id="expenseFilterCategoryId">
+                                        <option value="">Todas las categorías</option>
+                                    </select>
+
+                                    <select id="expenseFilterStatus">
+                                        <option value="true" selected>Activos</option>
+                                        <option value="false">Eliminados/Inactivos</option>
+                                        <option value="">Todos los estados</option>
+                                    </select>
+
+                                    <select id="expenseFilterResponsible">
+                                        <option value="">Todos los responsables</option>
+                                    </select>
+
+                                    <button class="btn-primary" onclick="filterExpensesByAdvancedFilters()">
+                                        Filtrar gastos
+                                    </button>
+
+                                    <button class="btn-secondary" onclick="clearExpenseFilters()">
+                                        Limpiar filtros
+                                    </button>
+
+                                    <input id="expenseSearchInput" class="table-search" type="text"
+                                        placeholder="Buscar dentro del resultado..." oninput="filterExpenseTable()">
+                                </div>
+
+                                <div class="finance-modal-results">
+
+                                    <div id="expenseFilterSummary" class="finance-filter-summary hidden"></div>
+
+                                    <div id="expenseResult" class="result-box compact-result">
+                                        Mensajes de gastos...
+                                    </div>
+
+                                    <div class="table-wrapper floating-table-wrapper">
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <th>ID</th>
+                                                    <th>Categoría</th>
+                                                    <th>Descripción</th>
+                                                    <th>Monto</th>
+                                                    <th>Fecha</th>
+                                                    <th>Responsable</th>
+                                                    <th>Estado</th>
+                                                    <th>Acción</th>
+                                                </tr>
+                                            </thead>
+
+                                            <tbody id="expenseTableBody"></tbody>
+                                        </table>
+                                    </div>
+
+                                    <div class="pagination-bar">
+                                        <button class="btn-secondary" onclick="changeExpensePage(-1)">Anterior</button>
+                                        <span id="expensePageInfo">Página 1 de 1</span>
+                                        <button class="btn-secondary" onclick="changeExpensePage(1)">Siguiente</button>
+                                    </div>
+
+                                </div>
+
+                            </div>
                         </div>
-                    </div>
-                </div>
             </section>
 
             <!-- PRE-RESERVAS DE ATENCIÓN -->
@@ -1086,6 +1185,92 @@
                 </div>
             </section>
 
+            <!-- PROMOCIONES -->
+            <section id="promotions" class="section admin-only">
+                <div class="module-header">
+                    <div>
+                        <h2 class="section-title">Promociones del portal</h2>
+                        <p class="section-subtitle">
+                            Registra ofertas, descuentos o campañas para mostrarlas en el portal público.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="module-grid">
+                    <div class="card form-card">
+                        <div class="card-header">
+                            <h3>Registrar promoción</h3>
+                            <span>Promociones visibles para pacientes e interesados</span>
+                        </div>
+
+                        <div class="form-grid">
+                            <input type="text" id="promotionTitle" placeholder="Título de la promoción">
+                            <input type="number" id="promotionDiscount" placeholder="Descuento %. Ejemplo: 20">
+                            <input type="date" id="promotionStartDate">
+                            <input type="date" id="promotionEndDate">
+                            <textarea id="promotionDescription" placeholder="Descripción de la promoción"></textarea>
+                        </div>
+
+                        <div class="form-actions">
+                            <button id="promotionSaveButton" class="btn-primary" onclick="savePromotion()">
+                                Guardar promoción
+                            </button>
+
+                            <button id="promotionCancelButton" class="btn-secondary" onclick="clearPromotionForm()" style="display:none;">
+                                Cancelar edición
+                            </button>
+
+                            <button class="btn-secondary" onclick="loadPromotions()">
+                                Listar promociones
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card message-card">
+                        <div class="card-header">
+                            <h3>Estado</h3>
+                            <span>Mensajes del sistema</span>
+                        </div>
+
+                        <div id="promotionResult" class="result-box">
+                            Aquí verás el resultado del registro de promociones.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card table-card">
+                    <div class="table-header">
+                        <div>
+                            <h3>Promociones registradas</h3>
+                            <span>Controla las ofertas activas e inactivas del portal público</span>
+                        </div>
+                    </div>
+
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Título</th>
+                                    <th>Descripción</th>
+                                    <th>Descuento</th>
+                                    <th>Inicio</th>
+                                    <th>Fin</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="promotionTableBody">
+                                <tr>
+                                    <td colspan="8">Cargando promociones...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
             <!-- REPORTES -->
             <section id="reports" class="section admin-only">
 
@@ -1093,7 +1278,8 @@
                     <div>
                         <h2 class="section-title">Reportes del sistema</h2>
                         <p class="section-subtitle">
-                            Análisis mensual y exportación de información administrativa, financiera y clínica.
+                            Análisis mensual, rendimiento por psicólogo y exportación de información administrativa,
+                            financiera y clínica.
                         </p>
                     </div>
                 </div>
@@ -1172,6 +1358,59 @@
                     <div class="card chart-card">
                         <h3>Evolución mensual</h3>
                         <canvas id="monthlyEvolutionChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- REPORTE POR PSICÓLOGO -->
+                <div class="module-header psychologist-report-header">
+                    <div>
+                        <h2 class="section-title">Reporte por psicólogo</h2>
+                        <p class="section-subtitle">
+                            Consulta pacientes atendidos, citas atendidas y terapias realizadas por cada psicólogo.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card psychologist-report-filter-card">
+                    <div class="card-header">
+                        <h3>Rendimiento de atención</h3>
+                        <span>Solo se consideran citas con estado ATENDIDA</span>
+                    </div>
+
+                    <div class="form-grid report-psychologist-filter-grid">
+                        <input type="number" id="psychologistReportYear" placeholder="Año. Ejemplo: 2026">
+
+                        <select id="psychologistReportMonth">
+                            <option value="">Seleccione mes</option>
+                            <option value="1">Enero</option>
+                            <option value="2">Febrero</option>
+                            <option value="3">Marzo</option>
+                            <option value="4">Abril</option>
+                            <option value="5">Mayo</option>
+                            <option value="6">Junio</option>
+                            <option value="7">Julio</option>
+                            <option value="8">Agosto</option>
+                            <option value="9">Septiembre</option>
+                            <option value="10">Octubre</option>
+                            <option value="11">Noviembre</option>
+                            <option value="12">Diciembre</option>
+                        </select>
+
+                        <select id="reportPsychologistId">
+                            <option value="">Todos los psicólogos</option>
+                        </select>
+                    </div>
+
+                    <div class="form-actions">
+                        <button class="btn-primary" onclick="loadPsychologistPerformanceReport()">
+                            Generar reporte por psicólogo
+                        </button>
+                    </div>
+                </div>
+
+                <div id="psychologistPerformanceResult" class="psychologist-performance-result">
+                    <div class="psychologist-report-empty">
+                        Selecciona un año y mes para visualizar el reporte por psicólogo.
                     </div>
                 </div>
 
@@ -1317,6 +1556,8 @@
                             <option value="SERVICIOS">Servicios</option>
                             <option value="PSICÓLOGOS">Psicólogos</option>
                             <option value="FINANZAS">Finanzas</option>
+                            <option value="MENSAJES INTERNOS">Mensajes internos</option>
+                            <option value="PROMOCIONES">Promociones</option>
                         </select>
 
                         <button class="btn-primary" onclick="loadAuditLogs()">
@@ -1417,6 +1658,7 @@
     <script src="/js/reports.js"></script>
     <script src="/js/leads.js"></script>
     <script src="/js/reminders.js"></script>
+    <script src="/js/promotions.js"></script>
     <script src="/js/app.js"></script>
 </body>
 

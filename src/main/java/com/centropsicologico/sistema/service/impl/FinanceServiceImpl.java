@@ -196,7 +196,92 @@ public class FinanceServiceImpl implements FinanceService {
 
     @Override
     public List<Expense> findAllExpenses() {
-        return expenseRepository.findAll();
+        return expenseRepository.findByActiveTrue();
+    }
+
+    @Override
+    public List<Expense> filterExpenses(
+            Integer year,
+            Integer month,
+            Long categoryId,
+            Boolean active,
+            String responsible
+    ) {
+        LocalDate startDate = null;
+        LocalDate endDate = null;
+
+        if (month != null && year == null) {
+            throw new BusinessRuleException("Debe ingresar el año para filtrar por mes");
+        }
+
+        if (month != null && (month < 1 || month > 12)) {
+            throw new BusinessRuleException("El mes debe estar entre 1 y 12");
+        }
+
+        if (year != null && month != null) {
+            startDate = LocalDate.of(year, month, 1);
+            endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+        } else if (year != null) {
+            startDate = LocalDate.of(year, 1, 1);
+            endDate = LocalDate.of(year, 12, 31);
+        }
+
+        String responsibleFilter = null;
+
+        if (responsible != null && !responsible.trim().isEmpty()) {
+            responsibleFilter = responsible.trim();
+        }
+
+        return expenseRepository.filterExpenses(
+                startDate,
+                endDate,
+                categoryId,
+                active,
+                responsibleFilter
+        );
+    }
+    @Override
+    public void deleteExpense(Long id) {
+        Expense expense = expenseRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Gasto no encontrado"));
+
+        if (Boolean.FALSE.equals(expense.getActive())) {
+            throw new BusinessRuleException("El gasto ya se encuentra eliminado");
+        }
+
+        String categoryName = expense.getCategory() != null
+                ? expense.getCategory().getName()
+                : "Sin categoría";
+
+        expense.setActive(false);
+
+        Expense deletedExpense = expenseRepository.save(expense);
+
+        notificationService.createForRole(
+                "Gasto eliminado",
+                "Se eliminó lógicamente el gasto de S/ "
+                        + deletedExpense.getAmount()
+                        + " en "
+                        + categoryName
+                        + " por "
+                        + deletedExpense.getDescription(),
+                "GASTO_ELIMINADO",
+                "ADMIN"
+        );
+
+        auditLogService.record(
+                "FINANZAS",
+                "ELIMINACIÓN LÓGICA DE GASTO",
+                "Expense",
+                deletedExpense.getId(),
+                "Se eliminó lógicamente el gasto de S/ "
+                        + deletedExpense.getAmount()
+                        + " en "
+                        + categoryName
+                        + " por "
+                        + deletedExpense.getDescription()
+                        + ". El registro permanece en la base de datos con estado inactivo."
+        );
     }
 
     @Override

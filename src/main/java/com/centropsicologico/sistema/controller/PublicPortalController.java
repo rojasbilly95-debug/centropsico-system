@@ -46,7 +46,7 @@ public class PublicPortalController {
         Lead lead = new Lead();
 
         lead.setFullName(clean(request.getFullName()));
-        lead.setEmail(clean(request.getEmail()));
+        lead.setEmail(cleanEmail(request.getEmail()));
         lead.setPhone(clean(request.getPhone()));
 
         lead.setServiceId(request.getServiceId());
@@ -135,7 +135,7 @@ public class PublicPortalController {
                         + saved.getFullName()
                         + ". Consentimiento: "
                         + saved.getConsentVersion(),
-                saved.getEmail(),
+                valueOrDefault(saved.getEmail(), "SIN_CORREO"),
                 "VISITANTE",
                 "INFO",
                 false
@@ -194,42 +194,38 @@ public class PublicPortalController {
     }
 
     private void validateLead(LeadRequestDto request) {
-        if (!hasText(request.getFullName())) {
-            throw new RuntimeException("Debe ingresar su nombre completo");
-        }
-
-        if (!hasText(request.getEmail())) {
-            throw new RuntimeException("Debe ingresar su correo electrónico");
-        }
-
-        if (!request.getEmail().contains("@")) {
-            throw new RuntimeException("Debe ingresar un correo electrónico válido");
-        }
-
-        if (!hasText(request.getPhone())) {
-            throw new RuntimeException("Debe ingresar su teléfono o WhatsApp");
-        }
-
-        if (!hasText(request.getServiceInterest()) && request.getServiceId() == null) {
-            throw new RuntimeException("Debe seleccionar el tipo de atención");
-        }
-
-        if (!hasText(request.getModality())) {
-            throw new RuntimeException("Debe seleccionar la modalidad de atención");
-        }
-
-        if (!hasText(request.getPaymentMethod())) {
-            throw new RuntimeException("Debe seleccionar el método de pago del adelanto");
-        }
-
-        if (!hasText(request.getOperationCode())) {
-            throw new RuntimeException("Debe ingresar el código de operación del adelanto");
-        }
-
-        if (!Boolean.TRUE.equals(request.getConsentAccepted())) {
-            throw new RuntimeException("Debe aceptar el tratamiento de datos personales para registrar la pre-reserva");
-        }
+    if (!hasText(request.getFullName())) {
+        throw new RuntimeException("Debe ingresar su nombre completo");
     }
+
+    if (hasText(request.getEmail()) && !request.getEmail().contains("@")) {
+        throw new RuntimeException("Debe ingresar un correo electrónico válido");
+    }
+
+    if (!hasText(request.getPhone())) {
+        throw new RuntimeException("Debe ingresar su teléfono o WhatsApp");
+    }
+
+    if (!hasText(request.getServiceInterest()) && request.getServiceId() == null) {
+        throw new RuntimeException("Debe seleccionar el tipo de atención");
+    }
+
+    if (!hasText(request.getModality())) {
+        throw new RuntimeException("Debe seleccionar la modalidad de atención");
+    }
+
+    if (!hasText(request.getPaymentMethod())) {
+        throw new RuntimeException("Debe seleccionar el método de pago del adelanto");
+    }
+
+    if (!hasText(request.getOperationCode())) {
+        throw new RuntimeException("Debe ingresar el código de operación del adelanto");
+    }
+
+    if (!Boolean.TRUE.equals(request.getConsentAccepted())) {
+        throw new RuntimeException("Debe aceptar el tratamiento de datos personales para registrar la pre-reserva");
+    }
+}
 
     private void notifyRoles(String title, String message) {
         notificationService.createForRole(
@@ -257,6 +253,16 @@ public class PublicPortalController {
         return cleaned.isEmpty() ? null : cleaned;
     }
 
+    private String cleanEmail(String value) {
+    if (value == null) {
+        return null;
+    }
+
+    String cleaned = value.trim().toLowerCase();
+
+    return cleaned.isEmpty() ? null : cleaned;
+}
+   
     private boolean hasText(String value) {
         return value != null && !value.trim().isEmpty();
     }

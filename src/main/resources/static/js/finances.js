@@ -1,8 +1,10 @@
 let incomesData = [];
 let expensesData = [];
+let monthlyExpensesData = [];
 let currentIncomePage = 1;
 let currentExpensePage = 1;
 let expenseCategoryListVisible = false;
+let expenseAdvancedFilterActive = false;
 
 const financeRowsPerPage = 10;
 
@@ -280,18 +282,34 @@ async function loadExpenseCategoryOptions() {
 
         const data = await response.json();
 
-        const select = document.getElementById("expenseCategoryId");
-        if (!select) return;
+        const expenseSelect = document.getElementById("expenseCategoryId");
+        const filterSelect = document.getElementById("expenseFilterCategoryId");
 
-        select.innerHTML = `<option value="">Seleccione categoría</option>`;
+        if (expenseSelect) {
+            expenseSelect.innerHTML = `<option value="">Seleccione categoría</option>`;
 
-        data.forEach(category => {
-            select.innerHTML += `
-                <option value="${category.id}">
-                    ${category.name}
-                </option>
-            `;
-        });
+            data.forEach(category => {
+                if (category.active === false) return;
+
+                expenseSelect.innerHTML += `
+                    <option value="${category.id}">
+                        ${category.name}
+                    </option>
+                `;
+            });
+        }
+
+        if (filterSelect) {
+            filterSelect.innerHTML = `<option value="">Todas las categorías</option>`;
+
+            data.forEach(category => {
+                filterSelect.innerHTML += `
+                    <option value="${category.id}">
+                        ${category.name}
+                    </option>
+                `;
+            });
+        }
 
     } catch (error) {
         console.error("Error cargando categorías:", error);
@@ -366,8 +384,13 @@ async function loadExpenses() {
 
         expensesData = await response.json();
         currentExpensePage = 1;
+        expenseAdvancedFilterActive = false;
 
-        renderExpenseTable(expensesData);
+        renderExpenseTable(getFilteredExpenses());
+        renderExpenseFilterSummary(
+            expensesData,
+            "Listado general de gastos activos"
+        );
 
         document.getElementById("expenseResult").textContent =
             "Gastos cargados correctamente";
@@ -378,8 +401,190 @@ async function loadExpenses() {
     }
 }
 
+async function filterExpensesByAdvancedFilters(showMessage = true) {
+    const year = document.getElementById("expenseFilterYear")?.value;
+    const month = document.getElementById("expenseFilterMonth")?.value;
+    const categoryId = document.getElementById("expenseFilterCategoryId")?.value;
+    const status = document.getElementById("expenseFilterStatus")?.value;
+    const responsible = document.getElementById("expenseFilterResponsible")?.value.trim();
+
+    const params = new URLSearchParams();
+
+    if (year) params.append("year", year);
+    if (month) params.append("month", month);
+    if (categoryId) params.append("categoryId", categoryId);
+    if (status) params.append("active", status);
+    if (responsible) params.append("responsible", responsible);
+
+    try {
+        const url = `${baseUrl}/finances/expenses/filter?${params.toString()}`;
+
+        const response = await authFetch(url);
+        if (!response) return;
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            Swal.fire(
+                "Error",
+                data.message || "No se pudieron filtrar los gastos.",
+                "error"
+            );
+            return;
+        }
+
+        expensesData = data;
+        currentExpensePage = 1;
+        expenseAdvancedFilterActive = true;
+
+        renderExpenseTable(getFilteredExpenses());
+
+        renderExpenseFilterSummary(
+            expensesData,
+            buildExpenseFilterTitle(year, month, categoryId, status, responsible)
+        );
+
+        if (showMessage) {
+            Swal.fire({
+                icon: "success",
+                title: "Filtro aplicado",
+                text: "Los gastos fueron filtrados correctamente.",
+                timer: 1400,
+                showConfirmButton: false
+            });
+        }
+
+    } catch (error) {
+        console.error("Error filtrando gastos:", error);
+
+        Swal.fire(
+            "Error",
+            "Error de conexión al filtrar gastos.",
+            "error"
+        );
+    }
+}
+
+async function clearExpenseFilters() {
+    const yearInput = document.getElementById("expenseFilterYear");
+    const monthInput = document.getElementById("expenseFilterMonth");
+    const categoryInput = document.getElementById("expenseFilterCategoryId");
+    const statusInput = document.getElementById("expenseFilterStatus");
+    const responsibleInput = document.getElementById("expenseFilterResponsible");
+    const searchInput = document.getElementById("expenseSearchInput");
+
+    if (yearInput) yearInput.value = "";
+    if (monthInput) monthInput.value = "";
+    if (categoryInput) categoryInput.value = "";
+    if (statusInput) statusInput.value = "true";
+    if (responsibleInput) responsibleInput.value = "";
+    if (searchInput) searchInput.value = "";
+
+    expenseAdvancedFilterActive = false;
+
+    await loadExpenses();
+}
+
+function buildExpenseFilterTitle(year, month, categoryId, status, responsible) {
+    const parts = [];
+
+    if (year && month) {
+        parts.push(`${getFinanceMonthName(month)} ${year}`);
+    } else if (year) {
+        parts.push(`Año ${year}`);
+    } else {
+        parts.push("Todos los periodos");
+    }
+
+    const categorySelect = document.getElementById("expenseFilterCategoryId");
+    const categoryName = categorySelect && categorySelect.value
+        ? categorySelect.options[categorySelect.selectedIndex].textContent.trim()
+        : "";
+
+    if (categoryName) {
+        parts.push(`Categoría: ${categoryName}`);
+    }
+
+    if (status === "true") {
+        parts.push("Estado: Activos");
+    } else if (status === "false") {
+        parts.push("Estado: Eliminados/Inactivos");
+    } else {
+        parts.push("Estado: Todos");
+    }
+
+    if (responsible) {
+        parts.push(`Responsable: ${responsible}`);
+    }
+
+    return parts.join(" | ");
+}
+
+function renderExpenseFilterSummary(data, title) {
+    const container = document.getElementById("expenseFilterSummary");
+
+    if (!container) return;
+
+    const total = data.reduce((sum, expense) => {
+        return sum + Number(expense.amount || 0);
+    }, 0);
+
+    const count = data.length;
+
+    const categoryTotals = {};
+
+    data.forEach(expense => {
+        const categoryName = expense.category?.name || "Sin categoría";
+
+        if (!categoryTotals[categoryName]) {
+            categoryTotals[categoryName] = 0;
+        }
+
+        categoryTotals[categoryName] += Number(expense.amount || 0);
+    });
+
+    const categoryHtml = Object.entries(categoryTotals)
+        .map(([category, amount]) => `
+            <div class="expense-filter-category-row">
+                <span>${escapeFinanceHtml(category)}</span>
+                <strong>S/ ${formatFinanceMoney(amount)}</strong>
+            </div>
+        `)
+        .join("");
+
+    container.classList.remove("hidden");
+
+    container.innerHTML = `
+        <div class="expense-filter-summary-card">
+            <div class="expense-filter-summary-header">
+                <div>
+                    <strong>${escapeFinanceHtml(title || "Resultado de gastos")}</strong>
+                    <span>${count} gasto(s) encontrado(s)</span>
+                </div>
+
+                <div class="expense-filter-total">
+                    <small>Total filtrado</small>
+                    <strong>S/ ${formatFinanceMoney(total)}</strong>
+                </div>
+            </div>
+
+            <div class="expense-filter-category-list">
+                ${categoryHtml || `
+                    <div class="expense-filter-category-row">
+                        <span>No hay datos para mostrar</span>
+                        <strong>S/ 0.00</strong>
+                    </div>
+                `}
+            </div>
+        </div>
+    `;
+}
+
 function renderExpenseTable(data) {
     const tbody = document.getElementById("expenseTableBody");
+
+    if (!tbody) return;
+
     tbody.innerHTML = "";
 
     const totalPages = Math.ceil(data.length / financeRowsPerPage) || 1;
@@ -392,27 +597,169 @@ function renderExpenseTable(data) {
     const end = start + financeRowsPerPage;
     const pageData = data.slice(start, end);
 
+    if (!pageData || pageData.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="empty-table-message">
+                    No hay gastos registrados.
+                </td>
+            </tr>
+        `;
+
+        const pageInfo = document.getElementById("expensePageInfo");
+
+        if (pageInfo) {
+            pageInfo.textContent = `Página 1 de 1`;
+        }
+
+        return;
+    }
+
     pageData.forEach(expense => {
+        const categoryName = expense.category ? expense.category.name : "";
+        const description = expense.description ?? "";
+        const responsible = expense.responsible ?? "";
+
         tbody.innerHTML += `
             <tr>
                 <td>${expense.id ?? ""}</td>
-                <td>${expense.category ? expense.category.name : ""}</td>
-                <td>${expense.description ?? ""}</td>
+                <td>${escapeFinanceHtml(categoryName)}</td>
+                <td>${escapeFinanceHtml(description)}</td>
                 <td>S/ ${Number(expense.amount || 0).toFixed(2)}</td>
                 <td>${expense.date ?? ""}</td>
-                <td>${expense.responsible ?? ""}</td>
+                <td>${escapeFinanceHtml(responsible)}</td>
                 <td>
                     <span class="status-pill ${expense.active ? "active" : "inactive"}">
                         ${expense.active ? "Activo" : "Inactivo"}
                     </span>
+                </td>
+                <td>
+                    ${
+                        expense.active
+                            ? `
+                                <button 
+                                    type="button"
+                                    class="table-action-btn danger expense-delete-btn"
+                                    onclick="deleteExpense(${expense.id})">
+                                    Eliminar
+                                </button>
+                            `
+                            : `
+                                <span class="expense-deleted-label">
+                                    Eliminado
+                                </span>
+                            `
+                    }
                 </td>
             </tr>
         `;
     });
 
     const pageInfo = document.getElementById("expensePageInfo");
+
     if (pageInfo) {
         pageInfo.textContent = `Página ${currentExpensePage} de ${totalPages}`;
+    }
+}
+
+async function deleteExpense(id) {
+    if (!id) return;
+
+    const expense =
+        expensesData.find(item => Number(item.id) === Number(id)) ||
+        monthlyExpensesData.find(item => Number(item.id) === Number(id));
+
+    const description = expense?.description || "Gasto seleccionado";
+
+    const confirm = await Swal.fire({
+        icon: "warning",
+        title: "¿Eliminar gasto?",
+        html: `
+            <p>Se eliminará el gasto:</p>
+            <strong>${escapeFinanceHtml(description)}</strong>
+            <br><br>
+            <small>
+                El registro no se borrará de la base de datos. 
+                Solo quedará inactivo para mantener auditoría.
+            </small>
+        `,
+        showCancelButton: true,
+        confirmButtonText: "Sí, eliminar",
+        cancelButtonText: "Cancelar",
+        confirmButtonColor: "#dc2626"
+    });
+
+    if (!confirm.isConfirmed) return;
+
+    try {
+        const response = await authFetch(`${baseUrl}/finances/expenses/${id}`, {
+            method: "DELETE"
+        });
+
+        if (!response) return;
+
+        let result = {};
+
+        try {
+            result = await response.json();
+        } catch (error) {
+            result = {};
+        }
+
+        if (!response.ok) {
+            Swal.fire(
+                "Error",
+                result.message || "No se pudo eliminar el gasto.",
+                "error"
+            );
+            return;
+        }
+
+        Swal.fire({
+            icon: "success",
+            title: "Gasto eliminado",
+            text: "El gasto fue desactivado correctamente.",
+            timer: 1700,
+            showConfirmButton: false
+        });
+
+        if (expenseAdvancedFilterActive) {
+            await filterExpensesByAdvancedFilters(false);
+        } else {
+            await loadExpenses();
+        }
+
+        const monthlyYear = document.getElementById("monthlyExpenseYear")?.value;
+        const monthlyMonth = document.getElementById("monthlyExpenseMonth")?.value;
+        const monthlyResult = document.getElementById("monthlyExpenseResult");
+
+        if (monthlyYear && monthlyMonth && monthlyResult && monthlyResult.innerHTML.trim() !== "") {
+            await viewMonthlyExpenses(false);
+        }
+
+        if (typeof loadDashboard === "function") {
+            await loadDashboard();
+        }
+
+        const year = document.getElementById("summaryYear")?.value;
+        const month = document.getElementById("summaryMonth")?.value;
+
+        if (year && month && typeof loadFinanceSummary === "function") {
+            await loadFinanceSummary();
+        }
+
+        if (typeof loadNotifications === "function") {
+            await loadNotifications();
+        }
+
+    } catch (error) {
+        console.error("Error eliminando gasto:", error);
+
+        Swal.fire(
+            "Error",
+            "Error de conexión con el servidor.",
+            "error"
+        );
     }
 }
 
@@ -673,7 +1020,14 @@ function changeExpensePage(direction) {
 
 async function toggleIncomeList() {
     document.getElementById("incomeListModal").classList.remove("hidden");
+    document.body.classList.add("modal-open");
+
     await loadIncomes();
+}
+
+function closeIncomeList() {
+    document.getElementById("incomeListModal").classList.add("hidden");
+    document.body.classList.remove("modal-open");
 }
 
 function closeIncomeList() {
@@ -682,11 +1036,23 @@ function closeIncomeList() {
 
 async function toggleExpenseList() {
     document.getElementById("expenseListModal").classList.remove("hidden");
+    document.body.classList.add("modal-open");
+
+    await loadExpenseCategoryOptions();
+    await loadExpenseResponsibleOptions();
+
+    const statusInput = document.getElementById("expenseFilterStatus");
+
+    if (statusInput && !statusInput.value) {
+        statusInput.value = "true";
+    }
+
     await loadExpenses();
 }
 
 function closeExpenseList() {
     document.getElementById("expenseListModal").classList.add("hidden");
+    document.body.classList.remove("modal-open");
 }
 
 async function refreshFinancesRealtime() {
@@ -709,5 +1075,298 @@ async function refreshFinancesRealtime() {
 
     if (year && month && typeof loadFinanceSummary === "function") {
         await loadFinanceSummary();
+    }
+}
+
+function escapeFinanceHtml(value) {
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+function escapeFinanceAttr(value) {
+    return escapeFinanceHtml(value);
+}
+
+async function viewMonthlyExpenses(showMessage = true) {
+    const year = document.getElementById("monthlyExpenseYear")?.value;
+    const month = document.getElementById("monthlyExpenseMonth")?.value;
+    const resultBox = document.getElementById("monthlyExpenseResult");
+
+    if (!resultBox) return;
+
+    if (!year || !month) {
+        resultBox.innerHTML = `
+            <div class="monthly-expense-empty">
+                Selecciona el año y el mes para consultar los gastos.
+            </div>
+        `;
+        return;
+    }
+
+    try {
+        resultBox.innerHTML = `
+            <div class="monthly-expense-loading">
+                Cargando historial mensual de gastos...
+            </div>
+        `;
+
+        const params = new URLSearchParams();
+        params.append("year", year);
+        params.append("month", month);
+        params.append("active", "true");
+
+        const response = await authFetch(`${baseUrl}/finances/expenses/filter?${params.toString()}`);
+
+        if (!response) return;
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            resultBox.innerHTML = `
+                <div class="monthly-expense-empty error">
+                    ${data.message || "No se pudo cargar el historial mensual."}
+                </div>
+            `;
+            return;
+        }
+
+        renderMonthlyExpenseHistory(data, year, month);
+
+        if (showMessage) {
+            Swal.fire({
+                icon: "success",
+                title: "Historial cargado",
+                text: "Los gastos del mes fueron consultados correctamente.",
+                timer: 1400,
+                showConfirmButton: false
+            });
+        }
+
+    } catch (error) {
+        console.error("Error cargando historial mensual:", error);
+
+        resultBox.innerHTML = `
+            <div class="monthly-expense-empty error">
+                Error de conexión al cargar los gastos del mes.
+            </div>
+        `;
+    }
+}
+
+function renderMonthlyExpenseHistory(data, year, month) {
+    const resultBox = document.getElementById("monthlyExpenseResult");
+
+    if (!resultBox) return;
+
+    const monthName = getFinanceMonthName(month);
+    const expenses = Array.isArray(data) ? data : [];
+    monthlyExpensesData = expenses;
+
+    const total = expenses.reduce((sum, expense) => {
+        return sum + Number(expense.amount || 0);
+    }, 0);
+
+    const categoryTotals = {};
+
+    expenses.forEach(expense => {
+        const categoryName = expense.category?.name || "Sin categoría";
+
+        if (!categoryTotals[categoryName]) {
+            categoryTotals[categoryName] = 0;
+        }
+
+        categoryTotals[categoryName] += Number(expense.amount || 0);
+    });
+
+    const categoryEntries = Object.entries(categoryTotals)
+        .sort((a, b) => b[1] - a[1]);
+
+    const highestCategory = categoryEntries.length > 0
+        ? categoryEntries[0][0]
+        : "Sin datos";
+
+    const categoryHtml = categoryEntries.map(([category, amount]) => {
+        const percent = total > 0 ? ((amount / total) * 100).toFixed(1) : "0.0";
+
+        return `
+            <div class="monthly-category-item">
+                <div>
+                    <strong>${escapeFinanceHtml(category)}</strong>
+                    <span>${percent}% del total mensual</span>
+                </div>
+
+                <strong>S/ ${formatFinanceMoney(amount)}</strong>
+            </div>
+        `;
+    }).join("");
+
+    const sortedExpenses = [...expenses].sort((a, b) => {
+        const dateCompare = String(b.date || "").localeCompare(String(a.date || ""));
+
+        if (dateCompare !== 0) return dateCompare;
+
+        return Number(b.id || 0) - Number(a.id || 0);
+    });
+
+    const detailRows = sortedExpenses.map(expense => `
+        <tr>
+            <td>${expense.date ?? ""}</td>
+            <td>${escapeFinanceHtml(expense.category?.name || "Sin categoría")}</td>
+            <td>${escapeFinanceHtml(expense.description || "")}</td>
+            <td>${escapeFinanceHtml(expense.responsible || "No registrado")}</td>
+            <td>S/ ${formatFinanceMoney(expense.amount || 0)}</td>
+            <td>
+            <button 
+                type="button"
+                class="table-action-btn danger expense-delete-btn"
+                onclick="deleteExpense(${expense.id})">
+                Eliminar
+            </button>
+            </td>
+        </tr>
+    `).join("");
+
+    resultBox.innerHTML = `
+        <div class="monthly-expense-card">
+
+            <div class="monthly-expense-title">
+                <div>
+                    <span>Historial mensual de gastos</span>
+                    <h3>${capitalizeFinanceText(monthName)} ${year}</h3>
+                </div>
+
+                <div class="monthly-expense-total">
+                    <small>Total gastos del mes</small>
+                    <strong>S/ ${formatFinanceMoney(total)}</strong>
+                </div>
+            </div>
+
+            <div class="monthly-expense-kpis">
+                <div>
+                    <span>Cantidad de gastos</span>
+                    <strong>${expenses.length}</strong>
+                    <small>Registros activos encontrados</small>
+                </div>
+
+                <div>
+                    <span>Categoría principal</span>
+                    <strong>${escapeFinanceHtml(highestCategory)}</strong>
+                    <small>Mayor concentración de gasto</small>
+                </div>
+
+                <div>
+                    <span>Promedio por gasto</span>
+                    <strong>S/ ${formatFinanceMoney(expenses.length > 0 ? total / expenses.length : 0)}</strong>
+                    <small>Total dividido entre registros</small>
+                </div>
+            </div>
+
+            <div class="monthly-expense-section">
+                <h4>Gastos por categoría</h4>
+
+                <div class="monthly-category-list">
+                    ${categoryHtml || `
+                        <div class="monthly-expense-empty">
+                            No hay gastos registrados en este mes.
+                        </div>
+                    `}
+                </div>
+            </div>
+
+            <div class="monthly-expense-section">
+                <h4>Detalle de gastos</h4>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Categoría</th>
+                                <th>Descripción</th>
+                                <th>Responsable</th>
+                                <th>Monto</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            ${detailRows || `
+                                <tr>
+                                    <td colspan="6" class="empty-table-message">
+                                        No hay gastos registrados para este mes.
+                                    </td>
+                                </tr>
+                            `}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    `;
+}
+
+function capitalizeFinanceText(value) {
+    const text = String(value || "");
+
+    if (!text) return "";
+
+    return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+async function loadExpenseResponsibleOptions() {
+    const select = document.getElementById("expenseFilterResponsible");
+
+    if (!select) return;
+
+    const selectedValue = select.value;
+
+    try {
+        const response = await authFetch(`${baseUrl}/finances/expenses/filter`);
+
+        if (!response) return;
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            renderExpenseResponsibleOptions(expensesData, selectedValue);
+            return;
+        }
+
+        renderExpenseResponsibleOptions(data, selectedValue);
+
+    } catch (error) {
+        console.error("Error cargando responsables:", error);
+        renderExpenseResponsibleOptions(expensesData, selectedValue);
+    }
+}
+
+function renderExpenseResponsibleOptions(data, selectedValue = "") {
+    const select = document.getElementById("expenseFilterResponsible");
+
+    if (!select) return;
+
+    const responsibles = [...new Set(
+        (Array.isArray(data) ? data : [])
+            .map(expense => expense.responsible ? expense.responsible.trim() : "")
+            .filter(value => value !== "")
+    )].sort((a, b) => a.localeCompare(b));
+
+    select.innerHTML = `<option value="">Todos los responsables</option>`;
+
+    responsibles.forEach(responsible => {
+        select.innerHTML += `
+            <option value="${escapeFinanceAttr(responsible)}">
+                ${escapeFinanceHtml(responsible)}
+            </option>
+        `;
+    });
+
+    if (selectedValue && responsibles.includes(selectedValue)) {
+        select.value = selectedValue;
     }
 }

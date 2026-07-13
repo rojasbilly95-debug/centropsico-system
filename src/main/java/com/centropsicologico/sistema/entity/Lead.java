@@ -20,7 +20,7 @@ public class Lead {
     @Column(name = "nombres", nullable = false, length = 120)
     private String fullName;
 
-    @Column(name = "correo", nullable = false, length = 120)
+    @Column(name = "correo", length = 120)
     private String email;
 
     @Column(name = "telefono", length = 30)

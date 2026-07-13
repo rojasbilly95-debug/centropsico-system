@@ -21,5 +21,9 @@ public interface FinanceService {
 
     List<Expense> findAllExpenses();
 
+    List<Expense> filterExpenses(Integer year, Integer month, Long categoryId, Boolean active, String responsible);
+
+    void deleteExpense(Long id);
+
     FinanceSummaryDto getMonthlySummary(Integer year, Integer month);
 }

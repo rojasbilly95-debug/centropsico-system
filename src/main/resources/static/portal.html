@@ -391,6 +391,10 @@
                 </p>
             </div>
 
+            <div id="promotionsContainer" class="promotions-grid">
+                <div class="loading-card">Cargando promociones disponibles...</div>
+            </div>
+
             <div id="plansContainer" class="plans-grid">
                 <div class="loading-card">Cargando servicios disponibles...</div>
             </div>
@@ -419,7 +423,7 @@
                 </div>
 
                 <input id="leadFullName" type="text" placeholder="Nombre completo" required>
-                <input id="leadEmail" type="email" placeholder="Correo electrónico" required>
+                <input id="leadEmail" type="email" placeholder="Correo electrónico (opcional)">
                 <input id="leadPhone" type="text" placeholder="Teléfono o WhatsApp" required>
 
                 <select id="leadServiceInterest" onchange="handleServiceSelection()" required>
