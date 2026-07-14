@@ -778,12 +778,6 @@ body:not(.login-body) .section-title + p {
         linear-gradient(180deg, rgba(255,255,255,0.96), rgba(246,249,252,0.98));
 }
 
-.login-card {
-    width: 100%;
-    max-width: 405px;
-    text-align: center;
-    animation: loginFadeUp 0.45s ease both;
-}
 
 .login-logo {
     width: 82px;
@@ -3014,24 +3008,33 @@ body:not(.login-body) .section-title + p {
     padding-bottom: 58px !important;
 }
 
+/* =========================================================
+   ACCESO DISCRETO AL PORTAL DESDE LOGIN
+========================================================= */
+
+.login-card {
+    position: relative !important;
+    padding-bottom: 58px !important;
+}
+
 .portal-corner-link {
     position: absolute;
     right: 0;
     bottom: 0;
 
+    width: 42px;
+    height: 42px;
+
     display: inline-flex;
     align-items: center;
     justify-content: center;
 
-    padding: 10px 15px;
-    border-radius: 999px;
+    border-radius: 50%;
 
     background: rgba(15, 61, 102, 0.08);
-    border: 1px solid rgba(15, 61, 102, 0.13);
-    color: rgba(15, 61, 102, 0.82);
+    border: 1px solid rgba(15, 61, 102, 0.14);
+    color: rgba(15, 61, 102, 0.78);
 
-    font-size: 13px;
-    font-weight: 800;
     text-decoration: none;
 
     backdrop-filter: blur(8px);
@@ -3044,10 +3047,15 @@ body:not(.login-body) .section-title + p {
 .portal-corner-link:hover {
     opacity: 1;
     color: #0f3d66;
-    background: rgba(15, 61, 102, 0.14);
+    background: rgba(15, 61, 102, 0.15);
     border-color: rgba(15, 61, 102, 0.24);
     transform: translateY(-2px);
     box-shadow: 0 10px 22px rgba(15, 61, 102, 0.14);
+}
+
+.portal-home-icon {
+    width: 18px;
+    height: 18px;
 }
 
 @media (max-width: 560px) {
@@ -3059,8 +3067,6 @@ body:not(.login-body) .section-title + p {
         right: 50%;
         transform: translateX(50%);
         bottom: 0;
-        font-size: 12px;
-        padding: 9px 14px;
     }
 
     .portal-corner-link:hover {
