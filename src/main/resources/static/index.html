@@ -193,7 +193,7 @@
             </section>
 
             <!-- PACIENTES -->
-            <section id="patients" class="section">
+            <section id="patients" class="section recepcion-only">
                 <div class="module-header">
                     <div>
                         <h2 class="section-title">Módulo de Pacientes</h2>
@@ -296,7 +296,7 @@
             </section>
 
             <!-- USUARIOS -->
-            <section id="users" class="section">
+            <section id="users" class="section admin-only">
                 <div class="module-header">
                     <div>
                         <h2 class="section-title">Módulo de Usuarios</h2>
@@ -390,7 +390,7 @@
             </section>
 
             <!-- PSICOLOGOS -->
-            <section id="psychologists" class="section">
+            <section id="psychologists" class="section admin-only">
                 <div class="module-header">
                     <div>
                         <h2 class="section-title">Módulo de Psicólogos</h2>
@@ -481,7 +481,7 @@
             </section>
 
             <!-- SERVICIOS -->
-            <section id="services" class="section">
+            <section id="services" class="section admin-only">
                 <div class="module-header">
                     <div>
                         <h2 class="section-title">Módulo de Servicios</h2>
@@ -569,7 +569,7 @@
             </section>
 
             <!-- DISPONIBILIDAD PSICÓLOGOS -->
-            <section id="availability" class="section">
+            <section id="availability" class="section admin-only">
                 <div class="module-header">
                     <div>
                         <h2 class="section-title">Disponibilidad de Psicólogos</h2>
@@ -716,7 +716,7 @@
                             <span>Datos de paciente, psicólogo, servicio y horario</span>
                         </div>
 
-                        <div class="form-grid">
+                        <div class="form-grid admin-recepcion-only">
                             <select id="appointmentPatientId"></select>
                             <select id="appointmentPsychologistId"></select>
                             <select id="appointmentServiceId"></select>
@@ -743,7 +743,7 @@
                         </div>
 
                         <div class="form-actions">
-                            <button class="btn-primary" onclick="createAppointment()">Guardar cita</button>
+                            <button class="btn-primary admin-recepcion-only" onclick="createAppointment()">Guardar cita</button>
                             <button class="btn-secondary" onclick="toggleAppointmentList()">Listar citas</button>
                             <button class="btn-secondary" onclick="loadFullCalendar()">Ver calendario</button>
                         </div>
@@ -829,7 +829,7 @@
             </section>
 
             <!-- FINANZAS -->
-            <section id="finances" class="section">
+            <section id="finances" class="section admin-only">
                 <div class="module-header">
                     <div>
                         <h2 class="section-title">Módulo de Finanzas</h2>
@@ -1122,7 +1122,7 @@
             </section>
 
             <!-- PRE-RESERVAS DE ATENCIÓN -->
-            <section id="leads" class="section">
+            <section id="leads" class="section admin-recepcion-only">
                 <div class="module-header">
                     <div>
                         <h2 class="section-title">Pre-reservas de atención</h2>

@@ -133,9 +133,48 @@ public class SecurityConfig {
                         .requestMatchers("/api/notifications/**")
                         .hasAnyAuthority("ADMIN", "RECEPCIONISTA", "PSICOLOGO")
 
-                        // CITAS
-                        .requestMatchers("/api/appointments/**")
+                        // =========================================================
+                        // CITAS - REGLAS POR ROL
+                        // =========================================================
+
+                        // PSICÓLOGO: solo puede consultar sus propias citas
+                        .requestMatchers(HttpMethod.GET, "/api/appointments/my")
                         .hasAnyAuthority("ADMIN", "RECEPCIONISTA", "PSICOLOGO")
+
+                        .requestMatchers(HttpMethod.GET, "/api/appointments/my/by-date")
+                        .hasAnyAuthority("ADMIN", "RECEPCIONISTA", "PSICOLOGO")
+
+                        // ADMIN y RECEPCIONISTA: consulta general de citas
+                        .requestMatchers(HttpMethod.GET, "/api/appointments")
+                        .hasAnyAuthority("ADMIN", "RECEPCIONISTA")
+
+                        .requestMatchers(HttpMethod.GET, "/api/appointments/by-date")
+                        .hasAnyAuthority("ADMIN", "RECEPCIONISTA")
+
+                        .requestMatchers(HttpMethod.GET, "/api/appointments/*")
+                        .hasAnyAuthority("ADMIN", "RECEPCIONISTA")
+
+                        // ADMIN y RECEPCIONISTA: registrar citas
+                        .requestMatchers(HttpMethod.POST, "/api/appointments")
+                        .hasAnyAuthority("ADMIN", "RECEPCIONISTA")
+
+                        // ADMIN y RECEPCIONISTA: actualizar datos generales de cita
+                        .requestMatchers(HttpMethod.PUT, "/api/appointments/*")
+                        .hasAnyAuthority("ADMIN", "RECEPCIONISTA")
+
+                        // ADMIN y RECEPCIONISTA: registrar pagos
+                        .requestMatchers(HttpMethod.PUT, "/api/appointments/*/pay")
+                        .hasAnyAuthority("ADMIN", "RECEPCIONISTA")
+
+                        // Estado de cita:
+                        // ADMIN y RECEPCIONISTA pueden gestionar estados.
+                        // PSICÓLOGO también puede marcar atención si el frontend le muestra esa acción.
+                        .requestMatchers(HttpMethod.PUT, "/api/appointments/*/status")
+                        .hasAnyAuthority("ADMIN", "RECEPCIONISTA", "PSICOLOGO")
+
+                        // Solo ADMIN puede eliminar citas
+                        .requestMatchers(HttpMethod.DELETE, "/api/appointments/*")
+                        .hasAuthority("ADMIN")
 
                         // HISTORIA CLÍNICA
                         .requestMatchers("/api/clinical-history/**")
@@ -285,6 +324,10 @@ public class SecurityConfig {
                 || uri.startsWith("/api/profile")
                 || uri.startsWith("/api/services")
                 || uri.startsWith("/api/psychologists")
+                || uri.startsWith("/api/patients")
+                || uri.startsWith("/api/leads")
+                || uri.startsWith("/api/appointments")
+                || uri.startsWith("/api/psychologist-availabilities")
                 || uri.startsWith("/api/clinical-history");
     }
 

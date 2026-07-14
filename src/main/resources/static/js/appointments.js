@@ -114,8 +114,11 @@ function renderAppointmentTable(data) {
         const appointmentJson = JSON.stringify(appointment).replace(/'/g, "&apos;");
 
         const paymentInfo = getAppointmentPaymentInfo(appointment);
-        const canPay = canRegisterAppointmentPayment(appointment, paymentInfo);
-        const canShowReceipt = paymentInfo.paidAmount > 0 || paymentInfo.status === "PAGADO";
+        const canManagePayments = currentUser.role === "ADMIN" || currentUser.role === "RECEPCIONISTA";
+        const canUpdateStatus = currentUser.role === "ADMIN" || currentUser.role === "RECEPCIONISTA" || currentUser.role === "PSICOLOGO";
+
+        const canPay = canManagePayments && canRegisterAppointmentPayment(appointment, paymentInfo);
+        const canShowReceipt = canManagePayments && (paymentInfo.paidAmount > 0 || paymentInfo.status === "PAGADO");
 
         tbody.innerHTML += `
             <tr>
@@ -164,14 +167,19 @@ function renderAppointmentTable(data) {
                 : ""
             }
 
-                    ${currentStatus === "PROGRAMADA"
-                ? `
-                            <button class="btn-secondary" onclick="updateAppointmentStatus(${appointment.id}, 'ATENDIDA')">Atendida</button>
-                            <button class="btn-secondary" onclick="updateAppointmentStatus(${appointment.id}, 'CANCELADA')">Cancelar</button>
-                            <button class="btn-secondary" onclick="updateAppointmentStatus(${appointment.id}, 'NO_ASISTIO')">No asistió</button>
-                        `
-                : `<span class="badge badge-role">${statusLabel[currentStatus] ?? currentStatus}</span>`
-            }
+                    ${currentStatus === "PROGRAMADA" && canUpdateStatus
+                        ? `
+                                <button class="btn-secondary" onclick="updateAppointmentStatus(${appointment.id}, 'ATENDIDA')">Atendida</button>
+                                <button class="btn-secondary" onclick="updateAppointmentStatus(${appointment.id}, 'NO_ASISTIO')">No asistió</button>
+
+                                ${
+                                    currentUser.role === "ADMIN" || currentUser.role === "RECEPCIONISTA"
+                                        ? `<button class="btn-secondary" onclick="updateAppointmentStatus(${appointment.id}, 'CANCELADA')">Cancelar</button>`
+                                        : ""
+                                }
+                            `
+                        : `<span class="badge badge-role">${statusLabel[currentStatus] ?? currentStatus}</span>`
+                    }
                 </td>
             </tr>
         `;
