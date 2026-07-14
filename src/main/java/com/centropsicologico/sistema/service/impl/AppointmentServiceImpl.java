@@ -341,12 +341,48 @@ public AppointmentServiceImpl(
     public Appointment updateStatus(Long id, String status) {
         Appointment appointment = findById(id);
 
-        AppointmentStatus newStatus;
+        AppointmentStatus newStatus = parseAppointmentStatus(status);
 
-        try {
-            newStatus = AppointmentStatus.valueOf(status);
-        } catch (IllegalArgumentException e) {
-            throw new BusinessRuleException("Estado de cita no válido");
+        appointment.setStatus(newStatus);
+
+        Appointment updatedAppointment = appointmentRepository.save(appointment);
+
+        createAppointmentStatusNotification(updatedAppointment, newStatus);
+
+        auditLogService.record(
+                "CITAS",
+                "CAMBIO DE ESTADO DE CITA",
+                "Appointment",
+                updatedAppointment.getId(),
+                "La cita #"
+                        + updatedAppointment.getId()
+                        + " fue marcada como "
+                        + formatStatus(newStatus)
+        );
+
+        return updatedAppointment;
+    }
+
+    @Override
+    public Appointment updateStatusForPsychologist(Long id, String status, String psychologistEmail) {
+        Appointment appointment = findById(id);
+
+        validatePsychologistOwnsAppointment(appointment, psychologistEmail);
+
+        AppointmentStatus newStatus = parseAppointmentStatus(status);
+
+        if (newStatus != AppointmentStatus.ATENDIDA
+                && newStatus != AppointmentStatus.NO_ASISTIO) {
+
+            throw new BusinessRuleException(
+                    "El psicólogo solo puede marcar la cita como atendida o no asistió"
+            );
+        }
+
+        if (appointment.getStatus() != AppointmentStatus.PROGRAMADA) {
+            throw new BusinessRuleException(
+                    "Solo se puede actualizar el estado de una cita programada"
+            );
         }
 
         appointment.setStatus(newStatus);
@@ -356,17 +392,57 @@ public AppointmentServiceImpl(
         createAppointmentStatusNotification(updatedAppointment, newStatus);
 
         auditLogService.record(
-        "CITAS",
-        "CAMBIO DE ESTADO DE CITA",
-        "Appointment",
-        updatedAppointment.getId(),
-        "La cita #"
-                + updatedAppointment.getId()
-                + " fue marcada como "
-                + formatStatus(newStatus)
-);
+                "CITAS",
+                "CAMBIO DE ESTADO POR PSICÓLOGO",
+                "Appointment",
+                updatedAppointment.getId(),
+                "El psicólogo "
+                        + psychologistEmail
+                        + " marcó la cita #"
+                        + updatedAppointment.getId()
+                        + " como "
+                        + formatStatus(newStatus)
+        );
 
         return updatedAppointment;
+    }
+
+    private AppointmentStatus parseAppointmentStatus(String status) {
+        if (status == null || status.trim().isEmpty()) {
+            throw new BusinessRuleException("Debe ingresar el estado de la cita");
+        }
+
+        try {
+            return AppointmentStatus.valueOf(status.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new BusinessRuleException("Estado de cita no válido");
+        }
+    }
+
+    private void validatePsychologistOwnsAppointment(Appointment appointment, String psychologistEmail) {
+        if (appointment == null) {
+            throw new ResourceNotFoundException("Cita no encontrada");
+        }
+
+        if (appointment.getPsychologist() == null) {
+            throw new BusinessRuleException("La cita no tiene psicólogo asignado");
+        }
+
+        if (appointment.getPsychologist().getEmail() == null
+                || appointment.getPsychologist().getEmail().trim().isEmpty()) {
+
+            throw new BusinessRuleException("El psicólogo de la cita no tiene correo registrado");
+        }
+
+        if (psychologistEmail == null || psychologistEmail.trim().isEmpty()) {
+            throw new BusinessRuleException("No se pudo identificar al psicólogo autenticado");
+        }
+
+        if (!appointment.getPsychologist().getEmail().trim().equalsIgnoreCase(psychologistEmail.trim())) {
+            throw new BusinessRuleException(
+                    "No puedes modificar una cita que no está asignada a tu usuario"
+            );
+        }
     }
 
     @Override

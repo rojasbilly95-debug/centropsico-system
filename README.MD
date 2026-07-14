@@ -9,9 +9,9 @@
 ![Render](https://img.shields.io/badge/Deploy-Render-black)
 ![Aiven](https://img.shields.io/badge/Database-Aiven-blueviolet)
 
-Sistema web profesional desarrollado para la administración integral de un centro psicológico. Permite gestionar pacientes, psicólogos, disponibilidad, citas, pagos, pre-reservas, historia clínica, finanzas, reportes, auditoría, seguridad y notificaciones en tiempo real desde una sola plataforma moderna, segura y escalable.
+CentroPsico es una plataforma web integral desarrollada para la gestión administrativa, clínica, financiera y operativa de un centro psicológico. El sistema permite centralizar pacientes, psicólogos, servicios, disponibilidad, citas, pagos, pre-reservas, promociones, reportes, auditoría, seguridad y notificaciones en tiempo real desde una sola aplicación moderna, segura y escalable.
 
-Además del sistema interno, CentroPsico incorpora un portal público donde las personas pueden conocer los servicios psicológicos, consultar disponibilidad real, seleccionar horarios, registrar adelantos y enviar pre-reservas con consentimiento de tratamiento de datos personales.
+Además del sistema interno, incluye un portal público donde las personas interesadas pueden revisar servicios psicológicos, consultar disponibilidad real, seleccionar horarios, registrar datos de contacto, indicar método de pago, aceptar el tratamiento de datos personales y enviar una pre-reserva para su posterior validación administrativa.
 
 ---
 
@@ -23,51 +23,222 @@ Además del sistema interno, CentroPsico incorpora un portal público donde las 
 
 ---
 
-## 🚀 Características principales
+## 🚀 Funcionalidades principales
 
-- Plataforma responsive para desktop, tablet y móvil.
-- Sistema interno con control de acceso por roles.
-- Portal público de servicios psicológicos y pre-reservas.
-- Gestión de pacientes, psicólogos, disponibilidad y citas.
+- Sistema interno con autenticación JWT.
+- Control de acceso por roles: ADMIN, RECEPCIONISTA y PSICOLOGO.
+- Portal público para servicios, promociones y pre-reservas.
+- Gestión de pacientes activos e inactivos.
+- Gestión de psicólogos, especialidades y disponibilidad semanal.
+- Gestión de servicios psicológicos con duración y costo.
+- Programación de citas con validación de horarios disponibles.
+- Agenda diaria y calendario interactivo con FullCalendar.
+- Vista personalizada de citas para psicólogos.
 - Registro de pagos parciales o completos.
-- Comprobantes de pago imprimibles.
-- Conversión de pre-reservas en citas.
-- Registro financiero automático de adelantos e ingresos.
-- Historia clínica digital con acceso restringido.
-- Dashboard administrativo y financiero.
-- Reportes mensuales.
-- Notificaciones en tiempo real con WebSocket + STOMP.
-- Auditoría de movimientos, seguridad y autenticación.
-- Paginación, filtros y marcado de revisión en auditoría.
-- Seguridad con JWT y Spring Security.
+- Generación visual de comprobantes de pago.
+- Registro automático de ingresos financieros desde pagos.
+- Gestión de gastos, categorías y responsables.
+- Eliminación lógica de gastos para mantener trazabilidad.
+- Historial mensual de gastos.
+- Dashboard con indicadores operativos y financieros.
+- Reportes mensuales y reporte por psicólogo.
+- Promociones visibles en el portal público.
+- Notificaciones internas y en tiempo real con WebSocket + STOMP.
+- Auditoría de movimientos administrativos y de seguridad.
+- Perfil de usuario con foto y datos personales.
+- Diseño responsive para escritorio, tablet y móvil.
+
+---
+
+## 🧩 Módulos del sistema
+
+### Sistema interno
+
+```text
+Dashboard
+Solicitudes / Pre-reservas
+Pacientes
+Citas
+Finanzas
+Reportes
+Promociones
+Movimientos / Auditoría
+Administración
+ ├── Usuarios
+ ├── Psicólogos
+ ├── Servicios
+ └── Disponibilidad
+Perfil de usuario
+Notificaciones
+```
+
+### Portal público
+
+```text
+Inicio
+Servicios
+Promociones
+Disponibilidad
+Formulario de pre-reserva
+Consentimiento de tratamiento de datos
+Acceso al sistema interno
+```
+
+---
+
+## 👤 Roles del sistema
+
+### ADMIN
+
+Rol con acceso completo al sistema.
+
+Puede realizar:
+
+- Gestión de usuarios.
+- Gestión de pacientes.
+- Gestión de psicólogos.
+- Gestión de servicios.
+- Gestión de disponibilidad.
+- Gestión de citas.
+- Registro y control de pagos.
+- Gestión de ingresos y gastos.
+- Consulta de reportes.
+- Gestión de promociones.
+- Revisión de auditoría y movimientos.
+- Envío de notificaciones directas.
+- Acceso a dashboard completo.
+- Acceso a historia clínica.
+
+### RECEPCIONISTA
+
+Rol operativo para la atención administrativa.
+
+Puede realizar:
+
+- Gestión de solicitudes y pre-reservas.
+- Registro y edición de pacientes.
+- Programación de citas.
+- Consulta de disponibilidad.
+- Registro de pagos.
+- Cambio de estado de citas.
+- Consulta de agenda diaria.
+- Recepción de notificaciones.
+
+No tiene acceso a:
+
+- Finanzas generales.
+- Reportes.
+- Promociones.
+- Auditoría.
+- Administración de usuarios.
+- Administración de psicólogos.
+- Administración de servicios.
+
+### PSICOLOGO
+
+Rol clínico orientado a la atención del paciente.
+
+Puede realizar:
+
+- Ver su dashboard.
+- Consultar solo sus citas asignadas.
+- Revisar su agenda.
+- Ver calendario de sus citas.
+- Marcar citas como atendidas o no asistidas.
+- Acceder a historia clínica.
+- Recibir notificaciones de citas asignadas.
+
+No tiene acceso a:
+
+- Crear citas.
+- Registrar pagos.
+- Cancelar citas.
+- Ver pacientes generales.
+- Finanzas.
+- Reportes.
+- Promociones.
+- Auditoría.
+- Administración del sistema.
+
+---
+
+## 🔐 Seguridad y control de acceso
+
+El sistema implementa seguridad con Spring Security y JWT.
+
+Características:
+
+- Autenticación mediante token JWT.
+- Validación de sesión protegida.
+- Control de endpoints por rol.
+- Protección de rutas REST.
+- Bloqueo de accesos no autorizados.
+- Auditoría de accesos denegados.
+- Separación entre rutas públicas y privadas.
+- Ocultamiento de módulos en frontend según rol.
+- Validación de usuario activo/inactivo.
+- Registro de intentos de acceso no autorizados.
+
+### Reglas principales por rol
+
+```text
+ADMIN:
+Acceso completo.
+
+RECEPCIONISTA:
+Solicitudes, pacientes, citas y notificaciones.
+
+PSICOLOGO:
+Dashboard, citas asignadas, historia clínica y notificaciones.
+```
+
+### Control de citas
+
+Las citas cuentan con restricciones específicas:
+
+```text
+ADMIN / RECEPCIONISTA:
+- Crear citas.
+- Ver citas generales.
+- Registrar pagos.
+- Cambiar estados.
+- Cancelar citas.
+
+PSICOLOGO:
+- Ver solo sus citas.
+- Ver su agenda por fecha.
+- Marcar cita como atendida.
+- Marcar cita como no asistió.
+```
 
 ---
 
 ## 🌐 Portal público y pre-reservas
 
-El portal público permite a una persona interesada consultar información del centro, revisar servicios y enviar una pre-reserva de atención psicológica.
+El portal público permite que una persona interesada consulte información del centro psicológico y registre una pre-reserva.
 
-### Funcionalidades del portal
+### Funcionalidades
 
 - Visualización de servicios psicológicos.
+- Visualización de promociones activas.
 - Consulta pública de disponibilidad real.
-- Selección de servicio, fecha, psicólogo y horario.
+- Selección de servicio, psicólogo, fecha y horario.
 - Cálculo referencial de adelanto.
-- Registro de método de pago y código de operación.
-- Formulario de pre-reserva.
-- Consentimiento obligatorio para tratamiento de datos personales.
-- Registro de versión y fecha de consentimiento.
-- Notificación automática al ADMIN y RECEPCIONISTA.
-- Registro de auditoría por nueva pre-reserva.
-- Diseño responsive y mobile-first.
+- Registro de método de pago.
+- Registro de código de operación.
+- Registro de mensaje adicional.
+- Aceptación obligatoria del consentimiento de datos.
+- Envío de pre-reserva al sistema interno.
+- Notificación automática a ADMIN y RECEPCIONISTA.
 
-### Datos registrados desde el portal
+### Datos registrados
 
 - Nombre completo.
-- Correo electrónico.
+- Correo electrónico opcional.
 - Teléfono o WhatsApp.
 - Servicio de interés.
-- Psicólogo y horario seleccionado.
+- Psicólogo preferido.
+- Fecha y hora seleccionada.
 - Modalidad de atención.
 - Método de pago.
 - Código de operación.
@@ -77,235 +248,191 @@ El portal público permite a una persona interesada consultar información del c
 
 ---
 
-## 🔐 Privacidad y consentimiento
-
-El sistema registra evidencia del consentimiento aceptado por la persona interesada antes de enviar la pre-reserva.
-
-### Campos incorporados
+## 📌 Estados de pre-reserva
 
 ```text
-consentimiento_aceptado
-fecha_consentimiento
-version_consentimiento
+NUEVO
+PAGO_EN_REVISION
+CONTACTADO
+PRE_RESERVADO
+AGENDADO
+DESCARTADO
 ```
 
-### Versión actual
-
-```text
-PORTAL_PRIVACIDAD_V1
-```
-
-Esto permite demostrar que el interesado aceptó el uso de sus datos personales para gestionar la pre-reserva, validar la información registrada y permitir la comunicación administrativa correspondiente.
-
----
-
-## 🧠 Disponibilidad pública inteligente
-
-La disponibilidad pública se calcula dinámicamente considerando:
-
-- Servicio seleccionado.
-- Duración del servicio.
-- Psicólogo disponible.
-- Día de atención configurado.
-- Horarios ocupados.
-- Fecha seleccionada.
-- Cruces de citas.
-- Bloqueo automático de horarios no disponibles.
-
-El sistema evita reservas inválidas y muestra horarios disponibles reales.
-
----
-
-## 🔄 Flujo de atención
+### Flujo de pre-reserva
 
 ```text
 Portal público
 ↓
-Persona consulta servicios y disponibilidad
+Persona revisa servicios, promociones y disponibilidad
 ↓
-Selecciona servicio, fecha, psicólogo y horario
+Selecciona servicio, psicólogo, fecha y horario
 ↓
-Registra datos personales y adelanto
+Registra datos personales y datos de pago
 ↓
-Acepta el tratamiento de datos personales
+Acepta tratamiento de datos personales
 ↓
-Sistema genera una pre-reserva en estado PAGO_EN_REVISION
+Sistema genera pre-reserva
 ↓
 ADMIN y RECEPCIONISTA reciben notificación
 ↓
-Recepción valida o rechaza el adelanto
+Recepción valida o rechaza adelanto
 ↓
-Si el adelanto es validado, la pre-reserva pasa a PRE_RESERVADO
+Si procede, se asocia a un paciente
 ↓
-Recepción asocia la pre-reserva con un paciente
+La pre-reserva se convierte en cita
 ↓
-Sistema convierte la pre-reserva en cita
+El adelanto se registra como pago
 ↓
-El adelanto se registra como pago parcial o total
+Se genera ingreso financiero
 ↓
-Se genera ingreso financiero automático
-↓
-El psicólogo asignado recibe notificación de nueva cita
+El psicólogo asignado recibe notificación
 ```
 
 ---
 
-## 📌 Estados de pre-reserva
+## 🧠 Disponibilidad inteligente
 
-- NUEVO
-- PAGO_EN_REVISION
-- CONTACTADO
-- PRE_RESERVADO
-- AGENDADO
-- DESCARTADO
+La disponibilidad se calcula dinámicamente considerando:
 
----
+- Psicólogo seleccionado.
+- Servicio seleccionado.
+- Duración del servicio.
+- Día de atención configurado.
+- Hora de inicio y hora de fin.
+- Citas ya registradas.
+- Cruces de horario.
+- Estado de la cita.
+- Horarios ocupados.
+- Horarios libres.
 
-## 👥 Gestión de usuarios y personas
-
-### Pacientes
-
-- Registro de pacientes.
-- Validación de DNI único.
-- Estado activo/inactivo.
-- Búsqueda dinámica.
-- Paginación.
-- Asociación con citas e historia clínica.
-
-### Psicólogos
-
-- Registro de psicólogos.
-- Especialidades profesionales.
-- Activación y desactivación.
-- Disponibilidad semanal configurable.
-- Validación de cruces en disponibilidad.
-- Agenda personalizada.
-- Visualización exclusiva de sus citas.
-- Notificación automática cuando se le asigna una cita.
-
-### Usuarios del sistema
-
-Roles implementados:
-
-- ADMIN
-- RECEPCIONISTA
-- PSICÓLOGO
-
-Funciones:
-
-- Crear usuarios.
-- Editar usuarios.
-- Activar/desactivar usuarios.
-- Control de acceso por rol.
-- Restricción de módulos y endpoints.
+Esto evita dobles reservas y permite mostrar horarios disponibles reales.
 
 ---
 
-## 📅 Gestión avanzada de citas
-
-### Características
-
-- Programación inteligente de citas.
-- Validación automática de conflictos horarios.
-- Generación dinámica de horarios disponibles.
-- Bloqueo de horarios ocupados.
-- Agenda tipo cronograma.
-- Calendario interactivo con FullCalendar.
-- Visualización personalizada por rol.
-- Actualización de estados de cita.
-
-### Estados de citas
-
-- PROGRAMADA
-- ATENDIDA
-- CANCELADA
-- NO_ASISTIO
-- REPROGRAMADA
-
----
-
-## 💳 Sistema de pagos
+## 📅 Gestión de citas
 
 ### Funcionalidades
 
-- Registro de pagos de citas.
-- Pagos parciales o completos.
+- Registro de citas.
+- Validación automática de disponibilidad.
+- Generación dinámica de horarios disponibles.
+- Bloqueo de horarios ocupados.
+- Agenda diaria.
+- Calendario interactivo.
+- Vista mensual, semanal, diaria y lista.
+- Actualización de estados.
+- Vista personalizada por rol.
+- Notificación al psicólogo asignado.
+
+### Estados de cita
+
+```text
+PROGRAMADA
+ATENDIDA
+CANCELADA
+NO_ASISTIO
+REPROGRAMADA
+```
+
+---
+
+## 💳 Pagos y comprobantes
+
+### Funcionalidades
+
+- Registro de pagos por cita.
+- Pagos parciales.
+- Pagos completos.
 - Validación de saldo pendiente.
-- Bloqueo de registro de pago si la cita ya está pagada.
-- Bloqueo de pago en citas canceladas o con estado no asistió.
-- Conversión de adelantos de pre-reserva en pagos.
+- Bloqueo de pago en citas canceladas.
+- Bloqueo de pago en citas con estado no asistió.
+- Conversión de adelantos en pagos.
 - Comprobante visual profesional.
-- Impresión de comprobantes.
-- Integración con ingresos financieros.
-- Actualización de dashboard y finanzas.
+- Impresión de comprobante.
+- Registro automático en ingresos.
+- Actualización de dashboard financiero.
 
-### Métodos soportados
+### Métodos de pago
 
-- Efectivo
-- Yape
-- Plin
-- Transferencia
-- Tarjeta
-
----
-
-## 🧠 Historia clínica digital
-
-Sistema clínico profesional con:
-
-- Evolución del paciente.
-- Diagnósticos.
-- Recomendaciones.
-- Observaciones clínicas.
-- Timeline clínico visual.
-- Registro cronológico.
-
-Acceso restringido para:
-
-- ADMIN
-- PSICÓLOGO
+```text
+EFECTIVO
+YAPE
+PLIN
+TRANSFERENCIA
+TARJETA
+```
 
 ---
 
-## 💰 Gestión financiera
+## 💰 Finanzas
 
 ### Ingresos
 
-- Registro automático por pagos.
-- Registro manual.
-- Integración con citas.
-- Integración con pre-reservas.
-- Actualización del dashboard financiero.
+- Registro manual de ingresos.
+- Registro automático desde pagos de citas.
+- Registro de adelantos.
+- Método de pago.
+- Fecha de ingreso.
+- Integración con dashboard.
 
 ### Gastos
 
 - Registro de gastos.
 - Categorías dinámicas.
-- Responsable.
-- Control mensual.
-- Alertas por gastos altos.
+- Responsable del gasto.
+- Fecha del gasto.
+- Filtros por año, mes, categoría, estado y responsable.
+- Historial mensual.
+- Eliminación lógica mediante estado inactivo.
+- Auditoría de eliminación.
+
+### Resumen financiero
+
+El sistema permite consultar:
+
+- Total de ingresos.
+- Total de gastos.
+- Ganancia o pérdida mensual.
+- Historial de gastos por mes.
+- Balance operativo.
 
 ---
 
 ## 📊 Dashboard
 
-Indicadores disponibles:
+El dashboard muestra indicadores operativos y financieros según el rol.
 
-- Pacientes registrados.
-- Citas del día.
-- Ingresos.
-- Gastos.
-- Resultado financiero.
-- Agenda diaria.
-- Gráficas interactivas.
-- Resumen financiero.
-- Sincronización con eventos recibidos por WebSocket.
+### Indicadores
+
+- Total de pacientes.
+- Citas por periodo.
+- Ingresos por periodo.
+- Citas pendientes de pago.
+- Citas por estado.
+- Ingresos vs gastos.
+- Agenda relevante.
+- Recordatorios.
+- Notificaciones.
+
+### Periodos disponibles
+
+```text
+Hoy
+Esta semana
+Este mes
+Este año
+```
 
 ---
 
 ## 📈 Reportes
 
-El sistema permite generar reportes mensuales con:
+El sistema incluye reportes para análisis administrativo.
+
+### Reporte mensual
+
+Permite consultar:
 
 - Total de citas.
 - Citas atendidas.
@@ -315,59 +442,87 @@ El sistema permite generar reportes mensuales con:
 - Gastos.
 - Resultado financiero.
 
+### Reporte por psicólogo
+
+Permite analizar:
+
+- Psicólogo.
+- Total de pacientes atendidos.
+- Total de citas atendidas.
+- Terapias o servicios realizados.
+- Rendimiento por periodo.
+
+---
+
+## 🧠 Historia clínica digital
+
+La historia clínica permite registrar información clínica del paciente.
+
+Incluye:
+
+- Evolución.
+- Diagnóstico.
+- Recomendaciones.
+- Observaciones.
+- Timeline clínico.
+- Registro cronológico.
+
+Acceso restringido a:
+
+```text
+ADMIN
+PSICOLOGO
+```
+
 ---
 
 ## 🔔 Notificaciones en tiempo real
 
-El sistema incorpora notificaciones en tiempo real implementadas con WebSocket + STOMP.
+El sistema utiliza WebSocket + STOMP para emitir notificaciones en tiempo real.
 
-Las notificaciones se almacenan en base de datos y se emiten hacia el frontend para actualizar la campanita, contador, toasts y módulos relacionados.
+### Características
 
-### Eventos implementados
+- Notificaciones persistidas en base de datos.
+- Notificaciones por rol.
+- Notificaciones por usuario.
+- Campanita interactiva.
+- Contador de no leídas.
+- Vista previa del mensaje.
+- Modal con mensaje completo.
+- Marcado individual como leído.
+- Marcado masivo como leído.
+- Toasts en tiempo real.
+- Recarga automática de módulos relacionados.
+
+### Eventos notificados
 
 - Nuevo paciente registrado.
 - Paciente actualizado.
-- Activación/desactivación de pacientes.
 - Nuevo psicólogo registrado.
 - Psicólogo actualizado.
-- Activación/desactivación de psicólogos.
 - Nuevo servicio registrado.
 - Servicio actualizado.
-- Activación/desactivación de servicios.
 - Nueva disponibilidad registrada.
-- Disponibilidad actualizada.
 - Nueva cita registrada.
+- Cita asignada a psicólogo.
 - Cambio de estado de cita.
-- Cita asignada al psicólogo.
-- Pago registrado en cita.
-- Adelanto validado o rechazado.
+- Pago registrado.
+- Adelanto validado.
+- Adelanto rechazado.
 - Ingreso registrado.
 - Gasto registrado.
+- Gasto eliminado lógicamente.
 - Nueva pre-reserva.
 - Conversión de pre-reserva en cita.
+- Promoción registrada.
 - Movimiento crítico de auditoría.
-
-### Destinatarios
-
-- ADMIN.
-- RECEPCIONISTA.
-- PSICÓLOGO asignado por correo.
-
-### Características visuales
-
-- Campanita interactiva.
-- Contador dinámico de no leídas.
-- Dropdown profesional.
-- Toasts en tiempo real.
-- Marcado individual como leído.
-- Marcado masivo como leído.
-- Recarga automática de módulos relacionados.
+- Mensaje directo del administrador.
 
 ---
 
-## 🧾 Auditoría y movimientos del sistema
+## 🧾 Auditoría y movimientos
 
-El sistema incorpora un módulo de auditoría para registrar movimientos administrativos, operativos y de seguridad.
+El módulo de auditoría registra acciones administrativas, operativas y de seguridad.
 
 ### Eventos auditados
 
@@ -377,103 +532,80 @@ El sistema incorpora un módulo de auditoría para registrar movimientos adminis
 - Token inválido.
 - Acceso no autorizado.
 - Acceso denegado por rol.
-- Registro, edición y desactivación de entidades.
-- Validación o rechazo de adelantos.
+- Registro de entidades.
+- Actualización de entidades.
+- Activación o desactivación.
+- Validación de adelantos.
+- Rechazo de adelantos.
 - Conversión de pre-reservas en citas.
 - Registro de pagos.
 - Movimientos financieros.
+- Eliminación lógica de gastos.
+- Notificaciones directas.
 
-### Niveles de auditoría
+### Niveles
 
 ```text
-INFO      → acciones normales, login exitoso, cierre de sesión
-WARNING   → login fallido, token inválido, accesos no autorizados
-CRITICAL  → usuario inactivo, acceso denegado a módulos sensibles
+INFO      → acciones normales
+WARNING   → intentos fallidos o accesos no autorizados
+CRITICAL  → accesos denegados a módulos sensibles
 ```
 
-### Funcionalidades del módulo Movimientos
+### Funcionalidades
 
 - Filtro por módulo.
 - Filtro por nivel.
-- Filtro por revisado/pendiente.
+- Filtro por revisado.
 - Búsqueda textual.
 - Paginación.
-- Marcado como revisado.
-- Marcado como pendiente.
-- Notificación al ADMIN para eventos críticos.
+- Marcar como revisado.
+- Marcar como pendiente.
 
 ---
 
-## 🔐 Seguridad
+## 🎁 Promociones
 
-Implementado con:
+El sistema permite al administrador registrar promociones visibles en el portal público.
 
-- Spring Security.
-- JWT Authentication.
-- Control de roles.
-- Validación de sesión.
-- Protección de endpoints REST.
-- Expiración de token.
-- Auditoría de accesos.
-- Bloqueo por permisos en backend.
-- Ocultamiento de módulos según rol en frontend.
+### Funcionalidades
+
+- Registrar promoción.
+- Editar promoción.
+- Activar o desactivar promoción.
+- Definir porcentaje de descuento.
+- Definir fecha de inicio.
+- Definir fecha de fin.
+- Mostrar promoción principal destacada.
+- Mostrar promociones secundarias.
+- Ocultar promociones vencidas o inactivas.
 
 ---
 
-## 👤 Roles del sistema
+## 👤 Perfil de usuario
 
-### ADMIN
+Cada usuario puede revisar y actualizar su perfil.
 
-- Acceso total.
-- Dashboard global.
-- Usuarios.
-- Pacientes.
-- Psicólogos.
-- Servicios.
-- Disponibilidad.
-- Citas.
-- Pagos.
-- Finanzas.
-- Reportes.
-- Movimientos.
-- Notificaciones.
+Incluye:
 
-### RECEPCIONISTA
-
-- Pacientes.
-- Solicitudes/pre-reservas.
-- Programación de citas.
-- Registro de pagos.
-- Consulta de disponibilidad.
-- Notificaciones.
-
-### PSICÓLOGO
-
-- Agenda personalizada.
-- Visualización de sus citas.
-- Historia clínica.
-- Notificaciones directas por cita asignada.
+- Foto de perfil.
+- Nombre de usuario.
+- Rol.
+- Correo.
+- Teléfono.
+- Cambio de contraseña.
+- Visualización en sidebar.
 
 ---
 
 ## ☁️ Infraestructura Cloud
 
-- Frontend y backend desplegados en Render.
-- Base de datos MySQL Cloud en Aiven.
-- Variables de entorno para credenciales.
+- Backend y frontend servidos desde Spring Boot.
+- Despliegue en Render.
+- Base de datos MySQL en Aiven.
 - Integración con GitHub.
-- Deploy automático.
+- Deploy automático desde la rama principal.
+- Variables de entorno para credenciales sensibles.
 - Docker para producción.
-
----
-
-## 🐳 Docker
-
-```dockerfile
-FROM eclipse-temurin:21
-COPY target/*.jar app.jar
-ENTRYPOINT ["java","-jar","/app.jar"]
-```
 
 ---
 
@@ -483,12 +615,13 @@ ENTRYPOINT ["java","-jar","/app.jar"]
 
 - Java 21.
 - Spring Boot 3.
-- Spring Data JPA.
-- Hibernate 6.
 - Spring Security.
 - JWT.
-- WebSocket + STOMP.
+- Spring Data JPA.
+- Hibernate.
 - REST API.
+- WebSocket.
+- STOMP.
 - MySQL.
 
 ### Frontend
@@ -503,37 +636,20 @@ ENTRYPOINT ["java","-jar","/app.jar"]
 - SockJS.
 - STOMP.js.
 
-### Deploy
+### Base de datos y despliegue
 
+- MySQL.
+- Aiven MySQL.
 - Render.
 - Docker.
 - GitHub.
-- Aiven MySQL.
-
----
-
-## 🎨 UX/UI
-
-- Diseño moderno.
-- Sidebar interactivo.
-- Dashboard profesional.
-- Modales flotantes.
-- Timeline clínico.
-- Calendario visual.
-- Tablas dinámicas.
-- Portal emocional y profesional.
-- Responsive design.
-- Mobile-first design.
 
 ---
 
 ## 📂 Estructura del proyecto
 
-### Backend
-
 ```text
 src/main/java/com/centropsicologico/sistema
-
 ├── config
 ├── controller
 ├── dto
@@ -545,11 +661,8 @@ src/main/java/com/centropsicologico/sistema
 └── service/impl
 ```
 
-### Frontend
-
 ```text
 src/main/resources
-
 ├── static
 │   ├── components
 │   ├── css
@@ -563,6 +676,171 @@ src/main/resources
 
 ---
 
+## 🧪 Endpoints principales
+
+### Autenticación
+
+```http
+POST /api/auth/login
+GET  /api/auth/validate
+POST /api/auth/logout
+```
+
+### Perfil
+
+```http
+GET  /api/profile/me
+PUT  /api/profile/me
+PUT  /api/profile/change-password
+POST /api/profile/photo
+```
+
+### Pacientes
+
+```http
+POST  /api/patients
+GET   /api/patients
+GET   /api/patients/{id}
+PUT   /api/patients/{id}
+PATCH /api/patients/{id}/toggle-active
+```
+
+### Psicólogos
+
+```http
+POST  /api/psychologists
+GET   /api/psychologists
+GET   /api/psychologists/{id}
+PUT   /api/psychologists/{id}
+PATCH /api/psychologists/{id}/toggle-active
+```
+
+### Servicios
+
+```http
+POST  /api/services
+GET   /api/services
+GET   /api/services/{id}
+PUT   /api/services/{id}
+PATCH /api/services/{id}/toggle-active
+```
+
+### Disponibilidad
+
+```http
+POST  /api/psychologist-availabilities
+GET   /api/psychologist-availabilities
+GET   /api/psychologist-availabilities/psychologist/{id}
+PUT   /api/psychologist-availabilities/{id}
+PATCH /api/psychologist-availabilities/{id}/toggle-active
+```
+
+### Citas
+
+```http
+POST /api/appointments
+GET  /api/appointments
+GET  /api/appointments/{id}
+GET  /api/appointments/by-date
+GET  /api/appointments/my
+GET  /api/appointments/my/by-date
+PUT  /api/appointments/{id}
+PUT  /api/appointments/{id}/status
+PUT  /api/appointments/{id}/pay
+DELETE /api/appointments/{id}
+```
+
+### Portal público
+
+```http
+GET  /api/public/services
+GET  /api/public/promotions
+GET  /api/public/availability
+POST /api/public/leads
+```
+
+### Solicitudes / pre-reservas
+
+```http
+GET  /api/leads
+GET  /api/leads/{id}
+PUT  /api/leads/{id}/status
+PUT  /api/leads/{id}/payment/validate
+PUT  /api/leads/{id}/payment/reject
+POST /api/leads/{id}/convert-to-appointment
+```
+
+### Finanzas
+
+```http
+POST   /api/finances/incomes
+GET    /api/finances/incomes
+POST   /api/finances/expenses
+GET    /api/finances/expenses
+GET    /api/finances/expenses/filter
+DELETE /api/finances/expenses/{id}
+POST   /api/finances/expense-categories
+GET    /api/finances/expense-categories
+GET    /api/finances/summary
+```
+
+### Reportes
+
+```http
+GET /api/reports/monthly
+GET /api/reports/psychologist-performance
+```
+
+### Notificaciones
+
+```http
+GET   /api/notifications/role/{role}
+GET   /api/notifications/me
+GET   /api/notifications/role/{role}/unread-count
+GET   /api/notifications/me/unread-count
+PATCH /api/notifications/{id}/read
+PATCH /api/notifications/role/{role}/read-all
+PATCH /api/notifications/me/read-all
+```
+
+### Notificaciones directas de ADMIN
+
+```http
+POST /api/admin-notifications/users/{userId}
+POST /api/admin-notifications/psychologists/{psychologistId}
+```
+
+### Promociones
+
+```http
+POST  /api/promotions
+GET   /api/promotions
+GET   /api/promotions/{id}
+PUT   /api/promotions/{id}
+PATCH /api/promotions/{id}/toggle-active
+```
+
+### Historia clínica
+
+```http
+POST   /api/clinical-history/patient/{id}
+GET    /api/clinical-history/patient/{id}
+DELETE /api/clinical-history/{id}
+```
+
+### Auditoría
+
+```http
+GET   /api/audit-logs/recent
+GET   /api/audit-logs
+GET   /api/audit-logs/page
+GET   /api/audit-logs/module/{module}
+PATCH /api/audit-logs/{id}/review
+PATCH /api/audit-logs/{id}/pending
+```
+
+---
+
 ## ⚙️ Instalación local
 
 ### 1. Clonar repositorio
@@ -572,13 +850,15 @@ git clone https://github.com/rojasbilly95-debug/centropsico-system.git
 cd centropsico-system
 ```
 
-### 2. Crear base de datos
+### 2. Crear base de datos local
 
 ```sql
 CREATE DATABASE centro_psicologico;
 ```
 
 ### 3. Configurar `application.properties`
+
+Ejemplo para entorno local:
 
 ```properties
 spring.datasource.url=jdbc:mysql://localhost:3306/centro_psicologico
@@ -606,6 +886,8 @@ http://localhost:8080/portal.html
 
 ## 🔐 Variables de entorno sugeridas
 
+Para producción se recomienda usar variables de entorno y no exponer credenciales en el repositorio.
+
 ```env
 DB_URL=jdbc:mysql://host:puerto/base
 DB_USERNAME=usuario
@@ -615,133 +897,83 @@ JWT_SECRET=clave_segura
 
 ---
 
-## 🧪 Endpoints principales
+## 🐳 Docker
 
-### Auth
+Ejemplo de `Dockerfile`:
 
-```http
-POST /api/auth/login
-GET  /api/auth/validate
-POST /api/auth/logout
-```
-
-### Pacientes
-
-```http
-POST  /api/patients
-GET   /api/patients
-PUT   /api/patients/{id}
-PATCH /api/patients/{id}/toggle-active
-```
-
-### Citas
-
-```http
-POST /api/appointments
-GET  /api/appointments
-GET  /api/appointments/my
-GET  /api/appointments/by-date
-GET  /api/appointments/my/by-date
-PUT  /api/appointments/{id}
-PUT  /api/appointments/{id}/status
-PUT  /api/appointments/{id}/pay
-```
-
-### Portal público
-
-```http
-POST /api/public/leads
-GET  /api/public/plans
-GET  /api/public/services
-GET  /api/public/availability
-```
-
-### Pre-reservas
-
-```http
-GET  /api/leads
-GET  /api/leads/{id}
-PUT  /api/leads/{id}/status
-PUT  /api/leads/{id}/payment/validate
-PUT  /api/leads/{id}/payment/reject
-POST /api/leads/{id}/convert-to-appointment
-```
-
-### Historia clínica
-
-```http
-POST   /api/clinical-history/patient/{id}
-GET    /api/clinical-history/patient/{id}
-DELETE /api/clinical-history/{id}
-```
-
-### Finanzas
-
-```http
-POST /api/finances/incomes
-GET  /api/finances/incomes
-POST /api/finances/expenses
-GET  /api/finances/expenses
-POST /api/finances/expense-categories
-GET  /api/finances/expense-categories
-GET  /api/finances/summary
-```
-
-### Notificaciones
-
-```http
-GET   /api/notifications/role/{role}
-GET   /api/notifications/me
-GET   /api/notifications/role/{role}/unread-count
-GET   /api/notifications/me/unread-count
-PATCH /api/notifications/{id}/read
-PATCH /api/notifications/role/{role}/read-all
-PATCH /api/notifications/me/read-all
-```
-
-### Psicólogos y disponibilidad
-
-```http
-POST  /api/psychologists
-GET   /api/psychologists
-PUT   /api/psychologists/{id}
-PATCH /api/psychologists/{id}/toggle-active
-
-POST  /api/psychologist-availabilities
-GET   /api/psychologist-availabilities
-GET   /api/psychologist-availabilities/psychologist/{id}
-PUT   /api/psychologist-availabilities/{id}
-PATCH /api/psychologist-availabilities/{id}/toggle-active
-```
-
-### Auditoría
-
-```http
-GET   /api/audit-logs/recent
-GET   /api/audit-logs
-GET   /api/audit-logs/page
-GET   /api/audit-logs/module/{module}
-PATCH /api/audit-logs/{id}/review
-PATCH /api/audit-logs/{id}/pending
-```
-
-### Reportes
-
-```http
-GET /api/reports/monthly
+```dockerfile
+FROM eclipse-temurin:21
+COPY target/*.jar app.jar
+ENTRYPOINT ["java","-jar","/app.jar"]
 ```
 
 ---
 
-## 🧠 Metodología
+## 🧪 Pruebas por rol
 
-Proyecto desarrollado utilizando:
+### ADMIN
 
-- Scrum.
-- Desarrollo incremental.
-- Sprints.
-- Validación continua.
-- Modularización por funcionalidades.
+Debe validar:
+
+- Login correcto.
+- Visualización de todos los módulos.
+- Registro de usuario.
+- Registro de paciente.
+- Registro de psicólogo.
+- Registro de servicio.
+- Registro de disponibilidad.
+- Registro de cita.
+- Registro de pago.
+- Registro de gasto.
+- Consulta de reportes.
+- Registro de promoción.
+- Revisión de movimientos.
+- Recepción de notificaciones.
+
+### RECEPCIONISTA
+
+Debe validar:
+
+- Login correcto.
+- Visualización de dashboard.
+- Visualización de solicitudes.
+- Gestión de pacientes.
+- Gestión de citas.
+- Registro de pagos.
+- Cambio de estado de citas.
+- Recepción de notificaciones.
+- Bloqueo visual y backend de módulos administrativos.
+
+### PSICOLOGO
+
+Debe validar:
+
+- Login correcto.
+- Visualización de dashboard.
+- Visualización solo de sus citas.
+- Agenda personalizada.
+- Calendario personalizado.
+- Cambio de estado a atendida o no asistió.
+- Acceso a historia clínica.
+- Recepción de notificaciones.
+- Bloqueo de pagos, finanzas, reportes, pacientes generales y administración.
+
+---
+
+## 🎨 UX/UI
+
+- Login profesional.
+- Portal público responsive.
+- Sidebar interactivo.
+- Dashboard moderno.
+- Modales flotantes.
+- Calendario visual.
+- Tablas dinámicas.
+- Filtros de búsqueda.
+- Campanita de notificaciones.
+- Comprobantes visuales.
+- Promociones destacadas.
+- Diseño responsive.
 
 ---
 
@@ -750,13 +982,16 @@ Proyecto desarrollado utilizando:
 - Desorganización de citas.
 - Doble reserva de horarios.
 - Gestión manual de pacientes.
+- Falta de control de disponibilidad.
 - Falta de seguimiento clínico.
+- Falta de trazabilidad en pagos.
 - Mala gestión financiera.
-- Ausencia de reportes.
-- Mala comunicación con interesados.
-- Falta de control sobre pagos y adelantos.
-- Ausencia de trazabilidad sobre movimientos del sistema.
+- Ausencia de reportes administrativos.
+- Comunicación limitada con interesados.
+- Falta de control sobre adelantos.
+- Falta de auditoría.
 - Falta de control de accesos por rol.
+- Ausencia de notificaciones en tiempo real.
 
 ---
 
@@ -768,48 +1003,41 @@ Proyecto desarrollado utilizando:
 - [ ] Exportación PDF de comprobantes.
 - [ ] Exportación Excel/PDF de reportes.
 - [ ] Historial avanzado de pagos por cita.
-- [ ] Dashboard analítico con filtros por rango de fechas.
-- [ ] Limpieza automática de movimientos antiguos.
+- [ ] Dashboard analítico con rango personalizado.
 - [ ] Exportación de auditoría.
 - [ ] Portal del paciente.
 - [ ] Videollamadas psicológicas.
 - [ ] Multi-sede.
-- [ ] Integración con pasarelas de pago.
+- [ ] Integración con pasarela de pago.
 
 ---
 
 ## 📸 Capturas del sistema
 
-### Portal público
+Agrega capturas reales en una carpeta `docs/` para que se visualicen en GitHub.
 
 ```text
 docs/portal.png
-```
-
-### Dashboard
-
-```text
+docs/login.png
 docs/dashboard.png
+docs/citas.png
+docs/finanzas.png
+docs/reportes.png
+docs/auditoria.png
 ```
 
-### Calendario
+Ejemplo:
 
-```text
-docs/calendar.png
+```md
+![Portal público](docs/portal.png)
+![Dashboard](docs/dashboard.png)
+![Calendario de citas](docs/citas.png)
 ```
-
-> Agrega las imágenes reales en la carpeta `docs/` para que se visualicen en GitHub.
 
 ---
 
 ## 👨‍💻 Autor
 
-Billy Rojas
+**Billy Rojas**
 
-Proyecto desarrollado como plataforma integral de gestión clínica y atención psicológica, orientada a optimizar la administración interna, el seguimiento de pacientes y la experiencia de atención desde el portal público hasta el agendamiento clínico.
-
----
-
-## 📄 Licencia
-
-Proyecto desarrollado con fines educativos, profesionales y de portafolio.
+Proyecto desarrollado como plataforma integral de gestión clínica y atención psicológica, orientada a optimizar la administración interna, el seguimiento de pacientes, el control financiero y la experiencia de atención desde el portal público hasta el agendamiento clínico.

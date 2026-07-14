@@ -1,11 +1,12 @@
 package com.centropsicologico.sistema.controller;
 
+import com.centropsicologico.sistema.dto.PaymentRequestDto;
 import com.centropsicologico.sistema.entity.Appointment;
 import com.centropsicologico.sistema.service.AppointmentService;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import com.centropsicologico.sistema.dto.PaymentRequestDto;
-import java.security.Principal;
 
+import java.security.Principal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -47,14 +48,29 @@ public class AppointmentController {
     @PutMapping("/{id}/pay")
     public Appointment payAppointment(
             @PathVariable Long id,
-            @RequestBody PaymentRequestDto paymentRequest) {
+            @RequestBody PaymentRequestDto paymentRequest
+    ) {
         return appointmentService.payAppointment(id, paymentRequest);
     }
 
     @PutMapping("/{id}/status")
     public Appointment updateStatus(
             @PathVariable Long id,
-            @RequestParam String status) {
+            @RequestParam String status,
+            Principal principal,
+            Authentication authentication
+    ) {
+        if (hasAuthority(authentication, "PSICOLOGO")
+                && !hasAuthority(authentication, "ADMIN")
+                && !hasAuthority(authentication, "RECEPCIONISTA")) {
+
+            return appointmentService.updateStatusForPsychologist(
+                    id,
+                    status,
+                    principal.getName()
+            );
+        }
+
         return appointmentService.updateStatus(id, status);
     }
 
@@ -71,10 +87,19 @@ public class AppointmentController {
     @GetMapping("/my/by-date")
     public List<Appointment> findMyAppointmentsByDate(
             @RequestParam String date,
-            Principal principal) {
+            Principal principal
+    ) {
         return appointmentService.findByPsychologistEmailAndDate(
                 principal.getName(),
-                LocalDate.parse(date));
+                LocalDate.parse(date)
+        );
     }
 
+    private boolean hasAuthority(Authentication authentication, String authority) {
+        return authentication != null
+                && authentication.getAuthorities() != null
+                && authentication.getAuthorities()
+                        .stream()
+                        .anyMatch(item -> authority.equals(item.getAuthority()));
+    }
 }
