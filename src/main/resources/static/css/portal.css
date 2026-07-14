@@ -1544,3 +1544,390 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+/* =========================================================
+   PROMOCIONES TIPO PUBLICIDAD / SPAM ELEGANTE
+========================================================= */
+
+.promo-showcase-section {
+    width: 100%;
+    margin: 80px auto 40px !important;
+    padding: 0 !important;
+}
+
+.promo-showcase-section .section-heading {
+    text-align: center !important;
+    max-width: 850px !important;
+    margin: 0 auto 34px !important;
+}
+
+.promo-showcase-section .section-heading span {
+    display: inline-flex !important;
+    padding: 10px 18px !important;
+    border-radius: 999px !important;
+    background: linear-gradient(135deg, #ffedd5, #fef3c7) !important;
+    color: #9a3412 !important;
+    font-size: 13px !important;
+    font-weight: 900 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.4px !important;
+}
+
+.promo-showcase-section .section-heading h2 {
+    margin-top: 16px !important;
+    color: #2e1065 !important;
+    font-size: clamp(2rem, 4vw, 3.4rem) !important;
+    line-height: 1.1 !important;
+    font-weight: 950 !important;
+}
+
+.promo-showcase-section .section-heading p {
+    color: #6b5b86 !important;
+    font-size: 1.05rem !important;
+}
+
+/* PROMO PRINCIPAL GRANDE */
+.promo-spotlight-container {
+    width: min(1180px, 92vw) !important;
+    margin: 0 auto !important;
+}
+
+.promo-hero-card {
+    position: relative !important;
+    overflow: hidden !important;
+
+    min-height: 390px !important;
+    padding: 46px !important;
+    border-radius: 34px !important;
+
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.5fr) 320px !important;
+    align-items: center !important;
+    gap: 34px !important;
+
+    background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.35), transparent 32%),
+        radial-gradient(circle at bottom right, rgba(255, 221, 87, 0.45), transparent 28%),
+        linear-gradient(135deg, #7c3aed 0%, #ec4899 46%, #f97316 100%) !important;
+
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.28) !important;
+    box-shadow: 0 30px 90px rgba(124, 58, 237, 0.32) !important;
+}
+
+.promo-hero-card::before {
+    content: "PROMO" !important;
+    position: absolute !important;
+    top: 22px !important;
+    right: -62px !important;
+
+    width: 230px !important;
+    text-align: center !important;
+
+    padding: 12px 0 !important;
+    transform: rotate(35deg) !important;
+
+    background: #facc15 !important;
+    color: #7c2d12 !important;
+    font-size: 15px !important;
+    font-weight: 950 !important;
+    letter-spacing: 1px !important;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18) !important;
+}
+
+.promo-hero-card::after {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    background-image:
+        linear-gradient(45deg, rgba(255,255,255,0.08) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(255,255,255,0.08) 25%, transparent 25%) !important;
+    background-size: 34px 34px !important;
+    opacity: 0.28 !important;
+    pointer-events: none !important;
+}
+
+.promo-hero-content,
+.promo-hero-side {
+    position: relative !important;
+    z-index: 2 !important;
+}
+
+.promo-hero-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+
+    padding: 12px 18px !important;
+    margin-bottom: 18px !important;
+
+    border-radius: 999px !important;
+    background: rgba(255, 255, 255, 0.22) !important;
+    color: #fff7ad !important;
+    backdrop-filter: blur(8px) !important;
+
+    font-size: 15px !important;
+    font-weight: 950 !important;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.22) !important;
+}
+
+.promo-hero-badge::before {
+    content: "🔥" !important;
+}
+
+.promo-hero-title {
+    margin: 0 0 18px !important;
+    color: #ffffff !important;
+    font-size: clamp(2rem, 4vw, 4rem) !important;
+    line-height: 1.02 !important;
+    font-weight: 1000 !important;
+    letter-spacing: -1.4px !important;
+    text-shadow: 0 8px 28px rgba(0, 0, 0, 0.18) !important;
+}
+
+.promo-hero-description {
+    max-width: 700px !important;
+    margin: 0 0 22px !important;
+
+    color: rgba(255, 255, 255, 0.95) !important;
+    font-size: 1.13rem !important;
+    line-height: 1.7 !important;
+    font-weight: 600 !important;
+}
+
+.promo-hero-dates {
+    display: inline-flex !important;
+    align-items: center !important;
+
+    margin-bottom: 26px !important;
+    padding: 13px 18px !important;
+
+    border-radius: 16px !important;
+    background: rgba(255, 255, 255, 0.16) !important;
+    color: #ffffff !important;
+
+    font-weight: 850 !important;
+    font-size: 0.96rem !important;
+    backdrop-filter: blur(7px) !important;
+}
+
+.promo-hero-actions {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 14px !important;
+}
+
+.promo-hero-btn {
+    appearance: none !important;
+    border: none !important;
+    cursor: pointer !important;
+
+    padding: 15px 24px !important;
+    border-radius: 16px !important;
+
+    font-size: 1rem !important;
+    font-weight: 950 !important;
+
+    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.promo-hero-btn.primary {
+    background: #ffffff !important;
+    color: #6d28d9 !important;
+    box-shadow: 0 14px 34px rgba(255, 255, 255, 0.26) !important;
+}
+
+.promo-hero-btn.secondary {
+    background: rgba(255, 255, 255, 0.14) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+}
+
+.promo-hero-btn:hover {
+    transform: translateY(-3px) scale(1.02) !important;
+}
+
+.promo-hero-side {
+    display: flex !important;
+    justify-content: center !important;
+}
+
+.promo-discount-circle {
+    width: 230px !important;
+    height: 230px !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    border-radius: 50% !important;
+
+    background:
+        radial-gradient(circle, #ffffff 0%, #fff7ed 55%, #fde68a 100%) !important;
+
+    color: #7c2d12 !important;
+    box-shadow:
+        0 24px 60px rgba(0, 0, 0, 0.22),
+        inset 0 0 0 10px rgba(249, 115, 22, 0.12) !important;
+
+    border: 5px dashed rgba(194, 65, 12, 0.45) !important;
+    animation: promoPulse 1.9s infinite ease-in-out !important;
+}
+
+.promo-discount-circle strong {
+    display: block !important;
+    color: #c2410c !important;
+    font-size: 3.2rem !important;
+    line-height: 1 !important;
+    font-weight: 1000 !important;
+}
+
+.promo-discount-circle span {
+    margin-top: 10px !important;
+    color: #7c2d12 !important;
+    font-size: 1rem !important;
+    font-weight: 950 !important;
+    text-transform: uppercase !important;
+}
+
+/* PROMOS SECUNDARIAS */
+.promo-secondary-container {
+    width: min(1180px, 92vw) !important;
+    margin: 26px auto 0 !important;
+
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)) !important;
+    gap: 18px !important;
+}
+
+.promo-secondary-card {
+    position: relative !important;
+    overflow: hidden !important;
+
+    padding: 26px !important;
+    border-radius: 26px !important;
+
+    background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%) !important;
+    border: 1px solid rgba(251, 146, 60, 0.35) !important;
+    box-shadow: 0 18px 45px rgba(249, 115, 22, 0.14) !important;
+}
+
+.promo-secondary-card.alt-2 {
+    background: linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%) !important;
+    border-color: rgba(59, 130, 246, 0.25) !important;
+}
+
+.promo-secondary-card.alt-3 {
+    background: linear-gradient(135deg, #fdf2f8 0%, #fbcfe8 100%) !important;
+    border-color: rgba(236, 72, 153, 0.25) !important;
+}
+
+.promo-secondary-badge {
+    display: inline-flex !important;
+    padding: 8px 13px !important;
+    margin-bottom: 14px !important;
+
+    border-radius: 999px !important;
+    background: #ffffff !important;
+    color: #9a3412 !important;
+
+    font-size: 0.83rem !important;
+    font-weight: 950 !important;
+}
+
+.promo-secondary-title {
+    margin: 0 0 10px !important;
+    color: #21133f !important;
+    font-size: 1.3rem !important;
+    line-height: 1.25 !important;
+    font-weight: 950 !important;
+}
+
+.promo-secondary-description {
+    margin: 0 0 14px !important;
+    color: #5b506e !important;
+    font-size: 0.95rem !important;
+    line-height: 1.55 !important;
+}
+
+.promo-secondary-dates {
+    display: block !important;
+    margin-bottom: 18px !important;
+    color: #3f315c !important;
+    font-size: 0.9rem !important;
+    font-weight: 850 !important;
+}
+
+.promo-secondary-btn {
+    appearance: none !important;
+    border: none !important;
+    cursor: pointer !important;
+
+    padding: 12px 18px !important;
+    border-radius: 14px !important;
+
+    background: #4c1d95 !important;
+    color: #ffffff !important;
+
+    font-weight: 950 !important;
+    box-shadow: 0 12px 24px rgba(76, 29, 149, 0.22) !important;
+}
+
+.promo-secondary-btn:hover {
+    transform: translateY(-2px) !important;
+}
+
+.promo-empty-state {
+    padding: 26px !important;
+    border-radius: 22px !important;
+    background: #ffffff !important;
+    border: 1px dashed #cbd5e1 !important;
+    color: #64748b !important;
+    text-align: center !important;
+    font-weight: 700 !important;
+}
+
+@keyframes promoPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.045);
+    }
+}
+
+@media (max-width: 900px) {
+    .promo-hero-card {
+        grid-template-columns: 1fr !important;
+        padding: 32px !important;
+    }
+
+    .promo-hero-side {
+        justify-content: flex-start !important;
+    }
+
+    .promo-discount-circle {
+        width: 170px !important;
+        height: 170px !important;
+    }
+
+    .promo-discount-circle strong {
+        font-size: 2.3rem !important;
+    }
+}
+
+@media (max-width: 560px) {
+    .promo-hero-card {
+        padding: 26px !important;
+        border-radius: 26px !important;
+    }
+
+    .promo-hero-actions {
+        flex-direction: column !important;
+    }
+
+    .promo-hero-btn {
+        width: 100% !important;
+    }
+}
