@@ -20,6 +20,8 @@ public interface NotificationService {
 
     Notification markAsRead(Long id);
 
+    Notification markAsReadForCurrentUser(Long id, String currentRole, String currentEmail);
+
     void markAllAsReadByRole(String role);
 
     void markAllAsReadByUserEmail(String email);

@@ -10,7 +10,20 @@ function validateSession() {
         return false;
     }
 
-    currentUser = JSON.parse(storedUser);
+    try {
+        currentUser = JSON.parse(storedUser);
+    } catch (error) {
+        localStorage.clear();
+        window.location.href = "/login.html";
+        return false;
+    }
+
+    if (!currentUser || !currentUser.email || !currentUser.role) {
+        localStorage.clear();
+        window.location.href = "/login.html";
+        return false;
+    }
+
     return true;
 }
 

@@ -139,7 +139,8 @@ public class AuthController {
     @GetMapping("/validate")
     public Map<String, Object> validateToken(
             @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
-            HttpServletRequest request) {
+            HttpServletRequest request
+    ) {
         if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
             return Map.of("valid", false);
         }
@@ -157,12 +158,37 @@ public class AuthController {
                     "desconocido",
                     "NO_AUTENTICADO",
                     "WARNING",
-                    false);
+                    false
+            );
+
+            return Map.of("valid", false);
         }
 
-        return Map.of("valid", valid);
-    }
+        String email = jwtUtil.getEmailFromToken(token);
 
+        Optional<User> optionalUser = userRepository.findByEmail(email);
+
+        if (optionalUser.isEmpty()) {
+            return Map.of("valid", false);
+        }
+
+        User user = optionalUser.get();
+
+        if (!Boolean.TRUE.equals(user.getActive())) {
+            return Map.of("valid", false);
+        }
+
+        return Map.of(
+                "valid", true,
+                "id", user.getId(),
+                "firstName", user.getFirstName(),
+                "lastName", user.getLastName(),
+                "email", user.getEmail(),
+                "role", user.getRole(),
+                "phone", user.getPhone() == null ? "" : user.getPhone(),
+                "profileImageUrl", user.getProfileImageUrl() == null ? "" : user.getProfileImageUrl()
+        );
+    }
     @PostMapping("/logout")
     public Map<String, Object> logout(
             Principal principal,

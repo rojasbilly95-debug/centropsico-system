@@ -162,10 +162,10 @@ function renderAppointmentTable(data) {
                 : ""
             }
 
-                    ${!canPay && !canShowReceipt
-                ? `<span class="badge badge-role">Sin pago</span>`
-                : ""
-            }
+                    ${canManagePayments && !canPay && !canShowReceipt
+                        ? `<span class="badge badge-role">Sin pago</span>`
+                        : ""
+                    }
 
                     ${currentStatus === "PROGRAMADA" && canUpdateStatus
                         ? `
@@ -1138,7 +1138,11 @@ async function generateAvailableAppointmentSlots() {
             `${baseUrl}/psychologist-availabilities/psychologist/${psychologistId}`
         );
 
-        const appointmentsResponse = await authFetch(`${baseUrl}/appointments`);
+        const appointmentsResponse = await authFetch(
+         currentUser.role === "PSICOLOGO"
+        ? `${baseUrl}/appointments/my`
+        : `${baseUrl}/appointments`
+);
 
         if (!availabilityResponse || !appointmentsResponse) return;
 

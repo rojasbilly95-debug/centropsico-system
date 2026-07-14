@@ -14,13 +14,13 @@ async function createIncome() {
         amount: parseFloat(document.getElementById("incomeAmount").value),
         date: document.getElementById("incomeDate").value,
         paymentMethod: document.getElementById("incomePaymentMethod").value,
-        active: true
+        active: true,
     };
 
     try {
         const response = await authFetch(`${baseUrl}/finances/incomes`, {
             method: "POST",
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         if (!response) return;
 
@@ -51,9 +51,8 @@ async function createIncome() {
             title: "Ingreso registrado",
             text: "El ingreso fue guardado y notificado al administrador.",
             timer: 1800,
-            showConfirmButton: false
+            showConfirmButton: false,
         });
-
     } catch (error) {
         document.getElementById("incomeResult").textContent =
             "Error de conexión con el servidor";
@@ -72,7 +71,6 @@ async function loadIncomes() {
 
         document.getElementById("incomeResult").textContent =
             "Ingresos cargados correctamente";
-
     } catch (error) {
         document.getElementById("incomeResult").textContent =
             "Error al listar ingresos";
@@ -93,7 +91,7 @@ function renderIncomeTable(data) {
     const end = start + financeRowsPerPage;
     const pageData = data.slice(start, end);
 
-    pageData.forEach(income => {
+    pageData.forEach((income) => {
         tbody.innerHTML += `
             <tr>
                 <td>${income.id ?? ""}</td>
@@ -128,8 +126,10 @@ async function createExpenseCategory() {
 
     const data = {
         name: document.getElementById("expenseCategoryName").value.trim(),
-        description: document.getElementById("expenseCategoryDescription").value.trim(),
-        active: true
+        description: document
+            .getElementById("expenseCategoryDescription")
+            .value.trim(),
+        active: true,
     };
 
     if (!data.name) {
@@ -145,7 +145,7 @@ async function createExpenseCategory() {
     try {
         const response = await authFetch(`${baseUrl}/finances/expense-categories`, {
             method: "POST",
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
 
         if (!response) return;
@@ -176,7 +176,6 @@ async function createExpenseCategory() {
         if (expenseCategoryListVisible) {
             await loadExpenseCategories();
         }
-
     } catch (error) {
         resultBox.style.display = "block";
         resultBox.innerHTML = `
@@ -226,7 +225,7 @@ async function loadExpenseCategories() {
 
         let html = `<div class="category-list">`;
 
-        data.forEach(category => {
+        data.forEach((category) => {
             html += `
                 <div class="category-item">
                     <strong>${category.name ?? "Sin nombre"}</strong>
@@ -238,7 +237,6 @@ async function loadExpenseCategories() {
         html += `</div>`;
 
         resultBox.innerHTML = html;
-
     } catch (error) {
         resultBox.innerHTML = `
             <div class="finance-inline-message error">
@@ -288,7 +286,7 @@ async function loadExpenseCategoryOptions() {
         if (expenseSelect) {
             expenseSelect.innerHTML = `<option value="">Seleccione categoría</option>`;
 
-            data.forEach(category => {
+            data.forEach((category) => {
                 if (category.active === false) return;
 
                 expenseSelect.innerHTML += `
@@ -302,7 +300,7 @@ async function loadExpenseCategoryOptions() {
         if (filterSelect) {
             filterSelect.innerHTML = `<option value="">Todas las categorías</option>`;
 
-            data.forEach(category => {
+            data.forEach((category) => {
                 filterSelect.innerHTML += `
                     <option value="${category.id}">
                         ${category.name}
@@ -310,7 +308,6 @@ async function loadExpenseCategoryOptions() {
                 `;
             });
         }
-
     } catch (error) {
         console.error("Error cargando categorías:", error);
     }
@@ -330,13 +327,13 @@ async function createExpense() {
         amount: parseFloat(document.getElementById("expenseAmount").value),
         date: document.getElementById("expenseDate").value,
         responsible: document.getElementById("expenseResponsible").value.trim(),
-        active: true
+        active: true,
     };
 
     try {
         const response = await authFetch(`${baseUrl}/finances/expenses`, {
             method: "POST",
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
 
         if (!response) return;
@@ -368,9 +365,8 @@ async function createExpense() {
             title: "Gasto registrado",
             text: "El gasto fue guardado y notificado al administrador.",
             timer: 1800,
-            showConfirmButton: false
+            showConfirmButton: false,
         });
-
     } catch (error) {
         document.getElementById("expenseResult").textContent =
             "Error de conexión con el servidor";
@@ -389,12 +385,11 @@ async function loadExpenses() {
         renderExpenseTable(getFilteredExpenses());
         renderExpenseFilterSummary(
             expensesData,
-            "Listado general de gastos activos"
+            "Listado general de gastos activos",
         );
 
         document.getElementById("expenseResult").textContent =
             "Gastos cargados correctamente";
-
     } catch (error) {
         document.getElementById("expenseResult").textContent =
             "Error al listar gastos";
@@ -406,7 +401,9 @@ async function filterExpensesByAdvancedFilters(showMessage = true) {
     const month = document.getElementById("expenseFilterMonth")?.value;
     const categoryId = document.getElementById("expenseFilterCategoryId")?.value;
     const status = document.getElementById("expenseFilterStatus")?.value;
-    const responsible = document.getElementById("expenseFilterResponsible")?.value.trim();
+    const responsible = document
+        .getElementById("expenseFilterResponsible")
+        ?.value.trim();
 
     const params = new URLSearchParams();
 
@@ -428,7 +425,7 @@ async function filterExpensesByAdvancedFilters(showMessage = true) {
             Swal.fire(
                 "Error",
                 data.message || "No se pudieron filtrar los gastos.",
-                "error"
+                "error",
             );
             return;
         }
@@ -441,7 +438,7 @@ async function filterExpensesByAdvancedFilters(showMessage = true) {
 
         renderExpenseFilterSummary(
             expensesData,
-            buildExpenseFilterTitle(year, month, categoryId, status, responsible)
+            buildExpenseFilterTitle(year, month, categoryId, status, responsible),
         );
 
         if (showMessage) {
@@ -450,18 +447,13 @@ async function filterExpensesByAdvancedFilters(showMessage = true) {
                 title: "Filtro aplicado",
                 text: "Los gastos fueron filtrados correctamente.",
                 timer: 1400,
-                showConfirmButton: false
+                showConfirmButton: false,
             });
         }
-
     } catch (error) {
         console.error("Error filtrando gastos:", error);
 
-        Swal.fire(
-            "Error",
-            "Error de conexión al filtrar gastos.",
-            "error"
-        );
+        Swal.fire("Error", "Error de conexión al filtrar gastos.", "error");
     }
 }
 
@@ -497,9 +489,10 @@ function buildExpenseFilterTitle(year, month, categoryId, status, responsible) {
     }
 
     const categorySelect = document.getElementById("expenseFilterCategoryId");
-    const categoryName = categorySelect && categorySelect.value
-        ? categorySelect.options[categorySelect.selectedIndex].textContent.trim()
-        : "";
+    const categoryName =
+        categorySelect && categorySelect.value
+            ? categorySelect.options[categorySelect.selectedIndex].textContent.trim()
+            : "";
 
     if (categoryName) {
         parts.push(`Categoría: ${categoryName}`);
@@ -533,7 +526,7 @@ function renderExpenseFilterSummary(data, title) {
 
     const categoryTotals = {};
 
-    data.forEach(expense => {
+    data.forEach((expense) => {
         const categoryName = expense.category?.name || "Sin categoría";
 
         if (!categoryTotals[categoryName]) {
@@ -544,12 +537,14 @@ function renderExpenseFilterSummary(data, title) {
     });
 
     const categoryHtml = Object.entries(categoryTotals)
-        .map(([category, amount]) => `
+        .map(
+            ([category, amount]) => `
             <div class="expense-filter-category-row">
                 <span>${escapeFinanceHtml(category)}</span>
                 <strong>S/ ${formatFinanceMoney(amount)}</strong>
             </div>
-        `)
+        `,
+        )
         .join("");
 
     container.classList.remove("hidden");
@@ -569,12 +564,14 @@ function renderExpenseFilterSummary(data, title) {
             </div>
 
             <div class="expense-filter-category-list">
-                ${categoryHtml || `
+                ${categoryHtml ||
+        `
                     <div class="expense-filter-category-row">
                         <span>No hay datos para mostrar</span>
                         <strong>S/ 0.00</strong>
                     </div>
-                `}
+                `
+        }
             </div>
         </div>
     `;
@@ -615,7 +612,7 @@ function renderExpenseTable(data) {
         return;
     }
 
-    pageData.forEach(expense => {
+    pageData.forEach((expense) => {
         const categoryName = expense.category ? expense.category.name : "";
         const description = expense.description ?? "";
         const responsible = expense.responsible ?? "";
@@ -634,9 +631,8 @@ function renderExpenseTable(data) {
                     </span>
                 </td>
                 <td>
-                    ${
-                        expense.active
-                            ? `
+                    ${expense.active
+                ? `
                                 <button 
                                     type="button"
                                     class="table-action-btn danger expense-delete-btn"
@@ -644,12 +640,12 @@ function renderExpenseTable(data) {
                                     Eliminar
                                 </button>
                             `
-                            : `
+                : `
                                 <span class="expense-deleted-label">
                                     Eliminado
                                 </span>
                             `
-                    }
+            }
                 </td>
             </tr>
         `;
@@ -666,8 +662,8 @@ async function deleteExpense(id) {
     if (!id) return;
 
     const expense =
-        expensesData.find(item => Number(item.id) === Number(id)) ||
-        monthlyExpensesData.find(item => Number(item.id) === Number(id));
+        expensesData.find((item) => Number(item.id) === Number(id)) ||
+        monthlyExpensesData.find((item) => Number(item.id) === Number(id));
 
     const description = expense?.description || "Gasto seleccionado";
 
@@ -686,14 +682,14 @@ async function deleteExpense(id) {
         showCancelButton: true,
         confirmButtonText: "Sí, eliminar",
         cancelButtonText: "Cancelar",
-        confirmButtonColor: "#dc2626"
+        confirmButtonColor: "#dc2626",
     });
 
     if (!confirm.isConfirmed) return;
 
     try {
         const response = await authFetch(`${baseUrl}/finances/expenses/${id}`, {
-            method: "DELETE"
+            method: "DELETE",
         });
 
         if (!response) return;
@@ -710,7 +706,7 @@ async function deleteExpense(id) {
             Swal.fire(
                 "Error",
                 result.message || "No se pudo eliminar el gasto.",
-                "error"
+                "error",
             );
             return;
         }
@@ -720,7 +716,7 @@ async function deleteExpense(id) {
             title: "Gasto eliminado",
             text: "El gasto fue desactivado correctamente.",
             timer: 1700,
-            showConfirmButton: false
+            showConfirmButton: false,
         });
 
         if (expenseAdvancedFilterActive) {
@@ -733,7 +729,12 @@ async function deleteExpense(id) {
         const monthlyMonth = document.getElementById("monthlyExpenseMonth")?.value;
         const monthlyResult = document.getElementById("monthlyExpenseResult");
 
-        if (monthlyYear && monthlyMonth && monthlyResult && monthlyResult.innerHTML.trim() !== "") {
+        if (
+            monthlyYear &&
+            monthlyMonth &&
+            monthlyResult &&
+            monthlyResult.innerHTML.trim() !== ""
+        ) {
             await viewMonthlyExpenses(false);
         }
 
@@ -751,15 +752,10 @@ async function deleteExpense(id) {
         if (typeof loadNotifications === "function") {
             await loadNotifications();
         }
-
     } catch (error) {
         console.error("Error eliminando gasto:", error);
 
-        Swal.fire(
-            "Error",
-            "Error de conexión con el servidor.",
-            "error"
-        );
+        Swal.fire("Error", "Error de conexión con el servidor.", "error");
     }
 }
 
@@ -792,7 +788,9 @@ async function loadFinanceSummary() {
             </div>
         `;
 
-        const response = await authFetch(`${baseUrl}/finances/summary?year=${year}&month=${month}`);
+        const response = await authFetch(
+            `${baseUrl}/finances/summary?year=${year}&month=${month}`,
+        );
 
         if (!response) return;
 
@@ -808,7 +806,6 @@ async function loadFinanceSummary() {
         }
 
         renderFinancialSummary(data, year, month);
-
     } catch (error) {
         resultBox.innerHTML = `
             <div class="finance-summary-empty error">
@@ -830,17 +827,16 @@ function renderFinancialSummary(data, year, month) {
 
     const monthName = getFinanceMonthName(month);
 
-    const percentageExpense = totalIncome > 0
-        ? ((totalExpense / totalIncome) * 100).toFixed(1)
-        : "0.0";
+    const percentageExpense =
+        totalIncome > 0 ? ((totalExpense / totalIncome) * 100).toFixed(1) : "0.0";
 
-    const percentageProfit = totalIncome > 0
-        ? ((profit / totalIncome) * 100).toFixed(1)
-        : "0.0";
+    const percentageProfit =
+        totalIncome > 0 ? ((profit / totalIncome) * 100).toFixed(1) : "0.0";
 
-    const analysisMessage = profit >= 0
-        ? `Durante ${monthName} de ${year}, el centro obtuvo un resultado positivo. Los ingresos superaron a los gastos registrados, generando una ganancia de S/ ${formatFinanceMoney(profit)}.`
-        : `Durante ${monthName} de ${year}, el centro presenta un resultado negativo. Se recomienda revisar los gastos y reforzar el registro de ingresos.`;
+    const analysisMessage =
+        profit >= 0
+            ? `Durante ${monthName} de ${year}, el centro obtuvo un resultado positivo. Los ingresos superaron a los gastos registrados, generando una ganancia de S/ ${formatFinanceMoney(profit)}.`
+            : `Durante ${monthName} de ${year}, el centro presenta un resultado negativo. Se recomienda revisar los gastos y reforzar el registro de ingresos.`;
 
     resultBox.innerHTML = `
         <div class="finance-summary-container">
@@ -920,7 +916,7 @@ function renderFinancialSummary(data, year, month) {
 function formatFinanceMoney(value) {
     return Number(value || 0).toLocaleString("es-PE", {
         minimumFractionDigits: 2,
-        maximumFractionDigits: 2
+        maximumFractionDigits: 2,
     });
 }
 
@@ -937,7 +933,7 @@ function getFinanceMonthName(month) {
         9: "septiembre",
         10: "octubre",
         11: "noviembre",
-        12: "diciembre"
+        12: "diciembre",
     };
 
     return months[Number(month)] || `mes ${month}`;
@@ -949,7 +945,7 @@ function getFilteredIncomes() {
 
     if (!search) return incomesData;
 
-    return incomesData.filter(income => {
+    return incomesData.filter((income) => {
         const text = `
             ${income.id ?? ""}
             ${income.description ?? ""}
@@ -969,7 +965,7 @@ function getFilteredExpenses() {
 
     if (!search) return expensesData;
 
-    return expensesData.filter(expense => {
+    return expensesData.filter((expense) => {
         const text = `
             ${expense.id ?? ""}
             ${expense.category ? expense.category.name : ""}
@@ -1028,10 +1024,6 @@ async function toggleIncomeList() {
 function closeIncomeList() {
     document.getElementById("incomeListModal").classList.add("hidden");
     document.body.classList.remove("modal-open");
-}
-
-function closeIncomeList() {
-    document.getElementById("incomeListModal").classList.add("hidden");
 }
 
 async function toggleExpenseList() {
@@ -1119,7 +1111,9 @@ async function viewMonthlyExpenses(showMessage = true) {
         params.append("month", month);
         params.append("active", "true");
 
-        const response = await authFetch(`${baseUrl}/finances/expenses/filter?${params.toString()}`);
+        const response = await authFetch(
+            `${baseUrl}/finances/expenses/filter?${params.toString()}`,
+        );
 
         if (!response) return;
 
@@ -1142,10 +1136,9 @@ async function viewMonthlyExpenses(showMessage = true) {
                 title: "Historial cargado",
                 text: "Los gastos del mes fueron consultados correctamente.",
                 timer: 1400,
-                showConfirmButton: false
+                showConfirmButton: false,
             });
         }
-
     } catch (error) {
         console.error("Error cargando historial mensual:", error);
 
@@ -1172,7 +1165,7 @@ function renderMonthlyExpenseHistory(data, year, month) {
 
     const categoryTotals = {};
 
-    expenses.forEach(expense => {
+    expenses.forEach((expense) => {
         const categoryName = expense.category?.name || "Sin categoría";
 
         if (!categoryTotals[categoryName]) {
@@ -1182,17 +1175,18 @@ function renderMonthlyExpenseHistory(data, year, month) {
         categoryTotals[categoryName] += Number(expense.amount || 0);
     });
 
-    const categoryEntries = Object.entries(categoryTotals)
-        .sort((a, b) => b[1] - a[1]);
+    const categoryEntries = Object.entries(categoryTotals).sort(
+        (a, b) => b[1] - a[1],
+    );
 
-    const highestCategory = categoryEntries.length > 0
-        ? categoryEntries[0][0]
-        : "Sin datos";
+    const highestCategory =
+        categoryEntries.length > 0 ? categoryEntries[0][0] : "Sin datos";
 
-    const categoryHtml = categoryEntries.map(([category, amount]) => {
-        const percent = total > 0 ? ((amount / total) * 100).toFixed(1) : "0.0";
+    const categoryHtml = categoryEntries
+        .map(([category, amount]) => {
+            const percent = total > 0 ? ((amount / total) * 100).toFixed(1) : "0.0";
 
-        return `
+            return `
             <div class="monthly-category-item">
                 <div>
                     <strong>${escapeFinanceHtml(category)}</strong>
@@ -1202,17 +1196,22 @@ function renderMonthlyExpenseHistory(data, year, month) {
                 <strong>S/ ${formatFinanceMoney(amount)}</strong>
             </div>
         `;
-    }).join("");
+        })
+        .join("");
 
     const sortedExpenses = [...expenses].sort((a, b) => {
-        const dateCompare = String(b.date || "").localeCompare(String(a.date || ""));
+        const dateCompare = String(b.date || "").localeCompare(
+            String(a.date || ""),
+        );
 
         if (dateCompare !== 0) return dateCompare;
 
         return Number(b.id || 0) - Number(a.id || 0);
     });
 
-    const detailRows = sortedExpenses.map(expense => `
+    const detailRows = sortedExpenses
+        .map(
+            (expense) => `
         <tr>
             <td>${expense.date ?? ""}</td>
             <td>${escapeFinanceHtml(expense.category?.name || "Sin categoría")}</td>
@@ -1228,7 +1227,9 @@ function renderMonthlyExpenseHistory(data, year, month) {
             </button>
             </td>
         </tr>
-    `).join("");
+    `,
+        )
+        .join("");
 
     resultBox.innerHTML = `
         <div class="monthly-expense-card">
@@ -1269,11 +1270,13 @@ function renderMonthlyExpenseHistory(data, year, month) {
                 <h4>Gastos por categoría</h4>
 
                 <div class="monthly-category-list">
-                    ${categoryHtml || `
+                    ${categoryHtml ||
+        `
                         <div class="monthly-expense-empty">
                             No hay gastos registrados en este mes.
                         </div>
-                    `}
+                    `
+        }
                 </div>
             </div>
 
@@ -1294,13 +1297,15 @@ function renderMonthlyExpenseHistory(data, year, month) {
                         </thead>
 
                         <tbody>
-                            ${detailRows || `
+                            ${detailRows ||
+        `
                                 <tr>
                                     <td colspan="6" class="empty-table-message">
                                         No hay gastos registrados para este mes.
                                     </td>
                                 </tr>
-                            `}
+                            `
+        }
                         </tbody>
                     </table>
                 </div>
@@ -1338,7 +1343,6 @@ async function loadExpenseResponsibleOptions() {
         }
 
         renderExpenseResponsibleOptions(data, selectedValue);
-
     } catch (error) {
         console.error("Error cargando responsables:", error);
         renderExpenseResponsibleOptions(expensesData, selectedValue);
@@ -1350,15 +1354,19 @@ function renderExpenseResponsibleOptions(data, selectedValue = "") {
 
     if (!select) return;
 
-    const responsibles = [...new Set(
-        (Array.isArray(data) ? data : [])
-            .map(expense => expense.responsible ? expense.responsible.trim() : "")
-            .filter(value => value !== "")
-    )].sort((a, b) => a.localeCompare(b));
+    const responsibles = [
+        ...new Set(
+            (Array.isArray(data) ? data : [])
+                .map((expense) =>
+                    expense.responsible ? expense.responsible.trim() : "",
+                )
+                .filter((value) => value !== ""),
+        ),
+    ].sort((a, b) => a.localeCompare(b));
 
     select.innerHTML = `<option value="">Todos los responsables</option>`;
 
-    responsibles.forEach(responsible => {
+    responsibles.forEach((responsible) => {
         select.innerHTML += `
             <option value="${escapeFinanceAttr(responsible)}">
                 ${escapeFinanceHtml(responsible)}

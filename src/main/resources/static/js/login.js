@@ -66,7 +66,9 @@ async function login() {
             firstName: data.firstName,
             lastName: data.lastName,
             email: data.email,
-            role: data.role
+            role: data.role,
+            phone: data.phone || "",
+            profileImageUrl: data.profileImageUrl || ""
         }));
 
         window.location.replace("/index.html");

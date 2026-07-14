@@ -92,10 +92,10 @@ public class FinanceServiceImpl implements FinanceService {
 
     @Override
     public List<Income> findAllIncomes() {
-        return incomeRepository.findAll();
-    }
-
+    return incomeRepository.findByActiveTrueOrderByDateDescIdDesc();
+}
     @Override
+    
     public ExpenseCategory saveExpenseCategory(ExpenseCategory category) {
         if (category == null || category.getName() == null || category.getName().trim().isEmpty()) {
             throw new BusinessRuleException("El nombre de la categoría es obligatorio");
@@ -286,6 +286,22 @@ public class FinanceServiceImpl implements FinanceService {
 
     @Override
     public FinanceSummaryDto getMonthlySummary(Integer year, Integer month) {
+        if (year == null) {
+            throw new BusinessRuleException("Debe ingresar el año");
+        }
+
+        if (month == null) {
+            throw new BusinessRuleException("Debe ingresar el mes");
+        }
+
+        if (month < 1 || month > 12) {
+            throw new BusinessRuleException("El mes debe estar entre 1 y 12");
+        }
+
+        if (year < 2000 || year > 2100) {
+            throw new BusinessRuleException("El año ingresado no es válido");
+        }
+
         LocalDate startDate = LocalDate.of(year, month, 1);
         LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
 
@@ -306,4 +322,4 @@ public class FinanceServiceImpl implements FinanceService {
 
         return new FinanceSummaryDto(totalIncome, totalExpense, profit, result);
     }
-}
+    }

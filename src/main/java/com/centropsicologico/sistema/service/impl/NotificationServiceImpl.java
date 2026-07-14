@@ -1,6 +1,7 @@
 package com.centropsicologico.sistema.service.impl;
 
 import com.centropsicologico.sistema.entity.Notification;
+import com.centropsicologico.sistema.exception.BusinessRuleException;
 import com.centropsicologico.sistema.exception.ResourceNotFoundException;
 import com.centropsicologico.sistema.repository.NotificationRepository;
 import com.centropsicologico.sistema.service.NotificationService;
@@ -18,7 +19,8 @@ public class NotificationServiceImpl implements NotificationService {
 
     public NotificationServiceImpl(
             NotificationRepository notificationRepository,
-            WebSocketNotificationService webSocketNotificationService) {
+            WebSocketNotificationService webSocketNotificationService
+    ) {
         this.notificationRepository = notificationRepository;
         this.webSocketNotificationService = webSocketNotificationService;
     }
@@ -26,10 +28,11 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public Notification createForRole(String title, String message, String type, String targetRole) {
         Notification notification = new Notification();
-        notification.setTitle(title);
-        notification.setMessage(message);
-        notification.setType(type);
-        notification.setTargetRole(targetRole);
+
+        notification.setTitle(clean(title));
+        notification.setMessage(clean(message));
+        notification.setType(clean(type));
+        notification.setTargetRole(clean(targetRole));
         notification.setTargetEmail(null);
         notification.setRead(false);
         notification.setActive(true);
@@ -37,7 +40,7 @@ public class NotificationServiceImpl implements NotificationService {
 
         Notification saved = notificationRepository.save(notification);
 
-        webSocketNotificationService.sendToRole(targetRole, saved);
+        webSocketNotificationService.sendToRole(saved.getTargetRole(), saved);
 
         return saved;
     }
@@ -45,18 +48,19 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public Notification createForUser(String title, String message, String type, String targetEmail) {
         Notification notification = new Notification();
-        notification.setTitle(title);
-        notification.setMessage(message);
-        notification.setType(type);
+
+        notification.setTitle(clean(title));
+        notification.setMessage(clean(message));
+        notification.setType(clean(type));
         notification.setTargetRole("USER");
-        notification.setTargetEmail(targetEmail);
+        notification.setTargetEmail(cleanEmail(targetEmail));
         notification.setRead(false);
         notification.setActive(true);
         notification.setCreatedAt(LocalDateTime.now());
 
         Notification saved = notificationRepository.save(notification);
 
-        webSocketNotificationService.sendToUserEmail(targetEmail, saved);
+        webSocketNotificationService.sendToUserEmail(saved.getTargetEmail(), saved);
 
         return saved;
     }
@@ -87,20 +91,79 @@ public class NotificationServiceImpl implements NotificationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Notificación no encontrada con id: " + id));
 
         notification.setRead(true);
+
+        return notificationRepository.save(notification);
+    }
+
+    @Override
+    public Notification markAsReadForCurrentUser(Long id, String currentRole, String currentEmail) {
+        Notification notification = notificationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Notificación no encontrada con id: " + id));
+
+        if (Boolean.FALSE.equals(notification.getActive())) {
+            throw new ResourceNotFoundException("Notificación no encontrada");
+        }
+
+        if (!belongsToCurrentUser(notification, currentRole, currentEmail)) {
+            throw new BusinessRuleException("No tienes permiso para leer esta notificación");
+        }
+
+        notification.setRead(true);
+
         return notificationRepository.save(notification);
     }
 
     @Override
     public void markAllAsReadByRole(String role) {
         List<Notification> notifications = findByRole(role);
-        notifications.forEach(n -> n.setRead(true));
+
+        notifications.forEach(notification -> notification.setRead(true));
+
         notificationRepository.saveAll(notifications);
     }
 
     @Override
     public void markAllAsReadByUserEmail(String email) {
         List<Notification> notifications = findByUserEmail(email);
-        notifications.forEach(n -> n.setRead(true));
+
+        notifications.forEach(notification -> notification.setRead(true));
+
         notificationRepository.saveAll(notifications);
+    }
+
+    private boolean belongsToCurrentUser(
+            Notification notification,
+            String currentRole,
+            String currentEmail
+    ) {
+        boolean belongsToRole = notification.getTargetRole() != null
+                && currentRole != null
+                && notification.getTargetRole().equalsIgnoreCase(currentRole);
+
+        boolean belongsToEmail = notification.getTargetEmail() != null
+                && currentEmail != null
+                && notification.getTargetEmail().equalsIgnoreCase(currentEmail);
+
+        return belongsToRole || belongsToEmail;
+    }
+
+    private String clean(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        String cleaned = value.trim();
+
+        return cleaned.isEmpty() ? null : cleaned;
+    }
+
+    private String cleanEmail(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        String cleaned = value.trim().toLowerCase();
+
+        return cleaned.isEmpty() ? null : cleaned;
     }
 }

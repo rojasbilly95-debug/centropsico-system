@@ -30,8 +30,7 @@ public class PublicPortalController {
             LeadRepository leadRepository,
             NotificationService notificationService,
             ServiceRepository serviceRepository,
-            AuditLogService auditLogService
-    ) {
+            AuditLogService auditLogService) {
         this.leadRepository = leadRepository;
         this.notificationService = notificationService;
         this.serviceRepository = serviceRepository;
@@ -106,8 +105,7 @@ public class PublicPortalController {
         lead.setConsentVersion(
                 hasText(request.getConsentVersion())
                         ? clean(request.getConsentVersion())
-                        : CONSENT_VERSION
-        );
+                        : CONSENT_VERSION);
 
         Lead saved = leadRepository.save(lead);
 
@@ -123,8 +121,7 @@ public class PublicPortalController {
                         + valueOrDefault(saved.getPreferredTime(), "por coordinar")
                         + ". Adelanto: S/ "
                         + formatAmount(saved.getAdvanceAmount())
-                        + "."
-        );
+                        + ".");
 
         auditLogService.recordSecurity(
                 "PRE-RESERVAS",
@@ -138,14 +135,12 @@ public class PublicPortalController {
                 valueOrDefault(saved.getEmail(), "SIN_CORREO"),
                 "VISITANTE",
                 "INFO",
-                false
-        );
+                false);
 
         return Map.of(
                 "success", true,
                 "message", "Pre-reserva registrada correctamente",
-                "leadId", saved.getId()
-        );
+                "leadId", saved.getId());
     }
 
     @GetMapping("/services")
@@ -165,15 +160,15 @@ public class PublicPortalController {
 
                     map.put("id", service.getId());
                     map.put("name", service.getName());
-                    map.put("description", valueOrDefault(service.getDescription(), "Servicio psicológico disponible."));
+                    map.put("description",
+                            valueOrDefault(service.getDescription(), "Servicio psicológico disponible."));
                     map.put("price", service.getPrice() != null ? service.getPrice() : 0.0);
                     map.put("durationMinutes", service.getDurationMinutes());
                     map.put("features", List.of(
                             "Atención profesional",
                             "Modalidad presencial o virtual",
                             "Orientación personalizada",
-                            "Proceso confidencial"
-                    ));
+                            "Proceso confidencial"));
 
                     return map;
                 })
@@ -194,53 +189,65 @@ public class PublicPortalController {
     }
 
     private void validateLead(LeadRequestDto request) {
-    if (!hasText(request.getFullName())) {
-        throw new RuntimeException("Debe ingresar su nombre completo");
-    }
+        if (!hasText(request.getFullName())) {
+            throw new RuntimeException("Debe ingresar su nombre completo");
+        }
 
-    if (hasText(request.getEmail()) && !request.getEmail().contains("@")) {
-        throw new RuntimeException("Debe ingresar un correo electrónico válido");
-    }
+        if (hasText(request.getEmail()) && !request.getEmail().contains("@")) {
+            throw new RuntimeException("Debe ingresar un correo electrónico válido");
+        }
 
-    if (!hasText(request.getPhone())) {
-        throw new RuntimeException("Debe ingresar su teléfono o WhatsApp");
-    }
+        if (!hasText(request.getPhone())) {
+            throw new RuntimeException("Debe ingresar su teléfono o WhatsApp");
+        }
 
-    if (!hasText(request.getServiceInterest()) && request.getServiceId() == null) {
-        throw new RuntimeException("Debe seleccionar el tipo de atención");
-    }
+        if (!hasText(request.getServiceInterest()) && request.getServiceId() == null) {
+            throw new RuntimeException("Debe seleccionar el tipo de atención");
+        }
 
-    if (!hasText(request.getModality())) {
-        throw new RuntimeException("Debe seleccionar la modalidad de atención");
-    }
+        if (!hasText(request.getModality())) {
+            throw new RuntimeException("Debe seleccionar la modalidad de atención");
+        }
 
-    if (!hasText(request.getPaymentMethod())) {
-        throw new RuntimeException("Debe seleccionar el método de pago del adelanto");
-    }
+        if (request.getServiceId() != null) {
+            if (request.getPsychologistId() == null) {
+                throw new RuntimeException("Debe seleccionar un psicólogo disponible");
+            }
 
-    if (!hasText(request.getOperationCode())) {
-        throw new RuntimeException("Debe ingresar el código de operación del adelanto");
-    }
+            if (!hasText(request.getPreferredDate())) {
+                throw new RuntimeException("Debe seleccionar una fecha disponible");
+            }
 
-    if (!Boolean.TRUE.equals(request.getConsentAccepted())) {
-        throw new RuntimeException("Debe aceptar el tratamiento de datos personales para registrar la pre-reserva");
+            if (!hasText(request.getPreferredTime())) {
+                throw new RuntimeException("Debe seleccionar un horario disponible");
+            }
+        }
+
+        if (!hasText(request.getPaymentMethod())) {
+            throw new RuntimeException("Debe seleccionar el método de pago del adelanto");
+        }
+
+        if (!hasText(request.getOperationCode())) {
+            throw new RuntimeException("Debe ingresar el código de operación del adelanto");
+        }
+
+        if (!Boolean.TRUE.equals(request.getConsentAccepted())) {
+            throw new RuntimeException("Debe aceptar el tratamiento de datos personales para registrar la pre-reserva");
+        }
     }
-}
 
     private void notifyRoles(String title, String message) {
         notificationService.createForRole(
                 title,
                 message,
                 "PRE_RESERVA",
-                "ADMIN"
-        );
+                "ADMIN");
 
         notificationService.createForRole(
                 title,
                 message,
                 "PRE_RESERVA",
-                "RECEPCIONISTA"
-        );
+                "RECEPCIONISTA");
     }
 
     private String clean(String value) {
@@ -254,15 +261,15 @@ public class PublicPortalController {
     }
 
     private String cleanEmail(String value) {
-    if (value == null) {
-        return null;
+        if (value == null) {
+            return null;
+        }
+
+        String cleaned = value.trim().toLowerCase();
+
+        return cleaned.isEmpty() ? null : cleaned;
     }
 
-    String cleaned = value.trim().toLowerCase();
-
-    return cleaned.isEmpty() ? null : cleaned;
-}
-   
     private boolean hasText(String value) {
         return value != null && !value.trim().isEmpty();
     }
