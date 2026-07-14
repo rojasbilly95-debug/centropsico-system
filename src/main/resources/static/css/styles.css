@@ -3073,3 +3073,90 @@ body:not(.login-body) .section-title + p {
         transform: translateX(50%) translateY(-2px);
     }
 }
+
+
+/* =========================================================
+   FIX FINAL LOGIN - ANCHO DEL FORMULARIO + BOTÓN PORTAL
+========================================================= */
+
+.login-card {
+    width: 100% !important;
+    max-width: 405px !important;
+    min-width: 405px !important;
+    text-align: center !important;
+    position: relative !important;
+    padding-bottom: 58px !important;
+    animation: loginFadeUp 0.45s ease both;
+}
+
+.login-form {
+    width: 100% !important;
+}
+
+.login-form input,
+.login-button {
+    width: 100% !important;
+}
+
+.input-box {
+    width: 100% !important;
+}
+
+.portal-corner-link {
+    position: absolute !important;
+    right: 0 !important;
+    bottom: 0 !important;
+
+    width: 42px !important;
+    height: 42px !important;
+
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    border-radius: 50% !important;
+
+    background: rgba(15, 61, 102, 0.08) !important;
+    border: 1px solid rgba(15, 61, 102, 0.14) !important;
+    color: rgba(15, 61, 102, 0.78) !important;
+
+    text-decoration: none !important;
+
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+
+    opacity: 0.72;
+    transition: all 0.22s ease;
+}
+
+.portal-corner-link:hover {
+    opacity: 1;
+    color: #0f3d66 !important;
+    background: rgba(15, 61, 102, 0.15) !important;
+    border-color: rgba(15, 61, 102, 0.24) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 22px rgba(15, 61, 102, 0.14);
+}
+
+.portal-home-icon {
+    width: 18px !important;
+    height: 18px !important;
+}
+
+@media (max-width: 560px) {
+    .login-card {
+        min-width: 0 !important;
+        max-width: 100% !important;
+        padding-bottom: 62px !important;
+    }
+
+    .portal-corner-link {
+        right: 50% !important;
+        transform: translateX(50%);
+        bottom: 0 !important;
+    }
+
+    .portal-corner-link:hover {
+        transform: translateX(50%) translateY(-2px);
+    }
+}
