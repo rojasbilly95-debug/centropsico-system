@@ -10,6 +10,8 @@ let currentDashboardPeriod = "month";
 async function loadDashboard(period = currentDashboardPeriod) {
     try {
         currentDashboardPeriod = period;
+
+        updateDashboardPeriodLabels(period);
         syncDashboardPeriodFilters(period);
 
         const response = await fetch(`${baseUrl}/dashboard?period=${period}`, {
@@ -42,6 +44,7 @@ async function loadDashboard(period = currentDashboardPeriod) {
 
         const demoData = buildDashboardDemoData();
 
+        updateDashboardPeriodLabels(period);
         updateDashboardUserInfo();
         updateDashboardKpis(demoData);
         renderTodaySchedule(demoData.upcomingAppointments);
@@ -537,4 +540,63 @@ function formatCurrency(value) {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
     })}`;
+}
+
+function updateDashboardPeriodLabels(period = currentDashboardPeriod) {
+    const labels = {
+        day: {
+            appointments: "Citas (Hoy)",
+            income: "Ingresos (Hoy)",
+            pending: "Pendientes de Pago (Hoy)",
+            statusTitle: "Citas por estado (Hoy)",
+            statusSubtitle: "Distribución de citas del día",
+            financeTitle: "Ingresos vs Gastos (Hoy)",
+            financeSubtitle: "Comparación del día"
+        },
+        week: {
+            appointments: "Citas (Semana)",
+            income: "Ingresos (Semana)",
+            pending: "Pendientes de Pago (Semana)",
+            statusTitle: "Citas por estado (Semana)",
+            statusSubtitle: "Distribución semanal de citas",
+            financeTitle: "Ingresos vs Gastos (Semana)",
+            financeSubtitle: "Comparación semanal"
+        },
+        month: {
+            appointments: "Citas (Mes)",
+            income: "Ingresos (Mes)",
+            pending: "Pendientes de Pago (Mes)",
+            statusTitle: "Citas por estado (Mes)",
+            statusSubtitle: "Distribución mensual de citas",
+            financeTitle: "Ingresos vs Gastos (Mes)",
+            financeSubtitle: "Comparación mensual"
+        },
+        year: {
+            appointments: "Citas (Año)",
+            income: "Ingresos (Año)",
+            pending: "Pendientes de Pago (Año)",
+            statusTitle: "Citas por estado (Año)",
+            statusSubtitle: "Distribución anual de citas",
+            financeTitle: "Ingresos vs Gastos (Año)",
+            financeSubtitle: "Comparación anual"
+        }
+    };
+
+    const selected = labels[period] || labels.month;
+
+    setTextIfExists("dashAppointmentsTitle", selected.appointments);
+    setTextIfExists("dashIncomeTitle", selected.income);
+    setTextIfExists("dashPendingPaymentsTitle", selected.pending);
+    setTextIfExists("dashAppointmentStatusTitle", selected.statusTitle);
+    setTextIfExists("dashAppointmentStatusSubtitle", selected.statusSubtitle);
+    setTextIfExists("dashFinanceChartTitle", selected.financeTitle);
+    setTextIfExists("dashFinanceChartSubtitle", selected.financeSubtitle);
+}
+
+function setTextIfExists(id, text) {
+    const element = document.getElementById(id);
+
+    if (element) {
+        element.textContent = text;
+    }
 }
