@@ -19,59 +19,229 @@ window.addEventListener("DOMContentLoaded", () => {
 });
 
 async function loadPublicPromotions() {
-    const container = document.getElementById("promotionsContainer");
+    const spotlightContainer = document.getElementById("promoSpotlightContainer");
+    const secondaryContainer = document.getElementById("promoSecondaryContainer");
 
-    if (!container) return;
+    if (!spotlightContainer || !secondaryContainer) return;
 
     try {
+        spotlightContainer.innerHTML = `
+            <div class="loading-card">
+                Cargando promociones destacadas...
+            </div>
+        `;
+
+        secondaryContainer.innerHTML = "";
+
         const response = await fetch("/api/public/promotions");
         const promotions = await response.json();
 
         if (!response.ok) {
-            container.innerHTML = "";
+            renderPromoEmptyState();
             return;
         }
 
-        if (!promotions || promotions.length === 0) {
-            container.innerHTML = `
-                <div class="loading-card">
-                    No hay promociones activas por el momento.
-                </div>
-            `;
-            return;
-        }
-
-        container.innerHTML = promotions.map(promotion => {
-            const discount = promotion.discountPercent != null
-                ? `${promotion.discountPercent}% de descuento`
-                : "Promoción especial";
-
-            return `
-                <article class="promotion-card">
-                    <div class="promotion-badge">
-                        ${escapeHtml(discount)}
-                    </div>
-
-                    <h3>${escapeHtml(promotion.title || "Promoción")}</h3>
-
-                    <p>${escapeHtml(promotion.description || "")}</p>
-
-                    <div class="promotion-dates">
-                        ${promotion.startDate ? `Desde ${escapeHtml(promotion.startDate)}` : ""}
-                        ${promotion.endDate ? ` hasta ${escapeHtml(promotion.endDate)}` : ""}
-                    </div>
-
-                    <a href="#quote" class="promotion-action">
-                        Solicitar pre-reserva
-                    </a>
-                </article>
-            `;
-        }).join("");
+        renderPublicPromotions(promotions);
 
     } catch (error) {
         console.error("Error cargando promociones:", error);
+        renderPromoEmptyState();
+    }
+}
 
-        container.innerHTML = "";
+function renderPublicPromotions(promotions) {
+    const spotlightContainer = document.getElementById("promoSpotlightContainer");
+    const secondaryContainer = document.getElementById("promoSecondaryContainer");
+
+    if (!spotlightContainer || !secondaryContainer) return;
+
+    spotlightContainer.innerHTML = "";
+    secondaryContainer.innerHTML = "";
+
+    const activePromotions = Array.isArray(promotions)
+        ? promotions.filter(promotion => isPublicPromotionActive(promotion))
+        : [];
+
+    if (activePromotions.length === 0) {
+        renderPromoEmptyState();
+        return;
+    }
+
+    const mainPromotion = activePromotions[0];
+    const secondaryPromotions = activePromotions.slice(1, 4);
+
+    spotlightContainer.innerHTML = `
+        <article class="promo-hero-card">
+
+            <div class="promo-hero-content">
+                <span class="promo-hero-badge">
+                    ${escapeHtml(buildPromotionBadge(mainPromotion))}
+                </span>
+
+                <h3 class="promo-hero-title">
+                    ${escapeHtml(mainPromotion.title || "Promoción especial")}
+                </h3>
+
+                <p class="promo-hero-description">
+                    ${escapeHtml(mainPromotion.description || "Aprovecha esta promoción disponible por tiempo limitado.")}
+                </p>
+
+                <div class="promo-hero-dates">
+                    Vigencia: ${formatPromotionDate(mainPromotion.startDate)}
+                    hasta ${formatPromotionDate(mainPromotion.endDate)}
+                </div>
+
+                <div class="promo-hero-actions">
+                    <button type="button" class="promo-hero-btn primary" onclick="scrollToReservationForm()">
+                        Solicitar pre-reserva
+                    </button>
+
+                    <button type="button" class="promo-hero-btn secondary" onclick="scrollToServicesSection()">
+                        Ver servicios
+                    </button>
+                </div>
+            </div>
+
+            <div class="promo-hero-side">
+                <div class="promo-discount-circle">
+                    <strong>
+                        ${formatPromotionDiscount(mainPromotion.discountPercent)}
+                    </strong>
+                    <span>
+                        ${mainPromotion.discountPercent ? "de descuento" : "Promoción"}
+                    </span>
+                </div>
+            </div>
+
+        </article>
+    `;
+
+    if (secondaryPromotions.length === 0) return;
+
+    secondaryContainer.innerHTML = secondaryPromotions.map((promotion, index) => `
+        <article class="promo-secondary-card ${index === 1 ? "alt-2" : index === 2 ? "alt-3" : ""}">
+            <span class="promo-secondary-badge">
+                ${escapeHtml(buildPromotionBadge(promotion))}
+            </span>
+
+            <h4 class="promo-secondary-title">
+                ${escapeHtml(promotion.title || "Promoción especial")}
+            </h4>
+
+            <p class="promo-secondary-description">
+                ${escapeHtml(promotion.description || "Promoción disponible por tiempo limitado.")}
+            </p>
+
+            <span class="promo-secondary-dates">
+                Vigencia: ${formatPromotionDate(promotion.startDate)}
+                - ${formatPromotionDate(promotion.endDate)}
+            </span>
+
+            <button type="button" class="promo-secondary-btn" onclick="scrollToReservationForm()">
+                Aprovechar promoción
+            </button>
+        </article>
+    `).join("");
+}
+
+function renderPromoEmptyState() {
+    const spotlightContainer = document.getElementById("promoSpotlightContainer");
+    const secondaryContainer = document.getElementById("promoSecondaryContainer");
+
+    if (spotlightContainer) {
+        spotlightContainer.innerHTML = `
+            <div class="promo-empty-state">
+                No hay promociones activas por el momento.
+            </div>
+        `;
+    }
+
+    if (secondaryContainer) {
+        secondaryContainer.innerHTML = "";
+    }
+}
+
+function buildPromotionBadge(promotion) {
+    if (promotion?.discountPercent != null && Number(promotion.discountPercent) > 0) {
+        return `${formatPromotionDiscount(promotion.discountPercent)} de descuento`;
+    }
+
+    return "Promoción vigente";
+}
+
+function formatPromotionDiscount(value) {
+    if (value == null || Number(value) <= 0) {
+        return "Promo";
+    }
+
+    const number = Number(value);
+
+    if (Number.isInteger(number)) {
+        return `${number}%`;
+    }
+
+    return `${number.toFixed(1)}%`;
+}
+
+function isPublicPromotionActive(promotion) {
+    if (!promotion) return false;
+
+    if (promotion.active !== undefined && promotion.active !== null) {
+        if (promotion.active === false || promotion.active === 0) {
+            return false;
+        }
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const startDate = promotion.startDate ? new Date(promotion.startDate) : null;
+    const endDate = promotion.endDate ? new Date(promotion.endDate) : null;
+
+    if (startDate) startDate.setHours(0, 0, 0, 0);
+    if (endDate) endDate.setHours(23, 59, 59, 999);
+
+    if (startDate && today < startDate) return false;
+    if (endDate && today > endDate) return false;
+
+    return true;
+}
+
+function formatPromotionDate(value) {
+    if (!value) return "-";
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return value;
+    }
+
+    return date.toLocaleDateString("es-PE", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+    });
+}
+
+function scrollToReservationForm() {
+    const quoteSection = document.getElementById("quote");
+
+    if (quoteSection) {
+        quoteSection.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+    }
+}
+
+function scrollToServicesSection() {
+    const servicesSection = document.getElementById("modules");
+
+    if (servicesSection) {
+        servicesSection.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
     }
 }
 
