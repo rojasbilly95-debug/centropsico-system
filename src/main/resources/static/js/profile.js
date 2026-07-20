@@ -20,11 +20,10 @@ async function openProfileModal() {
 
                     <div class="profile-header-card">
                         <div class="profile-avatar-preview" id="profileAvatarPreview">
-                            ${
-                                imageUrl
-                                    ? `<img src="${imageUrl}?t=${Date.now()}" alt="Foto de perfil">`
-                                    : `<span>${initials}</span>`
-                            }
+                            ${imageUrl
+                    ? `<img src="${imageUrl}?t=${Date.now()}" alt="Foto de perfil">`
+                    : `<span>${initials}</span>`
+                }
                         </div>
 
                         <div class="profile-header-info">
@@ -465,4 +464,99 @@ function initProfileSidebarClick() {
 
     sidebarUser.style.cursor = "pointer";
     sidebarUser.setAttribute("title", "Abrir mi perfil");
+}
+
+async function uploadProfileImage(input) {
+    const file = input.files[0];
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+        Swal.fire("Validación", "Selecciona una imagen válida.", "warning");
+        return;
+    }
+
+    if (file.size > 1024 * 1024) {
+        Swal.fire("Validación", "La imagen no debe superar 1 MB.", "warning");
+        return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = async function () {
+        const base64Image = reader.result;
+
+        const response = await authFetch(`${baseUrl}/profile/image`, {
+            method: "PUT",
+            body: JSON.stringify({
+                profileImageBase64: base64Image
+            })
+        });
+
+        if (!response || !response.ok) {
+            Swal.fire("Error", "No se pudo guardar la foto de perfil.", "error");
+            return;
+        }
+
+        localStorage.setItem("profileImageBase64", base64Image);
+        updateSidebarProfileImage(base64Image);
+
+        Swal.fire("Correcto", "Foto de perfil guardada correctamente.", "success");
+    };
+
+    reader.readAsDataURL(file);
+}
+
+function updateSidebarProfileImage(base64Image) {
+    const avatar = document.getElementById("sidebarUserAvatar");
+
+    if (!avatar) return;
+
+    if (base64Image) {
+        avatar.innerHTML = `
+            <img src="${base64Image}" alt="Foto de perfil" class="sidebar-profile-img">
+        `;
+    }
+}
+
+async function refreshSidebarUser() {
+    const nameElement = document.getElementById("sidebarUserName");
+    const roleElement = document.getElementById("sidebarUserRole");
+    const avatarElement = document.getElementById("sidebarUserAvatar");
+
+    if (!currentUser) return;
+
+    if (nameElement) {
+        nameElement.textContent = `${currentUser.firstName} ${currentUser.lastName}`;
+    }
+
+    if (roleElement) {
+        roleElement.textContent = currentUser.role;
+    }
+
+    try {
+        const response = await authFetch(`${baseUrl}/profile`);
+
+        if (response && response.ok) {
+            const profile = await response.json();
+
+            if (profile.profileImageBase64) {
+                localStorage.setItem("profileImageBase64", profile.profileImageBase64);
+                updateSidebarProfileImage(profile.profileImageBase64);
+                return;
+            }
+        }
+    } catch (error) {
+        console.error("Error al cargar perfil:", error);
+    }
+
+    const savedImage = localStorage.getItem("profileImageBase64");
+
+    if (savedImage) {
+        updateSidebarProfileImage(savedImage);
+    } else if (avatarElement) {
+        const firstInitial = currentUser.firstName?.charAt(0) || "";
+        const lastInitial = currentUser.lastName?.charAt(0) || "";
+        avatarElement.textContent = `${firstInitial}${lastInitial}` || "U";
+    }
 }
