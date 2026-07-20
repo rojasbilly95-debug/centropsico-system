@@ -84,15 +84,13 @@ async function openProfileModal() {
                             <input
                                 id="profilePhotoInput"
                                 type="file"
-                                accept="image/png,image/jpeg,image/webp"
+                                accept="image/*"
                             >
                         </div>
 
-                        <p class="profile-help">
-                            Selecciona una imagen JPG, PNG o WEBP.
-                            La foto se subirá automáticamente.
-                            Tamaño máximo: 2 MB.
-                        </p>
+                            <p class="profile-help">
+                                Selecciona una fotografía. El sistema la optimizará y subirá automáticamente.
+                            </p>
                     </div>
 
                     <div
@@ -140,8 +138,8 @@ async function openProfileModal() {
             if (result.isConfirmed && result.value) {
                 await Swal.fire({
                     icon: "success",
-                    title: "Perfil actualizado",
-                    text: "Tus datos fueron actualizados correctamente.",
+                    title: "Datos personales actualizados",
+                    text: "Tus nombres, apellidos y teléfono fueron guardados correctamente.",
                     timer: 1600,
                     showConfirmButton: false
                 });
@@ -333,59 +331,47 @@ async function uploadProfilePhotoFromModal() {
 ========================================================= */
 
 async function uploadProfilePhoto(input) {
-    if (
-        !input?.files ||
-        input.files.length === 0
-    ) {
+    if (!input?.files || input.files.length === 0) {
         showProfileModalMessage(
-            "Primero selecciona una imagen.",
+            "Primero selecciona una fotografía.",
             false
         );
 
         return null;
     }
 
-    const file = input.files[0];
+    const originalFile = input.files[0];
 
-    const allowedTypes = [
-        "image/jpeg",
-        "image/png",
-        "image/webp"
-    ];
-
-    if (!allowedTypes.includes(file.type)) {
+    if (!originalFile.type.startsWith("image/")) {
         showProfileModalMessage(
-            "Formato no permitido. Usa JPG, PNG o WEBP.",
+            "El archivo seleccionado no es una imagen válida.",
             false
         );
 
         input.value = "";
-
         return null;
     }
 
-        if (file.size > 2 * 1024 * 1024) {
-            showProfileModalMessage(
-                "La imagen no debe superar 2 MB.",
-                false
-            );
-
-            input.value = "";
-
-            return null;
-        }
-
     try {
-        const formData = new FormData();
+        showProfileModalMessage(
+            "Procesando y optimizando la fotografía...",
+            true
+        );
 
         /*
-         * El nombre "photo" debe coincidir con:
-         *
-         * @RequestParam("photo") MultipartFile photo
-         *
-         * en ProfileController.java.
+         * La fotografía original puede pesar varios MB.
+         * Antes de enviarla se reduce automáticamente.
          */
-        formData.append("photo", file);
+        const optimizedFile =
+            await prepareProfileImage(originalFile);
+
+        const formData = new FormData();
+
+        formData.append(
+            "photo",
+            optimizedFile,
+            optimizedFile.name
+        );
 
         const token =
             localStorage.getItem("token");
@@ -398,9 +384,8 @@ async function uploadProfilePhoto(input) {
         }
 
         /*
-         * No agregar Content-Type manualmente.
-         * El navegador debe generar automáticamente
-         * multipart/form-data con su boundary.
+         * No colocar Content-Type manualmente.
+         * El navegador genera multipart/form-data.
          */
         const response = await fetch(
             `${baseUrl}/profile/photo`,
@@ -414,13 +399,12 @@ async function uploadProfilePhoto(input) {
         const result =
             await readProfileJsonResponse(response);
 
-            if (response.status === 401) {
+        if (response.status === 401) {
             localStorage.removeItem("token");
             localStorage.removeItem("currentUser");
             localStorage.removeItem("profileImageBase64");
 
             window.location.href = "/login.html";
-
             return null;
         }
 
@@ -429,7 +413,7 @@ async function uploadProfilePhoto(input) {
                 result.detail ||
                 result.message ||
                 result.error ||
-                "No tienes permiso para actualizar la foto.",
+                "No tienes permiso para actualizar la fotografía.",
                 false
             );
 
@@ -441,19 +425,13 @@ async function uploadProfilePhoto(input) {
                 result.detail ||
                 result.message ||
                 result.error ||
-                `No se pudo subir la foto. Código: ${response.status}`,
+                `No se pudo subir la fotografía. Código: ${response.status}`,
                 false
             );
 
             return null;
         }
 
-        /*
-         * El backend debe devolver:
-         *
-         * profileImageBase64
-         * profileImageUrl
-         */
         syncCurrentUser(result);
         renderSidebarUser(currentUser);
 
@@ -461,20 +439,190 @@ async function uploadProfilePhoto(input) {
 
     } catch (error) {
         console.error(
-            "Error al subir foto:",
+            "Error al procesar o subir la fotografía:",
             error
         );
 
         showProfileModalMessage(
-            "Error de conexión al subir la foto.",
+            error.message ||
+            "No se pudo procesar la fotografía seleccionada.",
             false
         );
+
+        input.value = "";
 
         return null;
     }
 }
 
+async function prepareProfileImage(originalFile) {
+    const objectUrl =
+        URL.createObjectURL(originalFile);
 
+    try {
+        const image = await new Promise(
+            (resolve, reject) => {
+                const img = new Image();
+
+                img.onload = () => resolve(img);
+
+                img.onerror = () => {
+                    reject(
+                        new Error(
+                            "El navegador no pudo leer esta fotografía."
+                        )
+                    );
+                };
+
+                img.src = objectUrl;
+            }
+        );
+
+        /*
+         * Para una foto de perfil no se necesita
+         * conservar una resolución de cámara completa.
+         */
+        const maxSide = 1200;
+
+        const originalWidth =
+            image.naturalWidth || image.width;
+
+        const originalHeight =
+            image.naturalHeight || image.height;
+
+        if (!originalWidth || !originalHeight) {
+            throw new Error(
+                "La fotografía seleccionada no tiene dimensiones válidas."
+            );
+        }
+
+        const scale = Math.min(
+            1,
+            maxSide / Math.max(
+                originalWidth,
+                originalHeight
+            )
+        );
+
+        const newWidth = Math.max(
+            1,
+            Math.round(originalWidth * scale)
+        );
+
+        const newHeight = Math.max(
+            1,
+            Math.round(originalHeight * scale)
+        );
+
+        const canvas =
+            document.createElement("canvas");
+
+        canvas.width = newWidth;
+        canvas.height = newHeight;
+
+        const context =
+            canvas.getContext("2d");
+
+        if (!context) {
+            throw new Error(
+                "No se pudo preparar la fotografía."
+            );
+        }
+
+        /*
+         * Fondo blanco para fotografías PNG
+         * que contengan transparencia.
+         */
+        context.fillStyle = "#ffffff";
+
+        context.fillRect(
+            0,
+            0,
+            newWidth,
+            newHeight
+        );
+
+        context.drawImage(
+            image,
+            0,
+            0,
+            newWidth,
+            newHeight
+        );
+
+        let quality = 0.88;
+
+        let blob = await canvasToProfileBlob(
+            canvas,
+            quality
+        );
+
+        /*
+         * El backend permite 2 MB.
+         * Reducimos la calidad automáticamente
+         * hasta quedar por debajo de 1.8 MB.
+         */
+        const safeMaximumSize =
+            1.8 * 1024 * 1024;
+
+        while (
+            blob.size > safeMaximumSize &&
+            quality > 0.45
+        ) {
+            quality -= 0.08;
+
+            blob = await canvasToProfileBlob(
+                canvas,
+                quality
+            );
+        }
+
+        if (blob.size > safeMaximumSize) {
+            throw new Error(
+                "No se pudo optimizar suficientemente la fotografía."
+            );
+        }
+
+        return new File(
+            [blob],
+            `profile-${Date.now()}.jpg`,
+            {
+                type: "image/jpeg",
+                lastModified: Date.now()
+            }
+        );
+
+    } finally {
+        URL.revokeObjectURL(objectUrl);
+    }
+}
+
+function canvasToProfileBlob(
+    canvas,
+    quality
+) {
+    return new Promise(
+        (resolve, reject) => {
+            canvas.toBlob(
+                blob => {
+                    if (!blob) {
+                        reject(
+                            new Error(
+                                "No se pudo convertir la fotografía."
+                            )
+                        );
+
+                        return;
+                    }
+
+                    resolve(blob);
+                },
+                "image/jpeg",
+                quality
+            );
+        }
+    );
+}
 /* =========================================================
    CAMBIAR CONTRASEÑA
 ========================================================= */
