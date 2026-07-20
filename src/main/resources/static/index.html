@@ -34,10 +34,7 @@
                     <div class="admin-dashboard-topbar">
 
                         <div>
-                            <span
-                                id="dashboardEyebrow"
-                                class="dashboard-eyebrow"
-                            >
+                            <span id="dashboardEyebrow" class="dashboard-eyebrow">
                                 Dashboard
                             </span>
 
@@ -55,11 +52,8 @@
                                 Periodo
                             </label>
 
-                            <select
-                                id="dashboardGlobalPeriod"
-                                class="dashboard-period-filter"
-                                onchange="handleDashboardPeriodChange(this.value)"
-                            >
+                            <select id="dashboardGlobalPeriod" class="dashboard-period-filter"
+                                onchange="handleDashboardPeriodChange(this.value)">
                                 <option value="day">
                                     Hoy
                                 </option>
@@ -130,9 +124,7 @@
                         </div>
 
                         <!-- INGRESOS: SOLO ADMIN -->
-                        <div
-                            class="premium-kpi-card kpi-green admin-dashboard-only"
-                        >
+                        <div class="premium-kpi-card kpi-green admin-dashboard-only">
 
                             <div class="kpi-icon">
                                 <i data-lucide="circle-dollar-sign"></i>
@@ -155,9 +147,7 @@
                         </div>
 
                         <!-- PAGOS PENDIENTES: SOLO ADMIN -->
-                        <div
-                            class="premium-kpi-card kpi-orange admin-dashboard-only"
-                        >
+                        <div class="premium-kpi-card kpi-orange admin-dashboard-only">
 
                             <div class="kpi-icon">
                                 <i data-lucide="wallet-cards"></i>
@@ -203,9 +193,7 @@
 
                                 <div class="donut-wrapper">
 
-                                    <canvas
-                                        id="dashboardAppointmentsChart"
-                                    ></canvas>
+                                    <canvas id="dashboardAppointmentsChart"></canvas>
 
                                     <div class="donut-center">
                                         <span>
@@ -219,10 +207,7 @@
 
                                 </div>
 
-                                <div
-                                    id="appointmentStatusLegend"
-                                    class="status-legend"
-                                ></div>
+                                <div id="appointmentStatusLegend" class="status-legend"></div>
 
                             </div>
 
@@ -269,11 +254,7 @@
                                     </span>
                                 </div>
 
-                                <button
-                                    class="panel-link"
-                                    type="button"
-                                    onclick="openAppointmentsAgenda()"
-                                >
+                                <button class="panel-link" type="button" onclick="openAppointmentsAgenda()">
                                     Ver agenda
 
                                     <i data-lucide="arrow-right"></i>
@@ -281,10 +262,7 @@
 
                             </div>
 
-                            <div
-                                id="todaySchedule"
-                                class="premium-appointments-list"
-                            >
+                            <div id="todaySchedule" class="premium-appointments-list">
                                 Cargando citas próximas...
                             </div>
 
@@ -307,10 +285,7 @@
 
                             </div>
 
-                            <div
-                                id="dashboardSummary"
-                                class="premium-reminders-list"
-                            >
+                            <div id="dashboardSummary" class="premium-reminders-list">
                                 Cargando recordatorios...
                             </div>
 
@@ -843,42 +818,164 @@
 
                     <!-- FORMULARIO DE REGISTRO: SOLO ADMIN Y RECEPCIONISTA -->
                     <div class="card form-card admin-recepcion-only">
+
                         <div class="card-header">
                             <h3>Registrar cita</h3>
-                            <span>Datos de paciente, psicólogo, servicio y horario</span>
+
+                            <span>
+                                Selecciona el servicio, revisa los psicólogos disponibles
+                                y elige un horario libre.
+                            </span>
                         </div>
 
-                        <div class="form-grid">
-                            <select id="appointmentPatientId"></select>
-                            <select id="appointmentPsychologistId"></select>
-                            <select id="appointmentServiceId"></select>
-                            <input type="date" id="appointmentDate">
-                            <input type="time" id="appointmentStartTime">
-                            <input type="time" id="appointmentEndTime">
+                        <div class="form-grid appointment-form-grid">
 
-                            <div id="appointmentSlotsContainer" class="appointment-slots-container">
+                            <!-- PACIENTE -->
+                            <div class="appointment-field">
+                                <label for="appointmentPatientId">
+                                    Paciente
+                                </label>
+
+                                <select id="appointmentPatientId">
+                                    <option value="">
+                                        Seleccione un paciente
+                                    </option>
+                                </select>
+                            </div>
+
+                            <!-- SERVICIO / ESPECIALIDAD -->
+                            <div class="appointment-field">
+                                <label for="appointmentServiceId">
+                                    Servicio o especialidad
+                                </label>
+
+                                <select id="appointmentServiceId">
+                                    <option value="">
+                                        Seleccione un servicio
+                                    </option>
+                                </select>
+
+                                <small>
+                                    Primero selecciona el tipo de atención que necesita
+                                    el paciente.
+                                </small>
+                            </div>
+
+                            <!-- PSICÓLOGO -->
+                            <div class="appointment-field">
+                                <label for="appointmentPsychologistId">
+                                    Psicólogo disponible
+                                </label>
+
+                                <select id="appointmentPsychologistId" disabled>
+                                    <option value="">
+                                        Seleccione primero un servicio
+                                    </option>
+                                </select>
+
+                                <small>
+                                    El sistema mostrará únicamente los psicólogos
+                                    relacionados con el servicio seleccionado.
+                                </small>
+                            </div>
+
+                            <!--
+            El panel con los psicólogos y sus horarios semanales
+            será creado automáticamente por appointments.js.
+        -->
+
+                            <!-- FECHA -->
+                            <div class="appointment-field">
+                                <label for="appointmentDate">
+                                    Fecha de atención
+                                </label>
+
+                                <input type="date" id="appointmentDate" disabled>
+
+                                <small>
+                                    La fecha se habilitará después de seleccionar
+                                    al psicólogo.
+                                </small>
+                            </div>
+
+                            <!-- HORARIOS DISPONIBLES -->
+                            <div id="appointmentSlotsContainer"
+                                class="appointment-slots-container appointment-full-width">
                                 <span class="slots-placeholder">
-                                    Selecciona psicólogo, servicio y fecha para ver horarios disponibles.
+                                    Selecciona un servicio, un psicólogo y una fecha
+                                    para consultar las horas libres.
                                 </span>
                             </div>
 
-                            <select id="appointmentStatus">
-                                <option value="PROGRAMADA">PROGRAMADA</option>
-                                <option value="CANCELADA">CANCELADA</option>
-                                <option value="ATENDIDA">ATENDIDA</option>
-                                <option value="NO_ASISTIO">NO_ASISTIO</option>
-                                <option value="REPROGRAMADA">REPROGRAMADA</option>
-                            </select>
+                            <!-- HORAS ASIGNADAS AUTOMÁTICAMENTE -->
+                            <input type="time" id="appointmentStartTime" readonly hidden>
 
-                            <input type="text" id="appointmentReason" placeholder="Motivo">
-                            <input type="text" id="appointmentObservation" placeholder="Observación">
+                            <input type="time" id="appointmentEndTime" readonly hidden>
+
+                            <!-- ESTADO -->
+                            <div class="appointment-field">
+                                <label for="appointmentStatus">
+                                    Estado inicial
+                                </label>
+
+                                <select id="appointmentStatus">
+                                    <option value="PROGRAMADA" selected>
+                                        PROGRAMADA
+                                    </option>
+
+                                    <option value="CANCELADA">
+                                        CANCELADA
+                                    </option>
+
+                                    <option value="ATENDIDA">
+                                        ATENDIDA
+                                    </option>
+
+                                    <option value="NO_ASISTIO">
+                                        NO_ASISTIO
+                                    </option>
+
+                                    <option value="REPROGRAMADA">
+                                        REPROGRAMADA
+                                    </option>
+                                </select>
+                            </div>
+
+                            <!-- MOTIVO -->
+                            <div class="appointment-field">
+                                <label for="appointmentReason">
+                                    Motivo de consulta
+                                </label>
+
+                                <input type="text" id="appointmentReason" placeholder="Ejemplo: Evaluación inicial">
+                            </div>
+
+                            <!-- OBSERVACIÓN -->
+                            <div class="appointment-field appointment-full-width">
+                                <label for="appointmentObservation">
+                                    Observación
+                                </label>
+
+                                <textarea id="appointmentObservation" placeholder="Información adicional de la cita"
+                                    rows="3"></textarea>
+                            </div>
+
                         </div>
 
                         <div class="form-actions">
-                            <button class="btn-primary" onclick="createAppointment()">Guardar cita</button>
-                            <button class="btn-secondary" onclick="toggleAppointmentList()">Listar citas</button>
-                            <button class="btn-secondary" onclick="loadFullCalendar()">Ver calendario</button>
+                            <button class="btn-primary" type="button" onclick="createAppointment()">
+                                Guardar cita
+                            </button>
+
+                            <button class="btn-secondary" type="button" onclick="toggleAppointmentList()">
+                                Listar citas
+                            </button>
+
+                            <button class="btn-secondary" type="button" onclick="loadFullCalendar()">
+                                Ver calendario
+                            </button>
                         </div>
+
                     </div>
 
                     <!-- TARJETA DEL PSICÓLOGO -->

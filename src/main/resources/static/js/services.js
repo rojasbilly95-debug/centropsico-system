@@ -231,27 +231,119 @@ function closeServiceList() {
 }
 
 async function loadServiceOptions() {
+    const select =
+        document.getElementById("appointmentServiceId");
+
+    if (!select) {
+        return;
+    }
+
+    select.disabled = true;
+
+    select.innerHTML = `
+        <option value="">
+            Cargando servicios...
+        </option>
+    `;
+
     try {
-        const response = await authFetch(`${baseUrl}/services/active`);
-        if (!response) return;
+        const response =
+            await authFetch(
+                `${baseUrl}/services/active`
+            );
 
-        const data = await response.json();
-
-        const select = document.getElementById("appointmentServiceId");
-        if (!select) return;
-
-        select.innerHTML = `<option value="">Seleccione servicio</option>`;
-
-        data.forEach(service => {
-            select.innerHTML += `
-                <option value="${service.id}">
-                    ${service.name} - S/ ${Number(service.price || 0).toFixed(2)} - ${service.durationMinutes ?? ""} min
+        if (!response) {
+            select.innerHTML = `
+                <option value="">
+                    No se pudieron cargar los servicios
                 </option>
             `;
+
+            return;
+        }
+
+        const data =
+            await response.json();
+
+        if (!response.ok) {
+            select.innerHTML = `
+                <option value="">
+                    Error al cargar servicios
+                </option>
+            `;
+
+            console.error(
+                "Error del servidor al cargar servicios:",
+                data
+            );
+
+            return;
+        }
+
+        const services =
+            Array.isArray(data)
+                ? data
+                : [];
+
+        select.innerHTML = `
+            <option value="">
+                Seleccione un servicio
+            </option>
+        `;
+
+        services.forEach(service => {
+            const option =
+                document.createElement("option");
+
+            const durationMinutes =
+                Number(service.durationMinutes || 0);
+
+            const price =
+                Number(service.price || 0);
+
+            option.value =
+                String(service.id);
+
+            /*
+             * appointments.js utilizará este dato
+             * para generar los bloques horarios.
+             */
+            option.dataset.durationMinutes =
+                String(durationMinutes);
+
+            option.textContent =
+                `${service.name || "Servicio"} - ` +
+                `S/ ${price.toFixed(2)} - ` +
+                `${durationMinutes} min`;
+
+            select.appendChild(option);
         });
 
+        select.disabled = false;
+
+        if (services.length === 0) {
+            select.innerHTML = `
+                <option value="">
+                    No hay servicios activos
+                </option>
+            `;
+
+            select.disabled = true;
+        }
+
     } catch (error) {
-        console.error("Error cargando servicios:", error);
+        console.error(
+            "Error cargando servicios:",
+            error
+        );
+
+        select.innerHTML = `
+            <option value="">
+                Error de conexión
+            </option>
+        `;
+
+        select.disabled = true;
     }
 }
 
