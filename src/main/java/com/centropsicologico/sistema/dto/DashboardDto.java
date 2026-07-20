@@ -72,6 +72,11 @@ public class DashboardDto {
      */
     private Long todayScheduledAppointments = 0L;
 
+        /*
+        * Citas que continúan en estado PROGRAMADA,
+        * pero cuya fecha y hora de finalización ya pasaron.
+        */
+        private Long overdueScheduledAppointments = 0L;
 
     /*
      * =========================================================

@@ -3,17 +3,20 @@ let dashboardAppointmentsChart = null;
 let currentDashboardPeriod = "month";
 
 /* =========================================================
-   CARGA PRINCIPAL DEL DASHBOARD
+   CARGA PRINCIPAL
 ========================================================= */
 
 async function loadDashboard(period = currentDashboardPeriod) {
     const normalizedPeriod = normalizeDashboardPeriod(period);
+
     currentDashboardPeriod = normalizedPeriod;
 
     syncDashboardPeriodFilters(normalizedPeriod);
 
     try {
-        const response = await fetchDashboardData(normalizedPeriod);
+        const response = await fetchDashboardData(
+            normalizedPeriod
+        );
 
         if (!response.ok) {
             throw new Error(
@@ -22,33 +25,55 @@ async function loadDashboard(period = currentDashboardPeriod) {
         }
 
         const backendData = await response.json();
-        const dashboardData = normalizeDashboardData(backendData);
 
-        const role = getDashboardRole(dashboardData);
+        const data = normalizeDashboardData(
+            backendData
+        );
+
+        const role = getDashboardRole(data);
 
         applyDashboardByRole(role);
         updateDashboardUserInfo(role);
-        updateDashboardPeriodLabels(normalizedPeriod, role);
-        updateDashboardKpis(dashboardData, role);
-        renderTodaySchedule(dashboardData.upcomingAppointments, role);
-        renderDashboardReminders(dashboardData, role);
-        renderDashboardCharts(dashboardData, role);
+        updateDashboardPeriodLabels(
+            normalizedPeriod,
+            role
+        );
+        updateDashboardKpis(data, role);
+        renderTodaySchedule(
+            data.upcomingAppointments,
+            role
+        );
+        renderDashboardReminders(
+            data,
+            role
+        );
+        renderDashboardCharts(
+            data,
+            role
+        );
 
         refreshDashboardIcons();
 
     } catch (error) {
-        console.error("Error al cargar el dashboard:", error);
+        console.error(
+            "Error al cargar el dashboard:",
+            error
+        );
 
-        const emptyData = buildEmptyDashboardData();
-        const role = getDashboardRole(emptyData);
+        const data = buildEmptyDashboardData();
+
+        const role = getDashboardRole(data);
 
         applyDashboardByRole(role);
         updateDashboardUserInfo(role);
-        updateDashboardPeriodLabels(normalizedPeriod, role);
-        updateDashboardKpis(emptyData, role);
+        updateDashboardPeriodLabels(
+            normalizedPeriod,
+            role
+        );
+        updateDashboardKpis(data, role);
         renderTodaySchedule([], role);
         renderDashboardLoadError();
-        renderDashboardCharts(emptyData, role);
+        renderDashboardCharts(data, role);
 
         refreshDashboardIcons();
     }
@@ -59,41 +84,48 @@ async function loadDashboard(period = currentDashboardPeriod) {
 ========================================================= */
 
 async function fetchDashboardData(period) {
-    const url = `${baseUrl}/dashboard?period=${encodeURIComponent(period)}`;
+    const url =
+        `${baseUrl}/dashboard?period=${encodeURIComponent(period)}`;
 
-    /*
-     * Se utiliza authFetch cuando está disponible.
-     * De lo contrario, se realiza una petición normal con JWT.
-     */
     if (typeof authFetch === "function") {
         return authFetch(url);
     }
 
     return fetch(url, {
         method: "GET",
+
         headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`
+            Authorization:
+                `Bearer ${localStorage.getItem("token")}`
         }
     });
 }
 
 /* =========================================================
-   CAMBIO DE PERIODO
+   PERIODO
 ========================================================= */
 
 function handleDashboardPeriodChange(period) {
-    const normalizedPeriod = normalizeDashboardPeriod(period);
+    currentDashboardPeriod =
+        normalizeDashboardPeriod(period);
 
-    currentDashboardPeriod = normalizedPeriod;
-    loadDashboard(normalizedPeriod);
+    loadDashboard(
+        currentDashboardPeriod
+    );
 }
 
 function normalizeDashboardPeriod(period) {
-    const normalized = String(period || "")
-        .trim()
-        .toLowerCase();
+    const normalized =
+        String(period || "")
+            .trim()
+            .toLowerCase();
 
-    const allowedPeriods = ["day", "week", "month", "year"];
+    const allowedPeriods = [
+        "day",
+        "week",
+        "month",
+        "year"
+    ];
 
     return allowedPeriods.includes(normalized)
         ? normalized
@@ -102,41 +134,87 @@ function normalizeDashboardPeriod(period) {
 
 function syncDashboardPeriodFilters(period) {
     document
-        .querySelectorAll(".dashboard-period-filter")
+        .querySelectorAll(
+            ".dashboard-period-filter"
+        )
         .forEach(select => {
             select.value = period;
         });
 }
 
 /* =========================================================
-   NORMALIZACIÓN DE LA RESPUESTA
+   NORMALIZACIÓN DE DATOS
 ========================================================= */
 
-function normalizeDashboardData(backendData = {}) {
-    const emptyData = buildEmptyDashboardData();
+function normalizeDashboardData(
+    backendData = {}
+) {
+    const emptyData =
+        buildEmptyDashboardData();
 
     const appointmentStatus =
-        Array.isArray(backendData.appointmentStatus) &&
+        Array.isArray(
+            backendData.appointmentStatus
+        ) &&
         backendData.appointmentStatus.length > 0
-            ? backendData.appointmentStatus.map(item => ({
-                label: item?.label || "Sin estado",
-                value: Number(item?.value || 0),
-                color: item?.color || "#64748b"
-            }))
+
+            ? backendData
+                .appointmentStatus
+                .map(item => ({
+                    label:
+                        item?.label ||
+                        "Sin estado",
+
+                    value:
+                        Number(
+                            item?.value ?? 0
+                        ),
+
+                    color:
+                        item?.color ||
+                        "#64748b"
+                }))
+
             : emptyData.appointmentStatus;
 
     const upcomingAppointments =
-        Array.isArray(backendData.upcomingAppointments)
-            ? backendData.upcomingAppointments.map(item => ({
-                id: item?.id || null,
-                patient: item?.patient || "Paciente",
-                service: item?.service || "Servicio psicológico",
-                psychologist: item?.psychologist || "Psicólogo",
-                date: item?.date || "-",
-                time: item?.time || "-",
-                status: item?.status || "Programada",
-                initials: item?.initials || "CP"
-            }))
+        Array.isArray(
+            backendData.upcomingAppointments
+        )
+
+            ? backendData
+                .upcomingAppointments
+                .map(item => ({
+                    id:
+                        item?.id ?? null,
+
+                    patient:
+                        item?.patient ||
+                        "Paciente",
+
+                    service:
+                        item?.service ||
+                        "Servicio psicológico",
+
+                    psychologist:
+                        item?.psychologist ||
+                        "Psicólogo",
+
+                    date:
+                        item?.date || "-",
+
+                    time:
+                        item?.time || "-",
+
+                    status:
+                        item?.status ||
+                        "Programada",
+
+                    initials:
+                        item?.initials ||
+                        "CP"
+                }))
+
             : [];
 
     return {
@@ -152,12 +230,12 @@ function normalizeDashboardData(backendData = {}) {
         ),
 
         totalPatients: Number(
-            backendData.totalPatients || 0
+            backendData.totalPatients ?? 0
         ),
 
         /*
-         * Este es el valor que debe cambiar cuando se selecciona:
-         * día, semana, mes o año.
+         * Total de citas correspondiente al
+         * periodo seleccionado.
          */
         periodAppointments: Number(
             backendData.periodAppointments ??
@@ -166,85 +244,132 @@ function normalizeDashboardData(backendData = {}) {
         ),
 
         /*
-         * Este valor se utiliza únicamente para recordatorios
-         * relacionados con el día actual.
+         * Total de citas del día actual,
+         * sin importar su estado.
          */
         todayAppointments: Number(
-            backendData.todayAppointments || 0
+            backendData.todayAppointments ?? 0
         ),
 
+        /*
+         * Citas PROGRAMADAS de hoy
+         * que todavía no terminaron.
+         */
         todayScheduledAppointments: Number(
-            backendData.todayScheduledAppointments || 0
+            backendData
+                .todayScheduledAppointments ??
+            0
+        ),
+
+        /*
+         * Citas que terminaron, pero todavía
+         * siguen registradas como PROGRAMADA.
+         */
+        overdueScheduledAppointments: Number(
+            backendData
+                .overdueScheduledAppointments ??
+            0
         ),
 
         scheduledAppointments: Number(
-            backendData.scheduledAppointments || 0
+            backendData
+                .scheduledAppointments ??
+            0
         ),
 
         attendedAppointments: Number(
-            backendData.attendedAppointments || 0
+            backendData
+                .attendedAppointments ??
+            0
         ),
 
         cancelledAppointments: Number(
-            backendData.cancelledAppointments || 0
+            backendData
+                .cancelledAppointments ??
+            0
         ),
 
         noShowAppointments: Number(
-            backendData.noShowAppointments || 0
+            backendData
+                .noShowAppointments ??
+            0
         ),
 
         rescheduledAppointments: Number(
-            backendData.rescheduledAppointments || 0
+            backendData
+                .rescheduledAppointments ??
+            0
         ),
 
         totalIncome: Number(
-            backendData.totalIncome || 0
+            backendData.totalIncome ?? 0
         ),
 
         totalExpense: Number(
-            backendData.totalExpense || 0
+            backendData.totalExpense ?? 0
         ),
 
         profit: Number(
-            backendData.profit || 0
+            backendData.profit ?? 0
         ),
 
         pendingPayments: Number(
-            backendData.pendingPayments || 0
+            backendData.pendingPayments ?? 0
         ),
 
         pendingLeads: Number(
-            backendData.pendingLeads || 0
+            backendData.pendingLeads ?? 0
         ),
 
         appointmentStatus,
 
-        financeWeeks: normalizeFinanceWeeks(
-            backendData.financeWeeks,
-            emptyData.financeWeeks
-        ),
+        financeWeeks:
+            normalizeFinanceWeeks(
+                backendData.financeWeeks,
+                emptyData.financeWeeks
+            ),
 
         upcomingAppointments
     };
 }
 
-function normalizeFinanceWeeks(financeWeeks, fallback) {
+function normalizeFinanceWeeks(
+    financeWeeks,
+    fallback
+) {
     if (!financeWeeks) {
         return fallback;
     }
 
     return {
-        labels: Array.isArray(financeWeeks.labels)
-            ? financeWeeks.labels
-            : fallback.labels,
+        labels:
+            Array.isArray(
+                financeWeeks.labels
+            )
+                ? financeWeeks.labels
+                : fallback.labels,
 
-        income: Array.isArray(financeWeeks.income)
-            ? financeWeeks.income.map(value => Number(value || 0))
-            : fallback.income,
+        income:
+            Array.isArray(
+                financeWeeks.income
+            )
+                ? financeWeeks
+                    .income
+                    .map(value =>
+                        Number(value ?? 0)
+                    )
+                : fallback.income,
 
-        expense: Array.isArray(financeWeeks.expense)
-            ? financeWeeks.expense.map(value => Number(value || 0))
-            : fallback.expense
+        expense:
+            Array.isArray(
+                financeWeeks.expense
+            )
+                ? financeWeeks
+                    .expense
+                    .map(value =>
+                        Number(value ?? 0)
+                    )
+                : fallback.expense
     };
 }
 
@@ -258,24 +383,37 @@ function buildEmptyDashboardData() {
             currentUser?.role || ""
         ),
 
-        period: currentDashboardPeriod,
+        period:
+            currentDashboardPeriod,
 
         totalPatients: 0,
+
         periodAppointments: 0,
+
         todayAppointments: 0,
+
         todayScheduledAppointments: 0,
 
+        overdueScheduledAppointments: 0,
+
         scheduledAppointments: 0,
+
         attendedAppointments: 0,
+
         cancelledAppointments: 0,
+
         noShowAppointments: 0,
+
         rescheduledAppointments: 0,
 
         totalIncome: 0,
+
         totalExpense: 0,
+
         profit: 0,
 
         pendingPayments: 0,
+
         pendingLeads: 0,
 
         appointmentStatus: [
@@ -284,21 +422,32 @@ function buildEmptyDashboardData() {
                 value: 0,
                 color: "#2563eb"
             },
+
+            {
+                label:
+                    "Pendientes de cierre",
+                value: 0,
+                color: "#f59e0b"
+            },
+
             {
                 label: "Atendidas",
                 value: 0,
                 color: "#047857"
             },
+
             {
                 label: "Canceladas",
                 value: 0,
                 color: "#b42318"
             },
+
             {
                 label: "No asistió",
                 value: 0,
                 color: "#c2410c"
             },
+
             {
                 label: "Reprogramadas",
                 value: 0,
@@ -332,14 +481,19 @@ function updateDashboardUserInfo(role) {
         currentUser?.lastname ||
         "";
 
-    const fullName = `${firstName} ${lastName}`
-        .replace(/\s+/g, " ")
-        .trim();
+    const fullName =
+        `${firstName} ${lastName}`
+            .replace(/\s+/g, " ")
+            .trim();
 
     const fallbackNames = {
         ADMIN: "Administrador",
-        RECEPCIONISTA: "Recepcionista",
-        PSICOLOGO: "Psicólogo"
+
+        RECEPCIONISTA:
+            "Recepcionista",
+
+        PSICOLOGO:
+            "Psicólogo"
     };
 
     const displayName =
@@ -357,15 +511,17 @@ function updateDashboardUserInfo(role) {
    INDICADORES
 ========================================================= */
 
-function updateDashboardKpis(data, role) {
+function updateDashboardKpis(
+    data,
+    role
+) {
     setText(
         "dashPatients",
         data.totalPatients
     );
 
     /*
-     * Antes se utilizaba todayAppointments.
-     * Ahora se utiliza el total del periodo seleccionado.
+     * La tarjeta cambia según el periodo.
      */
     setText(
         "dashAppointments",
@@ -374,17 +530,23 @@ function updateDashboardKpis(data, role) {
 
     setText(
         "dashIncome",
-        formatCurrency(data.totalIncome)
+        formatCurrency(
+            data.totalIncome
+        )
     );
 
     setText(
         "dashExpense",
-        formatCurrency(data.totalExpense)
+        formatCurrency(
+            data.totalExpense
+        )
     );
 
     setText(
         "dashProfit",
-        formatCurrency(data.profit)
+        formatCurrency(
+            data.profit
+        )
     );
 
     setText(
@@ -393,8 +555,8 @@ function updateDashboardKpis(data, role) {
     );
 
     /*
-     * El número del centro del gráfico debe coincidir
-     * con la cantidad del periodo.
+     * El centro del gráfico debe ser igual
+     * al total del periodo seleccionado.
      */
     setText(
         "dashAppointmentsTotalMonth",
@@ -434,6 +596,7 @@ function updatePatientCardTexts(role) {
 function updateAppointmentCardTexts(role) {
     setText(
         "dashAppointmentsSubtitle",
+
         role === "PSICOLOGO"
             ? "Citas asignadas en el periodo"
             : "Citas registradas en el periodo"
@@ -445,21 +608,28 @@ function updateAppointmentCardTexts(role) {
 ========================================================= */
 
 function applyDashboardByRole(roleInput) {
-    const role = normalizeDashboardRole(roleInput);
+    const role =
+        normalizeDashboardRole(
+            roleInput
+        );
 
     const isAdmin =
         role === "ADMIN";
 
     document
-        .querySelectorAll(".admin-dashboard-only")
+        .querySelectorAll(
+            ".admin-dashboard-only"
+        )
         .forEach(element => {
             element.style.display =
-                isAdmin ? "" : "none";
+                isAdmin
+                    ? ""
+                    : "none";
         });
 
     /*
-     * Cuando el gráfico financiero está oculto,
-     * el gráfico de citas debe ocupar todo el ancho.
+     * Si no hay gráfico financiero,
+     * citas ocupa todo el ancho.
      */
     const analyticsGrid =
         document.querySelector(
@@ -467,28 +637,34 @@ function applyDashboardByRole(roleInput) {
         );
 
     if (analyticsGrid) {
-        analyticsGrid.style.gridTemplateColumns =
-            isAdmin
-                ? ""
-                : "minmax(0, 1fr)";
+        analyticsGrid
+            .style
+            .gridTemplateColumns =
+                isAdmin
+                    ? ""
+                    : "minmax(0, 1fr)";
     }
 
     /*
-     * Los porcentajes actuales son textos fijos,
-     * no están calculados por el backend.
-     * Se ocultan para no mostrar información falsa.
+     * Oculta porcentajes estáticos
+     * no calculados por el backend.
      */
     document
-        .querySelectorAll("#home .kpi-trend")
+        .querySelectorAll(
+            "#home .kpi-trend"
+        )
         .forEach(element => {
-            element.style.display = "none";
+            element.style.display =
+                "none";
         });
 
     updateDashboardHeaderByRole(role);
     updateBottomDashboardTexts(role);
 
     const dashboard =
-        document.querySelector("#home .admin-dashboard");
+        document.querySelector(
+            "#home .admin-dashboard"
+        );
 
     if (dashboard) {
         dashboard.dataset.role =
@@ -499,19 +675,25 @@ function applyDashboardByRole(roleInput) {
 function updateDashboardHeaderByRole(role) {
     const configuration = {
         ADMIN: {
-            eyebrow: "Dashboard administrativo",
+            eyebrow:
+                "Dashboard administrativo",
+
             subtitle:
                 "Indicadores operativos, agenda clínica y control financiero del centro."
         },
 
         RECEPCIONISTA: {
-            eyebrow: "Dashboard operativo",
+            eyebrow:
+                "Dashboard operativo",
+
             subtitle:
                 "Consulta pacientes, solicitudes, citas y actividades administrativas."
         },
 
         PSICOLOGO: {
-            eyebrow: "Dashboard clínico",
+            eyebrow:
+                "Dashboard clínico",
+
             subtitle:
                 "Consulta tus citas asignadas, pacientes relacionados y próximas atenciones."
         }
@@ -582,7 +764,10 @@ function updateBottomDashboardTexts(role) {
    GRÁFICOS
 ========================================================= */
 
-function renderDashboardCharts(data, role) {
+function renderDashboardCharts(
+    data,
+    role
+) {
     destroyDashboardCharts();
 
     renderAppointmentStatusChart(
@@ -594,8 +779,7 @@ function renderDashboardCharts(data, role) {
     );
 
     /*
-     * El gráfico financiero solamente debe
-     * crearse cuando el usuario sea ADMIN.
+     * Finanzas solo para ADMIN.
      */
     if (role === "ADMIN") {
         renderFinanceChart(
@@ -607,23 +791,29 @@ function renderDashboardCharts(data, role) {
 function destroyDashboardCharts() {
     if (dashboardFinanceChart) {
         dashboardFinanceChart.destroy();
-        dashboardFinanceChart = null;
+
+        dashboardFinanceChart =
+            null;
     }
 
     if (dashboardAppointmentsChart) {
         dashboardAppointmentsChart.destroy();
-        dashboardAppointmentsChart = null;
+
+        dashboardAppointmentsChart =
+            null;
     }
 }
 
-function renderAppointmentStatusChart(statusList) {
-    const appointmentsCanvas =
+function renderAppointmentStatusChart(
+    statusList
+) {
+    const canvas =
         document.getElementById(
             "dashboardAppointmentsChart"
         );
 
     if (
-        !appointmentsCanvas ||
+        !canvas ||
         typeof Chart === "undefined"
     ) {
         return;
@@ -635,30 +825,38 @@ function renderAppointmentStatusChart(statusList) {
             : [];
 
     dashboardAppointmentsChart =
-        new Chart(appointmentsCanvas, {
+        new Chart(canvas, {
             type: "doughnut",
 
             data: {
                 labels:
-                    safeStatusList.map(
-                        item => item.label
-                    ),
+                    safeStatusList
+                        .map(item =>
+                            item.label
+                        ),
 
                 datasets: [
                     {
                         data:
-                            safeStatusList.map(
-                                item =>
-                                    Number(item.value || 0)
-                            ),
+                            safeStatusList
+                                .map(item =>
+                                    Number(
+                                        item.value ??
+                                        0
+                                    )
+                                ),
 
                         backgroundColor:
-                            safeStatusList.map(
-                                item => item.color
-                            ),
+                            safeStatusList
+                                .map(item =>
+                                    item.color
+                                ),
 
-                        borderColor: "#ffffff",
+                        borderColor:
+                            "#ffffff",
+
                         borderWidth: 4,
+
                         hoverOffset: 6
                     }
                 ]
@@ -666,7 +864,10 @@ function renderAppointmentStatusChart(statusList) {
 
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
+
+                maintainAspectRatio:
+                    false,
+
                 cutout: "68%",
 
                 plugins: {
@@ -675,7 +876,9 @@ function renderAppointmentStatusChart(statusList) {
                     },
 
                     tooltip: {
-                        backgroundColor: "#101828",
+                        backgroundColor:
+                            "#101828",
+
                         padding: 12,
 
                         callbacks: {
@@ -690,35 +893,41 @@ function renderAppointmentStatusChart(statusList) {
 }
 
 function renderFinanceChart(financeWeeks) {
-    const financeCanvas =
+    const canvas =
         document.getElementById(
             "dashboardFinanceChart"
         );
 
     if (
-        !financeCanvas ||
+        !canvas ||
         typeof Chart === "undefined"
     ) {
         return;
     }
 
     const labels =
-        Array.isArray(financeWeeks?.labels)
+        Array.isArray(
+            financeWeeks?.labels
+        )
             ? financeWeeks.labels
             : [];
 
     const incomes =
-        Array.isArray(financeWeeks?.income)
+        Array.isArray(
+            financeWeeks?.income
+        )
             ? financeWeeks.income
             : [];
 
     const expenses =
-        Array.isArray(financeWeeks?.expense)
+        Array.isArray(
+            financeWeeks?.expense
+        )
             ? financeWeeks.expense
             : [];
 
     dashboardFinanceChart =
-        new Chart(financeCanvas, {
+        new Chart(canvas, {
             type: "bar",
 
             data: {
@@ -727,16 +936,27 @@ function renderFinanceChart(financeWeeks) {
                 datasets: [
                     {
                         label: "Ingresos",
+
                         data: incomes,
-                        backgroundColor: "#047857",
+
+                        backgroundColor:
+                            "#047857",
+
                         borderRadius: 6,
+
                         barThickness: 20
                     },
+
                     {
                         label: "Gastos",
+
                         data: expenses,
-                        backgroundColor: "#b42318",
+
+                        backgroundColor:
+                            "#b42318",
+
                         borderRadius: 6,
+
                         barThickness: 20
                     }
                 ]
@@ -744,26 +964,37 @@ function renderFinanceChart(financeWeeks) {
 
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
+
+                maintainAspectRatio:
+                    false,
 
                 plugins: {
                     legend: {
                         position: "top",
 
                         labels: {
-                            usePointStyle: true,
-                            pointStyle: "rectRounded",
-                            color: "#475467",
+                            usePointStyle:
+                                true,
+
+                            pointStyle:
+                                "rectRounded",
+
+                            color:
+                                "#475467",
 
                             font: {
                                 size: 12,
-                                weight: "600"
+
+                                weight:
+                                    "600"
                             }
                         }
                     },
 
                     tooltip: {
-                        backgroundColor: "#101828",
+                        backgroundColor:
+                            "#101828",
+
                         padding: 12,
 
                         callbacks: {
@@ -781,7 +1012,8 @@ function renderFinanceChart(financeWeeks) {
                         },
 
                         ticks: {
-                            color: "#667085",
+                            color:
+                                "#667085",
 
                             font: {
                                 size: 12
@@ -790,7 +1022,8 @@ function renderFinanceChart(financeWeeks) {
                     },
 
                     y: {
-                        beginAtZero: true,
+                        beginAtZero:
+                            true,
 
                         grid: {
                             color:
@@ -798,7 +1031,8 @@ function renderFinanceChart(financeWeeks) {
                         },
 
                         ticks: {
-                            color: "#667085",
+                            color:
+                                "#667085",
 
                             callback(value) {
                                 return value >= 1000
@@ -812,7 +1046,9 @@ function renderFinanceChart(financeWeeks) {
         });
 }
 
-function renderAppointmentStatusLegend(statusList) {
+function renderAppointmentStatusLegend(
+    statusList
+) {
     const legend =
         document.getElementById(
             "appointmentStatusLegend"
@@ -830,7 +1066,10 @@ function renderAppointmentStatusLegend(statusList) {
     const total =
         safeStatusList.reduce(
             (sum, item) =>
-                sum + Number(item.value || 0),
+                sum +
+                Number(
+                    item.value ?? 0
+                ),
             0
         );
 
@@ -838,7 +1077,9 @@ function renderAppointmentStatusLegend(statusList) {
         safeStatusList
             .map(item => {
                 const value =
-                    Number(item.value || 0);
+                    Number(
+                        item.value ?? 0
+                    );
 
                 const percent =
                     total > 0
@@ -850,13 +1091,25 @@ function renderAppointmentStatusLegend(statusList) {
 
                 return `
                     <div class="status-legend-item">
+
                         <div class="status-legend-name">
-                            <span style="background:${escapeHtml(item.color)}"></span>
+
+                            <span
+                                style="background:${escapeHtml(item.color)}"
+                            ></span>
+
                             ${escapeHtml(item.label)}
+
                         </div>
 
-                        <strong>${value}</strong>
-                        <em>${percent}%</em>
+                        <strong>
+                            ${value}
+                        </strong>
+
+                        <em>
+                            ${percent}%
+                        </em>
+
                     </div>
                 `;
             })
@@ -867,7 +1120,10 @@ function renderAppointmentStatusLegend(statusList) {
    PRÓXIMAS CITAS
 ========================================================= */
 
-function renderTodaySchedule(appointments, role) {
+function renderTodaySchedule(
+    appointments,
+    role
+) {
     const container =
         document.getElementById(
             "todaySchedule"
@@ -883,14 +1139,19 @@ function renderTodaySchedule(appointments, role) {
     ) {
         container.innerHTML = `
             <div class="premium-empty-state">
+
                 <i data-lucide="calendar-x"></i>
+
                 <span>
                     ${
                         role === "PSICOLOGO"
+
                             ? "No tienes citas próximas asignadas."
+
                             : "No hay citas próximas registradas."
                     }
                 </span>
+
             </div>
         `;
 
@@ -902,52 +1163,94 @@ function renderTodaySchedule(appointments, role) {
             .map(appointment => {
                 const normalizedStatus =
                     String(
-                        appointment.status || ""
-                    ).toLowerCase();
+                        appointment.status ||
+                        ""
+                    )
+                        .toLowerCase();
 
-                let statusClass = "pending";
+                const statusClass =
+                    normalizedStatus
+                        .includes("programada") ||
 
-                if (
-                    normalizedStatus.includes("programada") ||
-                    normalizedStatus.includes("confirmada") ||
-                    normalizedStatus.includes("atendida")
-                ) {
-                    statusClass = "confirmed";
-                }
+                    normalizedStatus
+                        .includes("confirmada") ||
+
+                    normalizedStatus
+                        .includes("atendida")
+
+                        ? "confirmed"
+
+                        : "pending";
 
                 return `
                     <div class="premium-appointment-row">
+
                         <div class="appointment-person">
+
                             <div class="appointment-avatar">
-                                ${escapeHtml(appointment.initials)}
+
+                                ${escapeHtml(
+                                    appointment.initials
+                                )}
+
                             </div>
 
                             <div>
+
                                 <strong>
-                                    ${escapeHtml(appointment.patient)}
+
+                                    ${escapeHtml(
+                                        appointment.patient
+                                    )}
+
                                 </strong>
 
                                 <span>
-                                    ${escapeHtml(appointment.service)}
+
+                                    ${escapeHtml(
+                                        appointment.service
+                                    )}
+
                                 </span>
+
                             </div>
+
                         </div>
 
                         <div class="appointment-meta">
+
                             <span>
+
                                 <i data-lucide="calendar"></i>
-                                ${escapeHtml(appointment.date)}
+
+                                ${escapeHtml(
+                                    appointment.date
+                                )}
+
                             </span>
 
                             <span>
+
                                 <i data-lucide="clock"></i>
-                                ${escapeHtml(appointment.time)}
+
+                                ${escapeHtml(
+                                    appointment.time
+                                )}
+
                             </span>
+
                         </div>
 
-                        <span class="premium-status-pill ${statusClass}">
-                            ${escapeHtml(appointment.status)}
+                        <span
+                            class="premium-status-pill ${statusClass}"
+                        >
+
+                            ${escapeHtml(
+                                appointment.status
+                            )}
+
                         </span>
+
                     </div>
                 `;
             })
@@ -955,10 +1258,13 @@ function renderTodaySchedule(appointments, role) {
 }
 
 /* =========================================================
-   RECORDATORIOS SEGÚN ROL
+   RECORDATORIOS
 ========================================================= */
 
-function renderDashboardReminders(data, role) {
+function renderDashboardReminders(
+    data,
+    role
+) {
     const container =
         document.getElementById(
             "dashboardSummary"
@@ -979,25 +1285,40 @@ function renderDashboardReminders(data, role) {
 
     renderAdministrativeReminders(
         container,
-        data,
-        role
+        data
     );
 }
 
-function renderPsychologistReminders(container, data) {
+/* =========================================================
+   RECORDATORIOS DEL PSICÓLOGO
+========================================================= */
+
+function renderPsychologistReminders(
+    container,
+    data
+) {
     const todayScheduled =
         Number(
-            data.todayScheduledAppointments || 0
+            data.todayScheduledAppointments ??
+            0
+        );
+
+    const overdue =
+        Number(
+            data.overdueScheduledAppointments ??
+            0
         );
 
     const attended =
         Number(
-            data.attendedAppointments || 0
+            data.attendedAppointments ??
+            0
         );
 
     const noShow =
         Number(
-            data.noShowAppointments || 0
+            data.noShowAppointments ??
+            0
         );
 
     container.innerHTML = `
@@ -1006,21 +1327,67 @@ function renderPsychologistReminders(container, data) {
             type="button"
             onclick="goToDashboardReminder('appointments')"
         >
+
             <div class="reminder-icon">
+
                 <i data-lucide="calendar-check"></i>
+
             </div>
 
             <div>
+
                 <strong>
-                    ${todayScheduled} citas programadas para hoy.
+
+                    ${formatDashboardCount(
+                        todayScheduled,
+                        "cita programada vigente para hoy",
+                        "citas programadas vigentes para hoy"
+                    )}.
+
                 </strong>
 
                 <span>
                     Revisa tu agenda y las próximas atenciones asignadas.
                 </span>
+
             </div>
 
             <i data-lucide="chevron-right"></i>
+
+        </button>
+
+        <button
+            class="premium-reminder-row orange clickable-reminder"
+            type="button"
+            onclick="goToDashboardReminder('overdue')"
+        >
+
+            <div class="reminder-icon">
+
+                <i data-lucide="clock-alert"></i>
+
+            </div>
+
+            <div>
+
+                <strong>
+
+                    ${formatDashboardCount(
+                        overdue,
+                        "cita pendiente de cierre",
+                        "citas pendientes de cierre"
+                    )}.
+
+                </strong>
+
+                <span>
+                    Marca las citas terminadas como atendidas o no asistió.
+                </span>
+
+            </div>
+
+            <i data-lucide="chevron-right"></i>
+
         </button>
 
         <button
@@ -1028,21 +1395,33 @@ function renderPsychologistReminders(container, data) {
             type="button"
             onclick="goToDashboardReminder('attended')"
         >
+
             <div class="reminder-icon">
+
                 <i data-lucide="clipboard-check"></i>
+
             </div>
 
             <div>
+
                 <strong>
-                    ${attended} citas atendidas en el periodo.
+
+                    ${formatDashboardCount(
+                        attended,
+                        "cita atendida en el periodo",
+                        "citas atendidas en el periodo"
+                    )}.
+
                 </strong>
 
                 <span>
                     Consulta las atenciones registradas y su seguimiento clínico.
                 </span>
+
             </div>
 
             <i data-lucide="chevron-right"></i>
+
         </button>
 
         <button
@@ -1050,45 +1429,67 @@ function renderPsychologistReminders(container, data) {
             type="button"
             onclick="goToDashboardReminder('no-show')"
         >
+
             <div class="reminder-icon">
+
                 <i data-lucide="user-x"></i>
+
             </div>
 
             <div>
+
                 <strong>
-                    ${noShow} pacientes no asistieron en el periodo.
+
+                    ${formatDashboardCount(
+                        noShow,
+                        "cita marcada como no asistió",
+                        "citas marcadas como no asistió"
+                    )}.
+
                 </strong>
 
                 <span>
-                    Revisa las citas marcadas como no asistió.
+                    Revisa las inasistencias registradas durante el periodo.
                 </span>
+
             </div>
 
             <i data-lucide="chevron-right"></i>
+
         </button>
     `;
 }
 
+/* =========================================================
+   RECORDATORIOS ADMINISTRATIVOS
+========================================================= */
+
 function renderAdministrativeReminders(
     container,
-    data,
-    role
+    data
 ) {
     const todayScheduled =
         Number(
-            data.todayScheduledAppointments ||
-            data.todayAppointments ||
+            data.todayScheduledAppointments ??
+            0
+        );
+
+    const overdue =
+        Number(
+            data.overdueScheduledAppointments ??
             0
         );
 
     const pendingPayments =
         Number(
-            data.pendingPayments || 0
+            data.pendingPayments ??
+            0
         );
 
     const pendingLeads =
         Number(
-            data.pendingLeads || 0
+            data.pendingLeads ??
+            0
         );
 
     container.innerHTML = `
@@ -1097,21 +1498,67 @@ function renderAdministrativeReminders(
             type="button"
             onclick="goToDashboardReminder('appointments')"
         >
+
             <div class="reminder-icon">
+
                 <i data-lucide="calendar-check"></i>
+
             </div>
 
             <div>
+
                 <strong>
-                    ${todayScheduled} citas programadas para hoy.
+
+                    ${formatDashboardCount(
+                        todayScheduled,
+                        "cita programada vigente para hoy",
+                        "citas programadas vigentes para hoy"
+                    )}.
+
                 </strong>
 
                 <span>
                     Revisa la agenda diaria y coordina las atenciones.
                 </span>
+
             </div>
 
             <i data-lucide="chevron-right"></i>
+
+        </button>
+
+        <button
+            class="premium-reminder-row orange clickable-reminder"
+            type="button"
+            onclick="goToDashboardReminder('overdue')"
+        >
+
+            <div class="reminder-icon">
+
+                <i data-lucide="clock-alert"></i>
+
+            </div>
+
+            <div>
+
+                <strong>
+
+                    ${formatDashboardCount(
+                        overdue,
+                        "cita pendiente de cierre",
+                        "citas pendientes de cierre"
+                    )}.
+
+                </strong>
+
+                <span>
+                    Revisa las citas terminadas que aún siguen programadas.
+                </span>
+
+            </div>
+
+            <i data-lucide="chevron-right"></i>
+
         </button>
 
         <button
@@ -1119,21 +1566,33 @@ function renderAdministrativeReminders(
             type="button"
             onclick="goToDashboardReminder('payments')"
         >
+
             <div class="reminder-icon">
+
                 <i data-lucide="triangle-alert"></i>
+
             </div>
 
             <div>
+
                 <strong>
-                    ${pendingPayments} pagos pendientes de revisión.
+
+                    ${formatDashboardCount(
+                        pendingPayments,
+                        "pago pendiente de revisión",
+                        "pagos pendientes de revisión"
+                    )}.
+
                 </strong>
 
                 <span>
                     Valida adelantos, saldos y comprobantes registrados.
                 </span>
+
             </div>
 
             <i data-lucide="chevron-right"></i>
+
         </button>
 
         <button
@@ -1141,24 +1600,40 @@ function renderAdministrativeReminders(
             type="button"
             onclick="goToDashboardReminder('leads')"
         >
+
             <div class="reminder-icon">
+
                 <i data-lucide="clipboard-list"></i>
+
             </div>
 
             <div>
+
                 <strong>
-                    ${pendingLeads} pre-reservas en seguimiento.
+
+                    ${formatDashboardCount(
+                        pendingLeads,
+                        "pre-reserva en seguimiento",
+                        "pre-reservas en seguimiento"
+                    )}.
+
                 </strong>
 
                 <span>
                     Gestiona las solicitudes enviadas desde el portal público.
                 </span>
+
             </div>
 
             <i data-lucide="chevron-right"></i>
+
         </button>
     `;
 }
+
+/* =========================================================
+   ERROR DEL DASHBOARD
+========================================================= */
 
 function renderDashboardLoadError() {
     const container =
@@ -1172,25 +1647,34 @@ function renderDashboardLoadError() {
 
     container.innerHTML = `
         <div class="premium-empty-state">
+
             <i data-lucide="triangle-alert"></i>
+
             <span>
                 No se pudieron cargar los indicadores del dashboard.
             </span>
+
         </div>
     `;
 }
 
 /* =========================================================
-   NAVEGACIÓN DESDE LOS RECORDATORIOS
+   NAVEGACIÓN DESDE RECORDATORIOS
 ========================================================= */
 
 function goToDashboardReminder(type) {
-    if (
-        type === "appointments" ||
-        type === "attended" ||
-        type === "no-show"
-    ) {
-        showSectionById("appointments");
+    const appointmentTypes =
+        new Set([
+            "appointments",
+            "overdue",
+            "attended",
+            "no-show"
+        ]);
+
+    if (appointmentTypes.has(type)) {
+        showSectionById(
+            "appointments"
+        );
 
         setTimeout(() => {
             const agendaDate =
@@ -1200,11 +1684,13 @@ function goToDashboardReminder(type) {
 
             if (agendaDate) {
                 agendaDate.value =
-                    new Date()
-                        .toISOString()
-                        .split("T")[0];
+                    getBusinessDateInputValue();
             }
 
+            /*
+             * Para citas programadas se abre
+             * directamente la agenda de hoy.
+             */
             if (
                 type === "appointments" &&
                 typeof loadAgenda === "function"
@@ -1212,19 +1698,26 @@ function goToDashboardReminder(type) {
                 loadAgenda();
             }
 
+            /*
+             * Para vencidas, atendidas o no asistió
+             * se abre el listado de citas.
+             */
             if (
                 type !== "appointments" &&
                 typeof toggleAppointmentList === "function"
             ) {
                 toggleAppointmentList();
             }
+
         }, 200);
 
         return;
     }
 
     if (type === "payments") {
-        showSectionById("appointments");
+        showSectionById(
+            "appointments"
+        );
 
         setTimeout(() => {
             if (
@@ -1238,7 +1731,9 @@ function goToDashboardReminder(type) {
     }
 
     if (type === "leads") {
-        showSectionById("leads");
+        showSectionById(
+            "leads"
+        );
 
         setTimeout(() => {
             if (
@@ -1267,27 +1762,47 @@ function updateDashboardPeriodLabels(
 
     const labels = {
         day: {
-            shortName: "Hoy",
-            statusTime: "del día",
-            financeTime: "del día"
+            shortName:
+                "Hoy",
+
+            statusTime:
+                "del día",
+
+            financeTime:
+                "del día"
         },
 
         week: {
-            shortName: "Semana",
-            statusTime: "de la semana",
-            financeTime: "semanal"
+            shortName:
+                "Semana",
+
+            statusTime:
+                "de la semana",
+
+            financeTime:
+                "semanal"
         },
 
         month: {
-            shortName: "Mes",
-            statusTime: "del mes",
-            financeTime: "mensual"
+            shortName:
+                "Mes",
+
+            statusTime:
+                "del mes",
+
+            financeTime:
+                "mensual"
         },
 
         year: {
-            shortName: "Año",
-            statusTime: "del año",
-            financeTime: "anual"
+            shortName:
+                "Año",
+
+            statusTime:
+                "del año",
+
+            financeTime:
+                "anual"
         }
     };
 
@@ -1302,40 +1817,51 @@ function updateDashboardPeriodLabels(
 
     setTextIfExists(
         "dashAppointmentsTitle",
+
         `${appointmentPrefix} (${selected.shortName})`
     );
 
     setTextIfExists(
         "dashAppointmentStatusTitle",
+
         role === "PSICOLOGO"
+
             ? `Mis citas por estado (${selected.shortName})`
+
             : `Citas por estado (${selected.shortName})`
     );
 
     setTextIfExists(
         "dashAppointmentStatusSubtitle",
+
         role === "PSICOLOGO"
+
             ? `Distribución de mis citas ${selected.statusTime}`
+
             : `Distribución de citas ${selected.statusTime}`
     );
 
     setTextIfExists(
         "dashIncomeTitle",
+
         `Ingresos (${selected.shortName})`
     );
 
     setTextIfExists(
         "dashPendingPaymentsTitle",
+
         `Pendientes de pago (${selected.shortName})`
     );
 
     setTextIfExists(
         "dashFinanceChartTitle",
+
         `Ingresos vs. gastos (${selected.shortName})`
     );
 
     setTextIfExists(
         "dashFinanceChartSubtitle",
+
         `Comparación financiera ${selected.financeTime}`
     );
 }
@@ -1366,7 +1892,10 @@ function normalizeDashboardRole(role) {
     return String(role || "")
         .trim()
         .toUpperCase()
-        .replace("ROLE_", "");
+        .replace(
+            "ROLE_",
+            ""
+        );
 }
 
 function setText(id, value) {
@@ -1374,7 +1903,8 @@ function setText(id, value) {
         document.getElementById(id);
 
     if (element) {
-        element.textContent = value;
+        element.textContent =
+            value;
     }
 }
 
@@ -1383,27 +1913,107 @@ function setTextIfExists(id, text) {
         document.getElementById(id);
 
     if (element) {
-        element.textContent = text;
+        element.textContent =
+            text;
     }
 }
 
 function formatCurrency(value) {
     const number =
-        Number(value || 0);
+        Number(value ?? 0);
 
-    return `S/ ${number.toLocaleString("es-PE", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    })}`;
+    return `S/ ${number.toLocaleString(
+        "es-PE",
+        {
+            minimumFractionDigits:
+                2,
+
+            maximumFractionDigits:
+                2
+        }
+    )}`;
 }
 
 function escapeHtml(value) {
     return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+        .replaceAll(
+            "&",
+            "&amp;"
+        )
+        .replaceAll(
+            "<",
+            "&lt;"
+        )
+        .replaceAll(
+            ">",
+            "&gt;"
+        )
+        .replaceAll(
+            '"',
+            "&quot;"
+        )
+        .replaceAll(
+            "'",
+            "&#039;"
+        );
+}
+
+/*
+ * Maneja correctamente singular y plural.
+ *
+ * Ejemplos:
+ * 1 cita pendiente de cierre
+ * 2 citas pendientes de cierre
+ */
+function formatDashboardCount(
+    value,
+    singularText,
+    pluralText
+) {
+    const count =
+        Number(value ?? 0);
+
+    return `${count} ${
+        count === 1
+            ? singularText
+            : pluralText
+    }`;
+}
+
+/*
+ * Obtiene la fecha actual en la zona horaria
+ * America/Lima y devuelve YYYY-MM-DD.
+ */
+function getBusinessDateInputValue() {
+    const parts =
+        new Intl.DateTimeFormat(
+            "en-US",
+            {
+                timeZone:
+                    "America/Lima",
+
+                year:
+                    "numeric",
+
+                month:
+                    "2-digit",
+
+                day:
+                    "2-digit"
+            }
+        )
+            .formatToParts(
+                new Date()
+            );
+
+    const values = {};
+
+    parts.forEach(part => {
+        values[part.type] =
+            part.value;
+    });
+
+    return `${values.year}-${values.month}-${values.day}`;
 }
 
 function refreshDashboardIcons() {

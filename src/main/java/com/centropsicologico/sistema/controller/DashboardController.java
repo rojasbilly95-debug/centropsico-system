@@ -23,14 +23,20 @@ import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 @RestController
 @RequestMapping("/api/dashboard")
 public class DashboardController {
+
+    private static final ZoneId BUSINESS_ZONE =
+            ZoneId.of("America/Lima");
 
     private static final DateTimeFormatter DATE_FORMATTER =
             DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -63,36 +69,24 @@ public class DashboardController {
             @RequestParam(defaultValue = "month") String period,
             Authentication authentication
     ) {
-        if (
-                authentication == null ||
-                authentication.getName() == null
-        ) {
-            throw new ResponseStatusException(
-                    HttpStatus.UNAUTHORIZED,
-                    "Usuario no autenticado"
-            );
-        }
+        validateAuthentication(authentication);
 
-        String authenticatedEmail =
-                authentication.getName();
+        String authenticatedEmail = authentication.getName();
+        String authenticatedRole = getAuthenticatedRole(authentication);
+        String normalizedPeriod = normalizePeriod(period);
 
-        String authenticatedRole =
-                getAuthenticatedRole(authentication);
+        boolean isAdmin = "ADMIN".equals(authenticatedRole);
+        boolean isReceptionist = "RECEPCIONISTA".equals(authenticatedRole);
+        boolean isPsychologist = "PSICOLOGO".equals(authenticatedRole);
 
-        String normalizedPeriod =
-                normalizePeriod(period);
-
-        boolean isAdmin =
-                "ADMIN".equals(authenticatedRole);
-
-        boolean isReceptionist =
-                "RECEPCIONISTA".equals(authenticatedRole);
-
-        boolean isPsychologist =
-                "PSICOLOGO".equals(authenticatedRole);
+        ZonedDateTime currentDateTime =
+                ZonedDateTime.now(BUSINESS_ZONE);
 
         LocalDate today =
-                LocalDate.now();
+                currentDateTime.toLocalDate();
+
+        LocalTime currentTime =
+                currentDateTime.toLocalTime();
 
         DateRange dateRange =
                 resolveDateRange(normalizedPeriod, today);
@@ -110,16 +104,10 @@ public class DashboardController {
          */
 
         List<Appointment> periodAppointments;
-
         List<Appointment> todayAppointments;
-
         List<Appointment> upcomingAppointmentsSource;
 
         if (isPsychologist) {
-            /*
-             * El psicólogo recibe únicamente sus citas,
-             * identificadas mediante el correo del JWT.
-             */
             periodAppointments =
                     appointmentRepository
                             .findByPsychologistEmailAndDateBetween(
@@ -141,12 +129,7 @@ public class DashboardController {
                                     authenticatedEmail,
                                     today
                             );
-
         } else {
-            /*
-             * ADMIN y RECEPCIONISTA trabajan con
-             * información operativa general.
-             */
             periodAppointments =
                     appointmentRepository
                             .findByDateBetween(
@@ -155,8 +138,7 @@ public class DashboardController {
                             );
 
             todayAppointments =
-                    appointmentRepository
-                            .findByDate(today);
+                    appointmentRepository.findByDate(today);
 
             upcomingAppointmentsSource =
                     appointmentRepository
@@ -177,17 +159,53 @@ public class DashboardController {
         long totalTodayAppointments =
                 todayAppointments.size();
 
+        /*
+         * Citas de hoy que continúan PROGRAMADAS y todavía
+         * no han terminado.
+         */
         long todayScheduledAppointments =
-                countStatus(
-                        todayAppointments,
-                        AppointmentStatus.PROGRAMADA
-                );
+                todayAppointments
+                        .stream()
+                        .filter(appointment ->
+                                isActiveScheduledAppointment(
+                                        appointment,
+                                        today,
+                                        currentTime
+                                )
+                        )
+                        .count();
 
+        /*
+         * Citas PROGRAMADAS vigentes dentro del periodo.
+         * No incluye las citas pasadas pendientes de cierre.
+         */
         long scheduledAppointments =
-                countStatus(
-                        periodAppointments,
-                        AppointmentStatus.PROGRAMADA
-                );
+                periodAppointments
+                        .stream()
+                        .filter(appointment ->
+                                isActiveScheduledAppointment(
+                                        appointment,
+                                        today,
+                                        currentTime
+                                )
+                        )
+                        .count();
+
+        /*
+         * Citas cuya fecha y hora final ya pasaron,
+         * pero continúan en estado PROGRAMADA.
+         */
+        long overdueScheduledAppointments =
+                periodAppointments
+                        .stream()
+                        .filter(appointment ->
+                                isOverdueScheduledAppointment(
+                                        appointment,
+                                        today,
+                                        currentTime
+                                )
+                        )
+                        .count();
 
         long attendedAppointments =
                 countStatus(
@@ -222,14 +240,11 @@ public class DashboardController {
         long totalPatients;
 
         if (isPsychologist) {
-            /*
-             * Cuenta pacientes diferentes vinculados
-             * con las citas del psicólogo durante el periodo.
-             */
             totalPatients =
                     periodAppointments
                             .stream()
                             .filter(appointment ->
+                                    appointment != null &&
                                     appointment.getPatient() != null &&
                                     appointment.getPatient().getId() != null
                             )
@@ -238,7 +253,6 @@ public class DashboardController {
                             )
                             .distinct()
                             .count();
-
         } else {
             totalPatients =
                     patientRepository.count();
@@ -318,7 +332,7 @@ public class DashboardController {
 
         /*
          * =====================================================
-         * PAGOS Y SOLICITUDES
+         * PAGOS Y PRE-RESERVAS
          * ADMIN Y RECEPCIONISTA
          * =====================================================
          */
@@ -354,8 +368,8 @@ public class DashboardController {
         }
 
         /*
-         * Para el psicólogo estos campos permanecen en cero.
-         * No se envía información de pagos o solicitudes.
+         * El psicólogo no recibe información financiera
+         * ni de pre-reservas.
          */
         if (isPsychologist) {
             pendingPayments = 0L;
@@ -370,13 +384,16 @@ public class DashboardController {
 
         List<DashboardDto.StatusItemDto> appointmentStatus =
                 buildAppointmentStatus(
-                        periodAppointments
+                        periodAppointments,
+                        today,
+                        currentTime
                 );
 
         List<DashboardDto.UpcomingAppointmentDto> upcomingAppointments =
                 buildUpcomingAppointments(
                         upcomingAppointmentsSource,
-                        today
+                        today,
+                        currentTime
                 );
 
         /*
@@ -403,6 +420,10 @@ public class DashboardController {
 
         response.setTodayScheduledAppointments(
                 todayScheduledAppointments
+        );
+
+        response.setOverdueScheduledAppointments(
+                overdueScheduledAppointments
         );
 
         response.setScheduledAppointments(
@@ -438,9 +459,8 @@ public class DashboardController {
         );
 
         /*
-         * Compatibilidad temporal con dashboard.js antiguo.
-         * Contiene el total del periodo seleccionado,
-         * aunque el nombre antiguo diga "Month".
+         * Compatibilidad temporal con versiones antiguas
+         * del frontend.
          */
         response.setTotalAppointmentsMonth(
                 totalPeriodAppointments
@@ -467,18 +487,46 @@ public class DashboardController {
      * =========================================================
      */
 
-    private List<DashboardDto.StatusItemDto>
-    buildAppointmentStatus(
-            List<Appointment> appointments
+    private List<DashboardDto.StatusItemDto> buildAppointmentStatus(
+            List<Appointment> appointments,
+            LocalDate today,
+            LocalTime currentTime
     ) {
+        long activeScheduled =
+                appointments
+                        .stream()
+                        .filter(appointment ->
+                                isActiveScheduledAppointment(
+                                        appointment,
+                                        today,
+                                        currentTime
+                                )
+                        )
+                        .count();
+
+        long overdueScheduled =
+                appointments
+                        .stream()
+                        .filter(appointment ->
+                                isOverdueScheduledAppointment(
+                                        appointment,
+                                        today,
+                                        currentTime
+                                )
+                        )
+                        .count();
+
         return List.of(
                 new DashboardDto.StatusItemDto(
                         "Programadas",
-                        countStatus(
-                                appointments,
-                                AppointmentStatus.PROGRAMADA
-                        ),
+                        activeScheduled,
                         "#2563eb"
+                ),
+
+                new DashboardDto.StatusItemDto(
+                        "Pendientes de cierre",
+                        overdueScheduled,
+                        "#f59e0b"
                 ),
 
                 new DashboardDto.StatusItemDto(
@@ -538,12 +586,77 @@ public class DashboardController {
 
     /*
      * =========================================================
+     * CITAS PROGRAMADAS VIGENTES Y VENCIDAS
+     * =========================================================
+     */
+
+    private boolean isActiveScheduledAppointment(
+            Appointment appointment,
+            LocalDate today,
+            LocalTime currentTime
+    ) {
+        if (
+                appointment == null ||
+                appointment.getStatus() != AppointmentStatus.PROGRAMADA ||
+                appointment.getDate() == null
+        ) {
+            return false;
+        }
+
+        return !isOverdueScheduledAppointment(
+                appointment,
+                today,
+                currentTime
+        );
+    }
+
+    private boolean isOverdueScheduledAppointment(
+            Appointment appointment,
+            LocalDate today,
+            LocalTime currentTime
+    ) {
+        if (
+                appointment == null ||
+                appointment.getStatus() != AppointmentStatus.PROGRAMADA ||
+                appointment.getDate() == null
+        ) {
+            return false;
+        }
+
+        if (appointment.getDate().isBefore(today)) {
+            return true;
+        }
+
+        if (appointment.getDate().isAfter(today)) {
+            return false;
+        }
+
+        /*
+         * La cita corresponde a hoy.
+         * Se considera vencida cuando su hora final ya pasó.
+         */
+        if (appointment.getEndTime() != null) {
+            return !appointment
+                    .getEndTime()
+                    .isAfter(currentTime);
+        }
+
+        /*
+         * Respaldo para registros antiguos sin hora final.
+         */
+        return appointment.getStartTime() != null &&
+                appointment
+                        .getStartTime()
+                        .isBefore(currentTime);
+    }
+
+    /*
+     * =========================================================
      * GRÁFICO FINANCIERO
      * =========================================================
      */
 
-    private DashboardDto.FinanceWeeksDto
-    buildFinanceWeeks(
+    private DashboardDto.FinanceWeeksDto buildFinanceWeeks(
             LocalDate startDate,
             LocalDate endDate,
             List<Income> incomes,
@@ -561,14 +674,16 @@ public class DashboardController {
         LocalDate currentStart =
                 startDate;
 
-        int periodIndex = 1;
+        int periodIndex =
+                1;
 
         while (!currentStart.isAfter(endDate)) {
             LocalDate currentEnd =
                     currentStart.plusDays(6);
 
             if (currentEnd.isAfter(endDate)) {
-                currentEnd = endDate;
+                currentEnd =
+                        endDate;
             }
 
             final LocalDate periodStart =
@@ -638,8 +753,7 @@ public class DashboardController {
         );
     }
 
-    private DashboardDto.FinanceWeeksDto
-    emptyFinanceWeeks() {
+    private DashboardDto.FinanceWeeksDto emptyFinanceWeeks() {
         return new DashboardDto.FinanceWeeksDto(
                 List.of(),
                 List.of(),
@@ -653,14 +767,11 @@ public class DashboardController {
      * =========================================================
      */
 
-    private List<DashboardDto.UpcomingAppointmentDto>
-    buildUpcomingAppointments(
+    private List<DashboardDto.UpcomingAppointmentDto> buildUpcomingAppointments(
             List<Appointment> appointments,
-            LocalDate today
+            LocalDate today,
+            LocalTime currentTime
     ) {
-        LocalTime currentTime =
-                LocalTime.now();
-
         return appointments
                 .stream()
                 .filter(appointment ->
@@ -682,22 +793,8 @@ public class DashboardController {
     ) {
         if (
                 appointment == null ||
-                appointment.getDate() == null
-        ) {
-            return false;
-        }
-
-        AppointmentStatus status =
-                appointment.getStatus();
-
-        /*
-         * No deben aparecer como próximas las citas
-         * ya finalizadas o canceladas.
-         */
-        if (
-                status == AppointmentStatus.CANCELADA ||
-                status == AppointmentStatus.ATENDIDA ||
-                status == AppointmentStatus.NO_ASISTIO
+                appointment.getDate() == null ||
+                appointment.getStatus() != AppointmentStatus.PROGRAMADA
         ) {
             return false;
         }
@@ -711,8 +808,17 @@ public class DashboardController {
         }
 
         /*
-         * Si la cita corresponde a hoy,
-         * solo aparece si todavía no pasó.
+         * Si la cita es de hoy, continúa apareciendo mientras
+         * no haya terminado.
+         */
+        if (appointment.getEndTime() != null) {
+            return appointment
+                    .getEndTime()
+                    .isAfter(currentTime);
+        }
+
+        /*
+         * Respaldo para citas antiguas sin hora final.
          */
         return appointment.getStartTime() == null ||
                 !appointment
@@ -720,8 +826,7 @@ public class DashboardController {
                         .isBefore(currentTime);
     }
 
-    private DashboardDto.UpcomingAppointmentDto
-    mapUpcomingAppointment(
+    private DashboardDto.UpcomingAppointmentDto mapUpcomingAppointment(
             Appointment appointment
     ) {
         String patientName =
@@ -788,6 +893,17 @@ public class DashboardController {
             Appointment appointment
     ) {
         if (appointment == null) {
+            return false;
+        }
+
+        /*
+         * Las citas canceladas o con inasistencia no deben
+         * aparecer como pagos pendientes operativos.
+         */
+        if (
+                appointment.getStatus() == AppointmentStatus.CANCELADA ||
+                appointment.getStatus() == AppointmentStatus.NO_ASISTIO
+        ) {
             return false;
         }
 
@@ -879,18 +995,40 @@ public class DashboardController {
      * =========================================================
      */
 
+    private void validateAuthentication(
+            Authentication authentication
+    ) {
+        if (
+                authentication == null ||
+                authentication.getName() == null ||
+                authentication.getName().isBlank()
+        ) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Usuario no autenticado"
+            );
+        }
+    }
+
     private String getAuthenticatedRole(
             Authentication authentication
     ) {
         return authentication
                 .getAuthorities()
                 .stream()
-                .findFirst()
                 .map(authority ->
                         authority
                                 .getAuthority()
                                 .replace("ROLE_", "")
+                                .trim()
+                                .toUpperCase(Locale.ROOT)
                 )
+                .filter(role ->
+                        role.equals("ADMIN") ||
+                        role.equals("RECEPCIONISTA") ||
+                        role.equals("PSICOLOGO")
+                )
+                .findFirst()
                 .orElse("SIN_ROL");
     }
 
@@ -908,7 +1046,7 @@ public class DashboardController {
                         ? ""
                         : period
                                 .trim()
-                                .toLowerCase();
+                                .toLowerCase(Locale.ROOT);
 
         return switch (normalized) {
             case "day", "week", "month", "year" ->
@@ -932,12 +1070,8 @@ public class DashboardController {
 
             case "week" ->
                     new DateRange(
-                            today.with(
-                                    DayOfWeek.MONDAY
-                            ),
-                            today.with(
-                                    DayOfWeek.SUNDAY
-                            )
+                            today.with(DayOfWeek.MONDAY),
+                            today.with(DayOfWeek.SUNDAY)
                     );
 
             case "year" ->
@@ -983,13 +1117,13 @@ public class DashboardController {
     }
 
     private String normalizeText(
-            String value
+            Object value
     ) {
         return value == null
                 ? ""
-                : value
+                : String.valueOf(value)
                         .trim()
-                        .toUpperCase();
+                        .toUpperCase(Locale.ROOT);
     }
 
     private String buildFullName(
@@ -1053,13 +1187,13 @@ public class DashboardController {
         if (parts.length == 1) {
             return parts[0]
                     .substring(0, 1)
-                    .toUpperCase();
+                    .toUpperCase(Locale.ROOT);
         }
 
         return (
                 parts[0].substring(0, 1) +
                 parts[1].substring(0, 1)
-        ).toUpperCase();
+        ).toUpperCase(Locale.ROOT);
     }
 
     private record DateRange(
