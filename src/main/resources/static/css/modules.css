@@ -3025,3 +3025,575 @@ body.modal-open {
     overflow-wrap: anywhere !important;
     word-break: break-word !important;
 }
+
+/* =========================================================
+   MÓDULO DE CITAS - DISPONIBILIDAD PROFESIONAL
+========================================================= */
+
+/* Formulario de citas */
+#appointments .appointment-form-grid {
+    align-items: start;
+}
+
+#appointments .appointment-field {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+#appointments .appointment-field label {
+    display: block;
+    margin-bottom: 7px;
+    color: #0f3d66;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+#appointments .appointment-field small {
+    display: block;
+    margin-top: 7px;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+#appointments .appointment-field input,
+#appointments .appointment-field select,
+#appointments .appointment-field textarea {
+    width: 100%;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+#appointments .appointment-field textarea {
+    min-height: 95px;
+    padding: 12px 14px;
+    border: 1px solid #d7e2ec;
+    border-radius: 12px;
+    outline: none;
+    resize: vertical;
+    background: #fbfdff;
+    color: #0f172a;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+#appointments .appointment-field textarea:focus {
+    border-color: #0f3d66;
+    box-shadow: 0 0 0 3px rgba(15, 61, 102, 0.10);
+}
+
+#appointments .appointment-full-width {
+    grid-column: 1 / -1;
+}
+
+/* =========================================================
+   PANEL GENERAL DE PSICÓLOGOS
+========================================================= */
+
+.appointment-psychologist-schedule-panel {
+    grid-column: 1 / -1;
+    width: 100%;
+    margin: 4px 0 2px;
+    box-sizing: border-box;
+}
+
+.psychologist-schedule-title,
+.schedule-section-title {
+    display: block;
+    margin-bottom: 12px;
+    color: #0f3d66;
+    font-size: 14px;
+    font-weight: 850;
+}
+
+.psychologist-schedule-grid {
+    display: grid;
+    grid-template-columns: repeat(
+        auto-fit,
+        minmax(240px, 1fr)
+    );
+    gap: 12px;
+}
+
+/* Tarjeta inicial de cada psicólogo */
+.psychologist-schedule-card {
+    width: 100%;
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid #dbe7f3;
+    border-radius: 18px;
+    background: #ffffff;
+    color: #0f172a;
+    text-align: left;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+    transition:
+        transform 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
+}
+
+.psychologist-schedule-card:hover {
+    transform: translateY(-2px);
+    border-color: #91b8dd;
+    box-shadow: 0 14px 28px rgba(15, 61, 102, 0.12);
+}
+
+.psychologist-schedule-card.selected {
+    border-color: #0f3d66;
+    background: #eef6ff;
+    box-shadow: 0 0 0 3px rgba(15, 61, 102, 0.10);
+}
+
+.psychologist-schedule-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.psychologist-schedule-card-header > div:last-child {
+    min-width: 0;
+}
+
+.psychologist-schedule-card-header strong {
+    display: block;
+    color: #0f172a;
+    font-size: 15px;
+    font-weight: 850;
+    line-height: 1.3;
+}
+
+.psychologist-schedule-card-header span {
+    display: block;
+    margin-top: 4px;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+/* Avatar */
+.psychologist-schedule-avatar {
+    width: 46px;
+    height: 46px;
+    min-width: 46px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    background: linear-gradient(
+        135deg,
+        #0f3d66,
+        #276b9f
+    );
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    box-shadow: 0 8px 18px rgba(15, 61, 102, 0.20);
+}
+
+.psychologist-schedule-card-body {
+    display: grid;
+    gap: 7px;
+}
+
+.psychologist-schedule-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 10px;
+    border-radius: 11px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+.psychologist-schedule-row strong {
+    color: #334155;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.psychologist-schedule-row span {
+    color: #0f3d66;
+    font-size: 12px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.psychologist-schedule-card-action {
+    margin-top: 13px;
+    padding-top: 12px;
+    border-top: 1px solid #e2e8f0;
+    color: #0f3d66;
+    font-size: 12px;
+    font-weight: 850;
+    text-align: center;
+}
+
+/* =========================================================
+   PSICÓLOGO SELECCIONADO
+========================================================= */
+
+.selected-psychologist-schedule {
+    width: 100%;
+    padding: 18px;
+    border-radius: 20px;
+    background: linear-gradient(
+        135deg,
+        #f8fbff,
+        #eef6ff
+    );
+    border: 1px solid #cfe0f3;
+    box-sizing: border-box;
+}
+
+.selected-psychologist-header {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding-bottom: 15px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid #dbe7f3;
+}
+
+.selected-psychologist-header > div:last-child {
+    min-width: 0;
+}
+
+.selected-psychologist-header strong {
+    display: block;
+    color: #0f172a;
+    font-size: 17px;
+    font-weight: 900;
+}
+
+.selected-psychologist-header span {
+    display: block;
+    margin-top: 4px;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.psychologist-weekly-schedule {
+    margin-bottom: 18px;
+}
+
+.selected-psychologist-days {
+    display: grid;
+    grid-template-columns: repeat(
+        auto-fit,
+        minmax(165px, 1fr)
+    );
+    gap: 9px;
+}
+
+.selected-schedule-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 12px;
+    border-radius: 13px;
+    background: #ffffff;
+    border: 1px solid #dbe7f3;
+}
+
+.selected-schedule-item span {
+    color: #475569;
+    font-size: 12px;
+    font-weight: 750;
+}
+
+.selected-schedule-item strong {
+    color: #0f3d66;
+    font-size: 12px;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+.selected-psychologist-help {
+    margin: 0 0 12px;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+/* =========================================================
+   PRÓXIMAS FECHAS DISPONIBLES
+========================================================= */
+
+.psychologist-upcoming-dates {
+    padding-top: 17px;
+    border-top: 1px solid #dbe7f3;
+}
+
+.appointment-date-grid {
+    display: grid;
+    grid-template-columns: repeat(
+        auto-fit,
+        minmax(155px, 1fr)
+    );
+    gap: 10px;
+}
+
+.appointment-date-card {
+    min-height: 105px;
+    padding: 13px;
+    border: 1px solid #d7e2ec;
+    border-radius: 16px;
+    background: #ffffff;
+    color: #0f172a;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
+    transition:
+        transform 0.18s ease,
+        border-color 0.18s ease,
+        box-shadow 0.18s ease,
+        background 0.18s ease;
+}
+
+.appointment-date-card:hover {
+    transform: translateY(-2px);
+    border-color: #74a4cf;
+    box-shadow: 0 12px 24px rgba(15, 61, 102, 0.12);
+}
+
+.appointment-date-card.selected {
+    border-color: #0f3d66;
+    background: #0f3d66;
+    color: #ffffff;
+    box-shadow: 0 10px 24px rgba(15, 61, 102, 0.24);
+}
+
+.appointment-date-day {
+    display: block;
+    margin-bottom: 6px;
+    color: #0f766e;
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.appointment-date-card strong {
+    display: block;
+    font-size: 14px;
+    font-weight: 900;
+    line-height: 1.35;
+}
+
+.appointment-date-card small {
+    display: block;
+    margin-top: 7px;
+    color: #64748b;
+    font-size: 11px;
+    line-height: 1.35;
+}
+
+.appointment-date-card.selected
+.appointment-date-day,
+.appointment-date-card.selected small {
+    color: rgba(255, 255, 255, 0.82);
+}
+
+/* =========================================================
+   HORARIOS LIBRES
+========================================================= */
+
+.appointment-slots-container {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-height: 58px;
+    padding: 16px;
+    border: 1px dashed #c7d7e8;
+    border-radius: 17px;
+    background: #f8fbff;
+    box-sizing: border-box;
+}
+
+.slots-title {
+    margin-bottom: 12px;
+    color: #0f3d66;
+    font-size: 14px;
+    font-weight: 900;
+}
+
+.slots-grid {
+    display: grid;
+    grid-template-columns: repeat(
+        auto-fit,
+        minmax(135px, 1fr)
+    );
+    gap: 10px;
+}
+
+.slot-btn {
+    min-height: 43px;
+    padding: 9px 12px;
+    border: 1px solid #b9cde0;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #0f3d66;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 850;
+    cursor: pointer;
+    transition:
+        transform 0.18s ease,
+        background 0.18s ease,
+        color 0.18s ease,
+        border-color 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+.slot-btn:hover {
+    transform: translateY(-1px);
+    background: #eef6ff;
+    border-color: #0f3d66;
+}
+
+.slot-btn.selected {
+    background: #0f766e;
+    color: #ffffff;
+    border-color: #0f766e;
+    box-shadow: 0 8px 18px rgba(15, 118, 110, 0.23);
+}
+
+.slots-help {
+    margin-top: 11px;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.slots-placeholder,
+.slots-loading,
+.slots-error {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.slots-placeholder {
+    color: #64748b;
+}
+
+.slots-loading {
+    color: #0f3d66;
+    font-weight: 750;
+}
+
+.slots-error {
+    padding: 11px 13px;
+    border-radius: 12px;
+    background: #fef3f2;
+    border: 1px solid #fecdca;
+    color: #b42318;
+    font-weight: 700;
+}
+
+/* =========================================================
+   MENSAJES DE DISPONIBILIDAD
+========================================================= */
+
+.availability-info-box {
+    grid-column: 1 / -1;
+    margin-top: 14px;
+    padding: 13px 15px;
+    border-radius: 14px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
+.availability-info-success {
+    background: #ecfdf3;
+    border: 1px solid #abefc6;
+    border-left: 4px solid #059669;
+    color: #047857;
+}
+
+.availability-info-error {
+    background: #fef3f2;
+    border: 1px solid #fecdca;
+    border-left: 4px solid #dc2626;
+    color: #b42318;
+}
+
+.availability-info-neutral {
+    background: #eef6ff;
+    border: 1px solid #cfe0f3;
+    border-left: 4px solid #0f3d66;
+    color: #334155;
+}
+
+/* Campos deshabilitados */
+#appointments input:disabled,
+#appointments select:disabled {
+    background: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+/* =========================================================
+   RESPONSIVE DE CITAS
+========================================================= */
+
+@media (max-width: 900px) {
+    .psychologist-schedule-grid,
+    .appointment-date-grid,
+    .selected-psychologist-days,
+    .slots-grid {
+        grid-template-columns: repeat(
+            2,
+            minmax(0, 1fr)
+        );
+    }
+}
+
+@media (max-width: 600px) {
+    #appointments .appointment-full-width,
+    .appointment-psychologist-schedule-panel,
+    .appointment-slots-container,
+    .availability-info-box {
+        grid-column: 1;
+    }
+
+    .psychologist-schedule-grid,
+    .appointment-date-grid,
+    .selected-psychologist-days,
+    .slots-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .selected-psychologist-header {
+        align-items: flex-start;
+    }
+
+    .selected-psychologist-schedule {
+        padding: 14px;
+    }
+
+    .psychologist-schedule-row,
+    .selected-schedule-item {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .appointment-date-card {
+        min-height: auto;
+    }
+
+    .slot-btn {
+        width: 100%;
+    }
+}

@@ -1915,10 +1915,12 @@ function renderAllPsychologistSchedules(psychologists) {
 }
 
 function buildPsychologistScheduleCard(psychologist) {
-    const schedules =
+const schedules =
+    removeDuplicatePsychologistSchedules(
         Array.isArray(psychologist.schedules)
             ? psychologist.schedules
-            : [];
+            : []
+    );
 
     const scheduleHtml =
         schedules.length > 0
@@ -2053,7 +2055,7 @@ function handleAppointmentPsychologistChange() {
         );
 
         showAppointmentAvailabilityInfo(
-            "Selecciona un psicólogo para habilitar la fecha.",
+            "Selecciona un psicólogo para ver sus próximas fechas disponibles.",
             "neutral"
         );
 
@@ -2083,10 +2085,18 @@ function handleAppointmentPsychologistChange() {
         return;
     }
 
+    /*
+     * Elimina horarios duplicados que puedan venir del backend.
+     */
     selectedPsychologistSchedules =
-        Array.isArray(selectedPsychologist.schedules)
-            ? selectedPsychologist.schedules
-            : [];
+        removeDuplicatePsychologistSchedules(
+            Array.isArray(selectedPsychologist.schedules)
+                ? selectedPsychologist.schedules
+                : []
+        );
+
+    selectedPsychologist.schedules =
+        selectedPsychologistSchedules;
 
     const selectedCard =
         document.querySelector(
@@ -2108,114 +2118,357 @@ function handleAppointmentPsychologistChange() {
     );
 
     showAppointmentAvailabilityInfo(
-        buildPsychologistAvailabilityMessage(
-            selectedPsychologist
-        ),
+        `Selecciona una de las próximas fechas disponibles de ${selectedPsychologist.psychologistName}.`,
         "success"
     );
 }
 
 function renderSelectedPsychologistSchedule(psychologist) {
     const schedules =
-        Array.isArray(psychologist.schedules)
-            ? psychologist.schedules
-            : [];
+        removeDuplicatePsychologistSchedules(
+            Array.isArray(psychologist.schedules)
+                ? psychologist.schedules
+                : []
+        );
+
+    const availableDates =
+        getUpcomingPsychologistDates(
+            schedules,
+            30,
+            12
+        );
 
     renderPsychologistSchedulePanel(`
         <div class="selected-psychologist-schedule">
+
             <div class="selected-psychologist-header">
                 <div class="psychologist-schedule-avatar">
-                    ${
-                        getPsychologistInitials(
-                            psychologist.psychologistName
-                        )
-                    }
+                    ${getPsychologistInitials(
+                        psychologist.psychologistName
+                    )}
                 </div>
 
                 <div>
                     <strong>
-                        ${
-                            escapeAppointmentHtml(
-                                psychologist.psychologistName ||
-                                "Psicólogo"
-                            )
-                        }
+                        ${escapeAppointmentHtml(
+                            psychologist.psychologistName ||
+                            "Psicólogo"
+                        )}
                     </strong>
 
                     <span>
-                        ${
-                            escapeAppointmentHtml(
-                                psychologist.specialty ||
-                                "Especialidad no registrada"
-                            )
-                        }
+                        ${escapeAppointmentHtml(
+                            psychologist.specialty ||
+                            "Especialidad no registrada"
+                        )}
                     </span>
                 </div>
             </div>
 
-            <div class="selected-psychologist-days">
-                ${
-                    schedules.length > 0
-                        ? schedules
-                            .map(schedule => `
-                                <div class="selected-schedule-item">
-                                    <span>
-                                        ${
-                                            escapeAppointmentHtml(
+            <div class="psychologist-weekly-schedule">
+                <strong class="schedule-section-title">
+                    Horario semanal
+                </strong>
+
+                <div class="selected-psychologist-days">
+                    ${
+                        schedules.length > 0
+                            ? schedules
+                                .map(schedule => `
+                                    <div class="selected-schedule-item">
+                                        <span>
+                                            ${escapeAppointmentHtml(
                                                 schedule.dayLabel ||
                                                 appointmentDayLabels[schedule.dayOfWeek] ||
                                                 schedule.dayOfWeek ||
                                                 ""
-                                            )
-                                        }
-                                    </span>
+                                            )}
+                                        </span>
 
-                                    <strong>
-                                        ${formatAppointmentTime(schedule.startTime)}
-                                        -
-                                        ${formatAppointmentTime(schedule.endTime)}
-                                    </strong>
+                                        <strong>
+                                            ${formatAppointmentTime(
+                                                schedule.startTime
+                                            )}
+                                            -
+                                            ${formatAppointmentTime(
+                                                schedule.endTime
+                                            )}
+                                        </strong>
+                                    </div>
+                                `)
+                                .join("")
+                            : `
+                                <div class="slots-error">
+                                    Este psicólogo no tiene horarios registrados.
                                 </div>
-                            `)
-                            .join("")
-                        : `
-                            <div class="slots-error">
-                                Sin horarios registrados
-                            </div>
-                        `
-                }
+                            `
+                    }
+                </div>
             </div>
 
-            <div class="selected-psychologist-help">
-                Elige una fecha que corresponda a uno de estos días.
-                Después se mostrarán solamente las horas libres.
+            <div class="psychologist-upcoming-dates">
+                <strong class="schedule-section-title">
+                    Próximas fechas disponibles
+                </strong>
+
+                <p class="selected-psychologist-help">
+                    Selecciona una fecha. El sistema la colocará
+                    automáticamente en el formulario y mostrará sus horas libres.
+                </p>
+
+                <div class="appointment-date-grid">
+                    ${
+                        availableDates.length > 0
+                            ? availableDates
+                                .map(dateItem => `
+                                    <button
+                                        type="button"
+                                        class="appointment-date-card"
+                                        data-date="${dateItem.date}"
+                                        onclick="selectAvailableAppointmentDate('${dateItem.date}', this)"
+                                    >
+                                        <span class="appointment-date-day">
+                                            ${escapeAppointmentHtml(
+                                                dateItem.dayLabel
+                                            )}
+                                        </span>
+
+                                        <strong>
+                                            ${escapeAppointmentHtml(
+                                                dateItem.formattedDate
+                                            )}
+                                        </strong>
+
+                                        <small>
+                                            ${escapeAppointmentHtml(
+                                                dateItem.scheduleLabel
+                                            )}
+                                        </small>
+                                    </button>
+                                `)
+                                .join("")
+                            : `
+                                <div class="slots-error">
+                                    No se encontraron próximas fechas disponibles.
+                                </div>
+                            `
+                    }
+                </div>
             </div>
+
         </div>
     `);
 }
 
+function removeDuplicatePsychologistSchedules(schedules) {
+    const uniqueSchedules = new Map();
+
+    schedules.forEach(schedule => {
+        const dayOfWeek =
+            String(schedule.dayOfWeek || "").trim();
+
+        const startTime =
+            formatAppointmentTime(schedule.startTime);
+
+        const endTime =
+            formatAppointmentTime(schedule.endTime);
+
+        if (!dayOfWeek || !startTime || !endTime) {
+            return;
+        }
+
+        const key =
+            `${dayOfWeek}-${startTime}-${endTime}`;
+
+        if (!uniqueSchedules.has(key)) {
+            uniqueSchedules.set(key, {
+                ...schedule,
+                dayOfWeek,
+                startTime,
+                endTime,
+                dayLabel:
+                    schedule.dayLabel ||
+                    appointmentDayLabels[dayOfWeek] ||
+                    dayOfWeek
+            });
+        }
+    });
+
+    return [...uniqueSchedules.values()];
+}
+
+function getUpcomingPsychologistDates(
+    schedules,
+    daysToSearch = 30,
+    maximumDates = 12
+) {
+    const uniqueSchedules =
+        removeDuplicatePsychologistSchedules(schedules);
+
+    const availableDates = [];
+    const today = new Date();
+
+    today.setHours(0, 0, 0, 0);
+
+    for (
+        let dayOffset = 0;
+        dayOffset <= daysToSearch;
+        dayOffset++
+    ) {
+        const currentDate = new Date(today);
+
+        currentDate.setDate(
+            today.getDate() + dayOffset
+        );
+
+        const dayOfWeek =
+            appointmentDayMap[currentDate.getDay()];
+
+        const schedulesForDate =
+            uniqueSchedules.filter(
+                schedule =>
+                    schedule.dayOfWeek === dayOfWeek
+            );
+
+        if (schedulesForDate.length === 0) {
+            continue;
+        }
+
+        const localDate =
+            formatDateToLocalIso(currentDate);
+
+        /*
+         * No agrega el día actual cuando todos sus horarios ya pasaron.
+         */
+        const hasFutureSchedule =
+            schedulesForDate.some(schedule => {
+                if (localDate !== getTodayLocalDate()) {
+                    return true;
+                }
+
+                return !isAppointmentSlotInPast(
+                    localDate,
+                    formatAppointmentTime(
+                        schedule.endTime
+                    )
+                );
+            });
+
+        if (!hasFutureSchedule) {
+            continue;
+        }
+
+        const scheduleLabel =
+            schedulesForDate
+                .map(schedule =>
+                    `${formatAppointmentTime(schedule.startTime)} - ${formatAppointmentTime(schedule.endTime)}`
+                )
+                .join(" / ");
+
+        availableDates.push({
+            date: localDate,
+
+            dayLabel:
+                appointmentDayLabels[dayOfWeek] ||
+                dayOfWeek,
+
+            formattedDate:
+                currentDate.toLocaleDateString(
+                    "es-PE",
+                    {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric"
+                    }
+                ),
+
+            scheduleLabel
+        });
+
+        if (
+            availableDates.length >= maximumDates
+        ) {
+            break;
+        }
+    }
+
+    return availableDates;
+}
+
+function formatDateToLocalIso(date) {
+    const year =
+        date.getFullYear();
+
+    const month =
+        String(date.getMonth() + 1)
+            .padStart(2, "0");
+
+    const day =
+        String(date.getDate())
+            .padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+}
+
+async function selectAvailableAppointmentDate(
+    dateValue,
+    selectedButton = null
+) {
+    const dateInput =
+        document.getElementById("appointmentDate");
+
+    if (!dateInput) {
+        return;
+    }
+
+    dateInput.disabled = false;
+    dateInput.value = dateValue;
+
+    document
+        .querySelectorAll(".appointment-date-card")
+        .forEach(button => {
+            button.classList.remove("selected");
+        });
+
+    if (selectedButton) {
+        selectedButton.classList.add("selected");
+    }
+
+    /*
+     * Genera automáticamente las horas libres
+     * después de seleccionar la fecha.
+     */
+    await generateAvailableAppointmentSlots();
+
+    dateInput.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+    });
+}
+
 function buildPsychologistAvailabilityMessage(psychologist) {
     const schedules =
-        Array.isArray(psychologist.schedules)
-            ? psychologist.schedules
-            : [];
+        removeDuplicatePsychologistSchedules(
+            Array.isArray(psychologist.schedules)
+                ? psychologist.schedules
+                : []
+        );
 
     if (schedules.length === 0) {
         return "El psicólogo seleccionado no tiene horarios registrados.";
     }
 
-    const ranges =
-        schedules
-            .map(schedule => {
-                const day =
-                    schedule.dayLabel ||
-                    appointmentDayLabels[schedule.dayOfWeek] ||
-                    schedule.dayOfWeek ||
-                    "";
+    const ranges = schedules
+        .map(schedule => {
+            const day =
+                schedule.dayLabel ||
+                appointmentDayLabels[schedule.dayOfWeek] ||
+                schedule.dayOfWeek ||
+                "";
 
-                return `${day}: ${formatAppointmentTime(schedule.startTime)} - ${formatAppointmentTime(schedule.endTime)}`;
-            })
-            .join(" | ");
+            return `${day}: ${formatAppointmentTime(schedule.startTime)} - ${formatAppointmentTime(schedule.endTime)}`;
+        })
+        .join(" | ");
 
     return `Horario de ${psychologist.psychologistName}: ${ranges}`;
 }
