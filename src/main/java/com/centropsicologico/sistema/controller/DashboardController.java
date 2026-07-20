@@ -11,14 +11,18 @@ import com.centropsicologico.sistema.repository.ExpenseRepository;
 import com.centropsicologico.sistema.repository.IncomeRepository;
 import com.centropsicologico.sistema.repository.LeadRepository;
 import com.centropsicologico.sistema.repository.PatientRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,312 +32,1039 @@ import java.util.Set;
 @RequestMapping("/api/dashboard")
 public class DashboardController {
 
-        private final PatientRepository patientRepository;
-        private final AppointmentRepository appointmentRepository;
-        private final IncomeRepository incomeRepository;
-        private final ExpenseRepository expenseRepository;
-        private final LeadRepository leadRepository;
+    private static final DateTimeFormatter DATE_FORMATTER =
+            DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-        private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
+    private static final DateTimeFormatter TIME_FORMATTER =
+            DateTimeFormatter.ofPattern("HH:mm");
 
-        public DashboardController(
-                        PatientRepository patientRepository,
-                        AppointmentRepository appointmentRepository,
-                        IncomeRepository incomeRepository,
-                        ExpenseRepository expenseRepository,
-                        LeadRepository leadRepository) {
-                this.patientRepository = patientRepository;
-                this.appointmentRepository = appointmentRepository;
-                this.incomeRepository = incomeRepository;
-                this.expenseRepository = expenseRepository;
-                this.leadRepository = leadRepository;
+    private final PatientRepository patientRepository;
+    private final AppointmentRepository appointmentRepository;
+    private final IncomeRepository incomeRepository;
+    private final ExpenseRepository expenseRepository;
+    private final LeadRepository leadRepository;
+
+    public DashboardController(
+            PatientRepository patientRepository,
+            AppointmentRepository appointmentRepository,
+            IncomeRepository incomeRepository,
+            ExpenseRepository expenseRepository,
+            LeadRepository leadRepository
+    ) {
+        this.patientRepository = patientRepository;
+        this.appointmentRepository = appointmentRepository;
+        this.incomeRepository = incomeRepository;
+        this.expenseRepository = expenseRepository;
+        this.leadRepository = leadRepository;
+    }
+
+    @GetMapping
+    public DashboardDto getDashboard(
+            @RequestParam(defaultValue = "month") String period,
+            Authentication authentication
+    ) {
+        if (
+                authentication == null ||
+                authentication.getName() == null
+        ) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Usuario no autenticado"
+            );
         }
 
-        @GetMapping
-        public DashboardDto getDashboard(@RequestParam(defaultValue = "month") String period) {
+        String authenticatedEmail =
+                authentication.getName();
 
-                LocalDate today = LocalDate.now();
+        String authenticatedRole =
+                getAuthenticatedRole(authentication);
 
-                DateRange range = resolveDateRange(period, today);
-                LocalDate startDate = range.startDate();
-                LocalDate endDate = range.endDate();
+        String normalizedPeriod =
+                normalizePeriod(period);
 
-                List<Appointment> todayAppointmentsList = appointmentRepository.findByDate(today);
-                List<Appointment> periodAppointments = appointmentRepository.findByDateBetween(startDate, endDate);
+        boolean isAdmin =
+                "ADMIN".equals(authenticatedRole);
 
-                List<Income> periodIncomes = incomeRepository.findByDateBetweenAndActiveTrue(startDate, endDate);
-                List<Expense> periodExpenses = expenseRepository.findByDateBetweenAndActiveTrue(startDate, endDate);
+        boolean isReceptionist =
+                "RECEPCIONISTA".equals(authenticatedRole);
 
-                List<Lead> leads = leadRepository.findAll();
+        boolean isPsychologist =
+                "PSICOLOGO".equals(authenticatedRole);
 
-                Long totalPatients = patientRepository.count();
-                Long todayAppointments = (long) todayAppointmentsList.size();
+        LocalDate today =
+                LocalDate.now();
 
-                BigDecimal totalIncome = periodIncomes.stream()
-                                .map(Income::getAmount)
-                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        DateRange dateRange =
+                resolveDateRange(normalizedPeriod, today);
 
-                BigDecimal totalExpense = periodExpenses.stream()
-                                .map(Expense::getAmount)
-                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        LocalDate startDate =
+                dateRange.startDate();
 
-                BigDecimal profit = totalIncome.subtract(totalExpense);
+        LocalDate endDate =
+                dateRange.endDate();
 
-                Long pendingAppointmentPayments = periodAppointments.stream()
-                                .filter(this::isAppointmentPaymentPending)
-                                .count();
+        /*
+         * =====================================================
+         * CITAS SEGÚN EL ROL
+         * =====================================================
+         */
 
-                Long pendingLeadPayments = leads.stream()
-                                .filter(this::isLeadPaymentPending)
-                                .count();
+        List<Appointment> periodAppointments;
 
-                Long pendingPayments = pendingAppointmentPayments + pendingLeadPayments;
+        List<Appointment> todayAppointments;
 
-                Long pendingLeads = leads.stream()
-                                .filter(this::isLeadPending)
-                                .count();
+        List<Appointment> upcomingAppointmentsSource;
 
-                List<DashboardDto.StatusItemDto> appointmentStatus = buildAppointmentStatus(periodAppointments);
+        if (isPsychologist) {
+            /*
+             * El psicólogo recibe únicamente sus citas,
+             * identificadas mediante el correo del JWT.
+             */
+            periodAppointments =
+                    appointmentRepository
+                            .findByPsychologistEmailAndDateBetween(
+                                    authenticatedEmail,
+                                    startDate,
+                                    endDate
+                            );
 
-                DashboardDto.FinanceWeeksDto financeWeeks = buildFinanceWeeks(
-                                startDate,
-                                endDate,
-                                periodIncomes,
-                                periodExpenses);
+            todayAppointments =
+                    appointmentRepository
+                            .findByPsychologistEmailAndDate(
+                                    authenticatedEmail,
+                                    today
+                            );
 
-                List<DashboardDto.UpcomingAppointmentDto> upcomingAppointments = buildUpcomingAppointments(today);
+            upcomingAppointmentsSource =
+                    appointmentRepository
+                            .findByPsychologistEmailAndDateGreaterThanEqualOrderByDateAscStartTimeAsc(
+                                    authenticatedEmail,
+                                    today
+                            );
 
-                Long totalAppointmentsMonth = (long) periodAppointments.size();
+        } else {
+            /*
+             * ADMIN y RECEPCIONISTA trabajan con
+             * información operativa general.
+             */
+            periodAppointments =
+                    appointmentRepository
+                            .findByDateBetween(
+                                    startDate,
+                                    endDate
+                            );
 
-                return new DashboardDto(
-                                totalPatients,
-                                todayAppointments,
-                                totalIncome,
-                                totalExpense,
-                                profit,
-                                pendingPayments,
-                                pendingLeads,
-                                totalAppointmentsMonth,
-                                appointmentStatus,
-                                financeWeeks,
-                                upcomingAppointments);
+            todayAppointments =
+                    appointmentRepository
+                            .findByDate(today);
+
+            upcomingAppointmentsSource =
+                    appointmentRepository
+                            .findByDateGreaterThanEqualOrderByDateAscStartTimeAsc(
+                                    today
+                            );
         }
 
-private List<DashboardDto.StatusItemDto> buildAppointmentStatus(List<Appointment> appointments) {
-    return List.of(
-            new DashboardDto.StatusItemDto(
-                    "Programadas",
-                    countStatus(appointments, AppointmentStatus.PROGRAMADA),
-                    "#2563eb"
-            ),
-            new DashboardDto.StatusItemDto(
-                    "Atendidas",
-                    countStatus(appointments, AppointmentStatus.ATENDIDA),
-                    "#047857"
-            ),
-            new DashboardDto.StatusItemDto(
-                    "Canceladas",
-                    countStatus(appointments, AppointmentStatus.CANCELADA),
-                    "#b42318"
-            ),
-            new DashboardDto.StatusItemDto(
-                    "No asistió",
-                    countStatus(appointments, AppointmentStatus.NO_ASISTIO),
-                    "#c2410c"
-            ),
-            new DashboardDto.StatusItemDto(
-                    "Reprogramadas",
-                    countStatus(appointments, AppointmentStatus.REPROGRAMADA),
-                    "#475467"
-            )
-    );
-}     
+        /*
+         * =====================================================
+         * INDICADORES DE CITAS
+         * =====================================================
+         */
 
-private Long countStatus(List<Appointment> appointments, AppointmentStatus status) {
-                return appointments.stream()
-                                .filter(appointment -> appointment.getStatus() == status)
-                                .count();
+        long totalPeriodAppointments =
+                periodAppointments.size();
+
+        long totalTodayAppointments =
+                todayAppointments.size();
+
+        long todayScheduledAppointments =
+                countStatus(
+                        todayAppointments,
+                        AppointmentStatus.PROGRAMADA
+                );
+
+        long scheduledAppointments =
+                countStatus(
+                        periodAppointments,
+                        AppointmentStatus.PROGRAMADA
+                );
+
+        long attendedAppointments =
+                countStatus(
+                        periodAppointments,
+                        AppointmentStatus.ATENDIDA
+                );
+
+        long cancelledAppointments =
+                countStatus(
+                        periodAppointments,
+                        AppointmentStatus.CANCELADA
+                );
+
+        long noShowAppointments =
+                countStatus(
+                        periodAppointments,
+                        AppointmentStatus.NO_ASISTIO
+                );
+
+        long rescheduledAppointments =
+                countStatus(
+                        periodAppointments,
+                        AppointmentStatus.REPROGRAMADA
+                );
+
+        /*
+         * =====================================================
+         * PACIENTES SEGÚN EL ROL
+         * =====================================================
+         */
+
+        long totalPatients;
+
+        if (isPsychologist) {
+            /*
+             * Cuenta pacientes diferentes vinculados
+             * con las citas del psicólogo durante el periodo.
+             */
+            totalPatients =
+                    periodAppointments
+                            .stream()
+                            .filter(appointment ->
+                                    appointment.getPatient() != null &&
+                                    appointment.getPatient().getId() != null
+                            )
+                            .map(appointment ->
+                                    appointment.getPatient().getId()
+                            )
+                            .distinct()
+                            .count();
+
+        } else {
+            totalPatients =
+                    patientRepository.count();
         }
 
-        private DashboardDto.FinanceWeeksDto buildFinanceWeeks(
-                        LocalDate startDate,
-                        LocalDate endDate,
-                        List<Income> incomes,
-                        List<Expense> expenses) {
-                List<String> labels = new ArrayList<>();
-                List<BigDecimal> incomeValues = new ArrayList<>();
-                List<BigDecimal> expenseValues = new ArrayList<>();
+        /*
+         * =====================================================
+         * INFORMACIÓN FINANCIERA
+         * SOLO ADMIN
+         * =====================================================
+         */
 
-                LocalDate currentStart = startDate;
-                int periodIndex = 1;
+        List<Income> periodIncomes =
+                List.of();
 
-                while (!currentStart.isAfter(endDate)) {
-                        LocalDate currentEnd = currentStart.plusDays(6);
+        List<Expense> periodExpenses =
+                List.of();
 
-                        if (currentEnd.isAfter(endDate)) {
-                                currentEnd = endDate;
-                        }
+        BigDecimal totalIncome =
+                BigDecimal.ZERO;
 
-                        final LocalDate weekStart = currentStart;
-                        final LocalDate weekEnd = currentEnd;
+        BigDecimal totalExpense =
+                BigDecimal.ZERO;
 
-                        BigDecimal weekIncome = incomes.stream()
-                                        .filter(income -> isBetween(income.getDate(), weekStart, weekEnd))
-                                        .map(Income::getAmount)
-                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal profit =
+                BigDecimal.ZERO;
 
-                        BigDecimal weekExpense = expenses.stream()
-                                        .filter(expense -> isBetween(expense.getDate(), weekStart, weekEnd))
-                                        .map(Expense::getAmount)
-                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+        DashboardDto.FinanceWeeksDto financeWeeks =
+                emptyFinanceWeeks();
 
-                        labels.add("Periodo " + periodIndex);
-                        incomeValues.add(weekIncome);
-                        expenseValues.add(weekExpense);
+        if (isAdmin) {
+            periodIncomes =
+                    incomeRepository
+                            .findByDateBetweenAndActiveTrue(
+                                    startDate,
+                                    endDate
+                            );
 
-                        currentStart = currentStart.plusDays(7);
-                        periodIndex++;
-                }
+            periodExpenses =
+                    expenseRepository
+                            .findByDateBetweenAndActiveTrue(
+                                    startDate,
+                                    endDate
+                            );
 
-                return new DashboardDto.FinanceWeeksDto(labels, incomeValues, expenseValues);
+            totalIncome =
+                    periodIncomes
+                            .stream()
+                            .map(Income::getAmount)
+                            .map(this::safeAmount)
+                            .reduce(
+                                    BigDecimal.ZERO,
+                                    BigDecimal::add
+                            );
+
+            totalExpense =
+                    periodExpenses
+                            .stream()
+                            .map(Expense::getAmount)
+                            .map(this::safeAmount)
+                            .reduce(
+                                    BigDecimal.ZERO,
+                                    BigDecimal::add
+                            );
+
+            profit =
+                    totalIncome.subtract(totalExpense);
+
+            financeWeeks =
+                    buildFinanceWeeks(
+                            startDate,
+                            endDate,
+                            periodIncomes,
+                            periodExpenses
+                    );
         }
 
-        private List<DashboardDto.UpcomingAppointmentDto> buildUpcomingAppointments(LocalDate today) {
-                return appointmentRepository
-                                .findByDateGreaterThanEqualOrderByDateAscStartTimeAsc(today)
-                                .stream()
-                                .filter(appointment -> appointment.getStatus() != AppointmentStatus.CANCELADA)
-                                .limit(5)
-                                .map(this::mapUpcomingAppointment)
-                                .toList();
+        /*
+         * =====================================================
+         * PAGOS Y SOLICITUDES
+         * ADMIN Y RECEPCIONISTA
+         * =====================================================
+         */
+
+        long pendingPayments = 0L;
+        long pendingLeads = 0L;
+
+        if (isAdmin || isReceptionist) {
+            List<Lead> leads =
+                    leadRepository.findAll();
+
+            long pendingAppointmentPayments =
+                    periodAppointments
+                            .stream()
+                            .filter(this::isAppointmentPaymentPending)
+                            .count();
+
+            long pendingLeadPayments =
+                    leads
+                            .stream()
+                            .filter(this::isLeadPaymentPending)
+                            .count();
+
+            pendingPayments =
+                    pendingAppointmentPayments +
+                    pendingLeadPayments;
+
+            pendingLeads =
+                    leads
+                            .stream()
+                            .filter(this::isLeadPending)
+                            .count();
         }
 
-        private DashboardDto.UpcomingAppointmentDto mapUpcomingAppointment(Appointment appointment) {
-                String patientName = appointment.getPatient().getFirstName() + " "
-                                + appointment.getPatient().getLastName();
-                String psychologistName = appointment.getPsychologist().getFirstName() + " "
-                                + appointment.getPsychologist().getLastName();
-                String serviceName = appointment.getService().getName();
-
-                String date = appointment.getDate().format(DATE_FORMATTER);
-                String time = appointment.getStartTime().format(TIME_FORMATTER);
-
-                return new DashboardDto.UpcomingAppointmentDto(
-                                appointment.getId(),
-                                patientName,
-                                serviceName,
-                                psychologistName,
-                                date,
-                                time,
-                                formatAppointmentStatus(appointment.getStatus()),
-                                getInitials(patientName));
+        /*
+         * Para el psicólogo estos campos permanecen en cero.
+         * No se envía información de pagos o solicitudes.
+         */
+        if (isPsychologist) {
+            pendingPayments = 0L;
+            pendingLeads = 0L;
         }
 
-        private boolean isAppointmentPaymentPending(Appointment appointment) {
-                if (Boolean.FALSE.equals(appointment.getPaid())) {
-                        return true;
-                }
+        /*
+         * =====================================================
+         * GRÁFICO Y PRÓXIMAS CITAS
+         * =====================================================
+         */
 
-                if (appointment.getPendingAmount() != null
-                                && appointment.getPendingAmount().compareTo(BigDecimal.ZERO) > 0) {
-                        return true;
-                }
+        List<DashboardDto.StatusItemDto> appointmentStatus =
+                buildAppointmentStatus(
+                        periodAppointments
+                );
 
-                String paymentStatus = normalize(appointment.getPaymentStatus());
+        List<DashboardDto.UpcomingAppointmentDto> upcomingAppointments =
+                buildUpcomingAppointments(
+                        upcomingAppointmentsSource,
+                        today
+                );
 
-                Set<String> pendingStatuses = Set.of(
-                                "PENDIENTE",
-                                "PAGO_EN_REVISION",
-                                "EN_REVISION",
-                                "PARCIAL",
-                                "NO_PAGADO");
+        /*
+         * =====================================================
+         * RESPUESTA
+         * =====================================================
+         */
 
-                return pendingStatuses.contains(paymentStatus);
+        DashboardDto response =
+                new DashboardDto();
+
+        response.setRole(authenticatedRole);
+        response.setPeriod(normalizedPeriod);
+
+        response.setTotalPatients(totalPatients);
+
+        response.setPeriodAppointments(
+                totalPeriodAppointments
+        );
+
+        response.setTodayAppointments(
+                totalTodayAppointments
+        );
+
+        response.setTodayScheduledAppointments(
+                todayScheduledAppointments
+        );
+
+        response.setScheduledAppointments(
+                scheduledAppointments
+        );
+
+        response.setAttendedAppointments(
+                attendedAppointments
+        );
+
+        response.setCancelledAppointments(
+                cancelledAppointments
+        );
+
+        response.setNoShowAppointments(
+                noShowAppointments
+        );
+
+        response.setRescheduledAppointments(
+                rescheduledAppointments
+        );
+
+        response.setTotalIncome(totalIncome);
+        response.setTotalExpense(totalExpense);
+        response.setProfit(profit);
+
+        response.setPendingPayments(
+                pendingPayments
+        );
+
+        response.setPendingLeads(
+                pendingLeads
+        );
+
+        /*
+         * Compatibilidad temporal con dashboard.js antiguo.
+         * Contiene el total del periodo seleccionado,
+         * aunque el nombre antiguo diga "Month".
+         */
+        response.setTotalAppointmentsMonth(
+                totalPeriodAppointments
+        );
+
+        response.setAppointmentStatus(
+                appointmentStatus
+        );
+
+        response.setFinanceWeeks(
+                financeWeeks
+        );
+
+        response.setUpcomingAppointments(
+                upcomingAppointments
+        );
+
+        return response;
+    }
+
+    /*
+     * =========================================================
+     * ESTADOS DE CITAS
+     * =========================================================
+     */
+
+    private List<DashboardDto.StatusItemDto>
+    buildAppointmentStatus(
+            List<Appointment> appointments
+    ) {
+        return List.of(
+                new DashboardDto.StatusItemDto(
+                        "Programadas",
+                        countStatus(
+                                appointments,
+                                AppointmentStatus.PROGRAMADA
+                        ),
+                        "#2563eb"
+                ),
+
+                new DashboardDto.StatusItemDto(
+                        "Atendidas",
+                        countStatus(
+                                appointments,
+                                AppointmentStatus.ATENDIDA
+                        ),
+                        "#047857"
+                ),
+
+                new DashboardDto.StatusItemDto(
+                        "Canceladas",
+                        countStatus(
+                                appointments,
+                                AppointmentStatus.CANCELADA
+                        ),
+                        "#b42318"
+                ),
+
+                new DashboardDto.StatusItemDto(
+                        "No asistió",
+                        countStatus(
+                                appointments,
+                                AppointmentStatus.NO_ASISTIO
+                        ),
+                        "#c2410c"
+                ),
+
+                new DashboardDto.StatusItemDto(
+                        "Reprogramadas",
+                        countStatus(
+                                appointments,
+                                AppointmentStatus.REPROGRAMADA
+                        ),
+                        "#475467"
+                )
+        );
+    }
+
+    private Long countStatus(
+            List<Appointment> appointments,
+            AppointmentStatus status
+    ) {
+        if (appointments == null) {
+            return 0L;
         }
 
-        private boolean isLeadPaymentPending(Lead lead) {
-                String paymentStatus = normalize(lead.getPaymentStatus());
+        return appointments
+                .stream()
+                .filter(appointment ->
+                        appointment != null &&
+                        appointment.getStatus() == status
+                )
+                .count();
+    }
 
-                Set<String> pendingStatuses = Set.of(
-                                "PENDIENTE",
-                                "PAGO_EN_REVISION",
-                                "EN_REVISION",
-                                "PARCIAL");
+    /*
+     * =========================================================
+     * GRÁFICO FINANCIERO
+     * =========================================================
+     */
 
-                return pendingStatuses.contains(paymentStatus);
+    private DashboardDto.FinanceWeeksDto
+    buildFinanceWeeks(
+            LocalDate startDate,
+            LocalDate endDate,
+            List<Income> incomes,
+            List<Expense> expenses
+    ) {
+        List<String> labels =
+                new ArrayList<>();
+
+        List<BigDecimal> incomeValues =
+                new ArrayList<>();
+
+        List<BigDecimal> expenseValues =
+                new ArrayList<>();
+
+        LocalDate currentStart =
+                startDate;
+
+        int periodIndex = 1;
+
+        while (!currentStart.isAfter(endDate)) {
+            LocalDate currentEnd =
+                    currentStart.plusDays(6);
+
+            if (currentEnd.isAfter(endDate)) {
+                currentEnd = endDate;
+            }
+
+            final LocalDate periodStart =
+                    currentStart;
+
+            final LocalDate periodEnd =
+                    currentEnd;
+
+            BigDecimal periodIncome =
+                    incomes
+                            .stream()
+                            .filter(income ->
+                                    income != null &&
+                                    isBetween(
+                                            income.getDate(),
+                                            periodStart,
+                                            periodEnd
+                                    )
+                            )
+                            .map(Income::getAmount)
+                            .map(this::safeAmount)
+                            .reduce(
+                                    BigDecimal.ZERO,
+                                    BigDecimal::add
+                            );
+
+            BigDecimal periodExpense =
+                    expenses
+                            .stream()
+                            .filter(expense ->
+                                    expense != null &&
+                                    isBetween(
+                                            expense.getDate(),
+                                            periodStart,
+                                            periodEnd
+                                    )
+                            )
+                            .map(Expense::getAmount)
+                            .map(this::safeAmount)
+                            .reduce(
+                                    BigDecimal.ZERO,
+                                    BigDecimal::add
+                            );
+
+            labels.add(
+                    "Periodo " + periodIndex
+            );
+
+            incomeValues.add(
+                    periodIncome
+            );
+
+            expenseValues.add(
+                    periodExpense
+            );
+
+            currentStart =
+                    currentStart.plusDays(7);
+
+            periodIndex++;
         }
 
-        private boolean isLeadPending(Lead lead) {
-                String status = normalize(lead.getStatus());
+        return new DashboardDto.FinanceWeeksDto(
+                labels,
+                incomeValues,
+                expenseValues
+        );
+    }
 
-                Set<String> pendingStatuses = Set.of(
-                                "NUEVO",
-                                "PAGO_EN_REVISION",
-                                "CONTACTADO",
-                                "PRE_RESERVADO");
+    private DashboardDto.FinanceWeeksDto
+    emptyFinanceWeeks() {
+        return new DashboardDto.FinanceWeeksDto(
+                List.of(),
+                List.of(),
+                List.of()
+        );
+    }
 
-                return pendingStatuses.contains(status);
+    /*
+     * =========================================================
+     * PRÓXIMAS CITAS
+     * =========================================================
+     */
+
+    private List<DashboardDto.UpcomingAppointmentDto>
+    buildUpcomingAppointments(
+            List<Appointment> appointments,
+            LocalDate today
+    ) {
+        LocalTime currentTime =
+                LocalTime.now();
+
+        return appointments
+                .stream()
+                .filter(appointment ->
+                        isUpcomingAppointment(
+                                appointment,
+                                today,
+                                currentTime
+                        )
+                )
+                .limit(5)
+                .map(this::mapUpcomingAppointment)
+                .toList();
+    }
+
+    private boolean isUpcomingAppointment(
+            Appointment appointment,
+            LocalDate today,
+            LocalTime currentTime
+    ) {
+        if (
+                appointment == null ||
+                appointment.getDate() == null
+        ) {
+            return false;
         }
 
-        private boolean isBetween(LocalDate date, LocalDate start, LocalDate end) {
-                return date != null
-                                && !date.isBefore(start)
-                                && !date.isAfter(end);
+        AppointmentStatus status =
+                appointment.getStatus();
+
+        /*
+         * No deben aparecer como próximas las citas
+         * ya finalizadas o canceladas.
+         */
+        if (
+                status == AppointmentStatus.CANCELADA ||
+                status == AppointmentStatus.ATENDIDA ||
+                status == AppointmentStatus.NO_ASISTIO
+        ) {
+            return false;
         }
 
-        private String normalize(String value) {
-                return value == null ? "" : value.trim().toUpperCase();
+        if (appointment.getDate().isAfter(today)) {
+            return true;
         }
 
-        private String formatAppointmentStatus(AppointmentStatus status) {
-                if (status == null) {
-                        return "Sin estado";
-                }
-
-                return switch (status) {
-                        case PROGRAMADA -> "Programada";
-                        case ATENDIDA -> "Atendida";
-                        case CANCELADA -> "Cancelada";
-                        case NO_ASISTIO -> "No asistió";
-                        case REPROGRAMADA -> "Reprogramada";
-                };
+        if (appointment.getDate().isBefore(today)) {
+            return false;
         }
 
-        private String getInitials(String fullName) {
-                if (fullName == null || fullName.isBlank()) {
-                        return "CP";
-                }
+        /*
+         * Si la cita corresponde a hoy,
+         * solo aparece si todavía no pasó.
+         */
+        return appointment.getStartTime() == null ||
+                !appointment
+                        .getStartTime()
+                        .isBefore(currentTime);
+    }
 
-                String[] parts = fullName.trim().split("\\s+");
+    private DashboardDto.UpcomingAppointmentDto
+    mapUpcomingAppointment(
+            Appointment appointment
+    ) {
+        String patientName =
+                buildFullName(
+                        appointment.getPatient() != null
+                                ? appointment.getPatient().getFirstName()
+                                : "",
+                        appointment.getPatient() != null
+                                ? appointment.getPatient().getLastName()
+                                : ""
+                );
 
-                if (parts.length == 1) {
-                        return parts[0].substring(0, 1).toUpperCase();
-                }
+        String psychologistName =
+                buildFullName(
+                        appointment.getPsychologist() != null
+                                ? appointment.getPsychologist().getFirstName()
+                                : "",
+                        appointment.getPsychologist() != null
+                                ? appointment.getPsychologist().getLastName()
+                                : ""
+                );
 
-                return (parts[0].substring(0, 1) + parts[1].substring(0, 1)).toUpperCase();
+        String serviceName =
+                appointment.getService() != null &&
+                appointment.getService().getName() != null
+                        ? appointment.getService().getName()
+                        : "Servicio psicológico";
+
+        String formattedDate =
+                appointment.getDate() != null
+                        ? appointment
+                                .getDate()
+                                .format(DATE_FORMATTER)
+                        : "-";
+
+        String formattedTime =
+                appointment.getStartTime() != null
+                        ? appointment
+                                .getStartTime()
+                                .format(TIME_FORMATTER)
+                        : "-";
+
+        return new DashboardDto.UpcomingAppointmentDto(
+                appointment.getId(),
+                patientName,
+                serviceName,
+                psychologistName,
+                formattedDate,
+                formattedTime,
+                formatAppointmentStatus(
+                        appointment.getStatus()
+                ),
+                getInitials(patientName)
+        );
+    }
+
+    /*
+     * =========================================================
+     * PAGOS Y SOLICITUDES
+     * =========================================================
+     */
+
+    private boolean isAppointmentPaymentPending(
+            Appointment appointment
+    ) {
+        if (appointment == null) {
+            return false;
         }
 
-        private DateRange resolveDateRange(String period, LocalDate today) {
-                String normalizedPeriod = normalize(period);
-
-                return switch (normalizedPeriod) {
-                        case "DAY" -> new DateRange(today, today);
-
-                        case "WEEK" -> new DateRange(
-                                        today.with(DayOfWeek.MONDAY),
-                                        today.with(DayOfWeek.SUNDAY));
-
-                        case "YEAR" -> new DateRange(
-                                        today.withDayOfYear(1),
-                                        today.withDayOfYear(today.lengthOfYear()));
-
-                        default -> new DateRange(
-                                        today.withDayOfMonth(1),
-                                        today.withDayOfMonth(today.lengthOfMonth()));
-                };
+        if (Boolean.FALSE.equals(appointment.getPaid())) {
+            return true;
         }
 
-        private record DateRange(LocalDate startDate, LocalDate endDate) {
+        if (
+                appointment.getPendingAmount() != null &&
+                appointment
+                        .getPendingAmount()
+                        .compareTo(BigDecimal.ZERO) > 0
+        ) {
+            return true;
         }
+
+        String paymentStatus =
+                normalizeText(
+                        appointment.getPaymentStatus()
+                );
+
+        Set<String> pendingStatuses =
+                Set.of(
+                        "PENDIENTE",
+                        "PAGO_EN_REVISION",
+                        "EN_REVISION",
+                        "PARCIAL",
+                        "NO_PAGADO"
+                );
+
+        return pendingStatuses.contains(
+                paymentStatus
+        );
+    }
+
+    private boolean isLeadPaymentPending(
+            Lead lead
+    ) {
+        if (lead == null) {
+            return false;
+        }
+
+        String paymentStatus =
+                normalizeText(
+                        lead.getPaymentStatus()
+                );
+
+        Set<String> pendingStatuses =
+                Set.of(
+                        "PENDIENTE",
+                        "PAGO_EN_REVISION",
+                        "EN_REVISION",
+                        "PARCIAL"
+                );
+
+        return pendingStatuses.contains(
+                paymentStatus
+        );
+    }
+
+    private boolean isLeadPending(
+            Lead lead
+    ) {
+        if (lead == null) {
+            return false;
+        }
+
+        String leadStatus =
+                normalizeText(
+                        lead.getStatus()
+                );
+
+        Set<String> pendingStatuses =
+                Set.of(
+                        "NUEVO",
+                        "PAGO_EN_REVISION",
+                        "CONTACTADO",
+                        "PRE_RESERVADO"
+                );
+
+        return pendingStatuses.contains(
+                leadStatus
+        );
+    }
+
+    /*
+     * =========================================================
+     * AUTENTICACIÓN Y ROL
+     * =========================================================
+     */
+
+    private String getAuthenticatedRole(
+            Authentication authentication
+    ) {
+        return authentication
+                .getAuthorities()
+                .stream()
+                .findFirst()
+                .map(authority ->
+                        authority
+                                .getAuthority()
+                                .replace("ROLE_", "")
+                )
+                .orElse("SIN_ROL");
+    }
+
+    /*
+     * =========================================================
+     * PERIODO
+     * =========================================================
+     */
+
+    private String normalizePeriod(
+            String period
+    ) {
+        String normalized =
+                period == null
+                        ? ""
+                        : period
+                                .trim()
+                                .toLowerCase();
+
+        return switch (normalized) {
+            case "day", "week", "month", "year" ->
+                    normalized;
+
+            default ->
+                    "month";
+        };
+    }
+
+    private DateRange resolveDateRange(
+            String period,
+            LocalDate today
+    ) {
+        return switch (period) {
+            case "day" ->
+                    new DateRange(
+                            today,
+                            today
+                    );
+
+            case "week" ->
+                    new DateRange(
+                            today.with(
+                                    DayOfWeek.MONDAY
+                            ),
+                            today.with(
+                                    DayOfWeek.SUNDAY
+                            )
+                    );
+
+            case "year" ->
+                    new DateRange(
+                            today.withDayOfYear(1),
+                            today.withDayOfYear(
+                                    today.lengthOfYear()
+                            )
+                    );
+
+            default ->
+                    new DateRange(
+                            today.withDayOfMonth(1),
+                            today.withDayOfMonth(
+                                    today.lengthOfMonth()
+                            )
+                    );
+        };
+    }
+
+    /*
+     * =========================================================
+     * HELPERS
+     * =========================================================
+     */
+
+    private boolean isBetween(
+            LocalDate date,
+            LocalDate startDate,
+            LocalDate endDate
+    ) {
+        return date != null &&
+                !date.isBefore(startDate) &&
+                !date.isAfter(endDate);
+    }
+
+    private BigDecimal safeAmount(
+            BigDecimal amount
+    ) {
+        return amount != null
+                ? amount
+                : BigDecimal.ZERO;
+    }
+
+    private String normalizeText(
+            String value
+    ) {
+        return value == null
+                ? ""
+                : value
+                        .trim()
+                        .toUpperCase();
+    }
+
+    private String buildFullName(
+            String firstName,
+            String lastName
+    ) {
+        String fullName =
+                (
+                        (firstName != null ? firstName : "") +
+                        " " +
+                        (lastName != null ? lastName : "")
+                )
+                        .replaceAll("\\s+", " ")
+                        .trim();
+
+        return fullName.isBlank()
+                ? "Sin nombre"
+                : fullName;
+    }
+
+    private String formatAppointmentStatus(
+            AppointmentStatus status
+    ) {
+        if (status == null) {
+            return "Sin estado";
+        }
+
+        return switch (status) {
+            case PROGRAMADA ->
+                    "Programada";
+
+            case ATENDIDA ->
+                    "Atendida";
+
+            case CANCELADA ->
+                    "Cancelada";
+
+            case NO_ASISTIO ->
+                    "No asistió";
+
+            case REPROGRAMADA ->
+                    "Reprogramada";
+        };
+    }
+
+    private String getInitials(
+            String fullName
+    ) {
+        if (
+                fullName == null ||
+                fullName.isBlank()
+        ) {
+            return "CP";
+        }
+
+        String[] parts =
+                fullName
+                        .trim()
+                        .split("\\s+");
+
+        if (parts.length == 1) {
+            return parts[0]
+                    .substring(0, 1)
+                    .toUpperCase();
+        }
+
+        return (
+                parts[0].substring(0, 1) +
+                parts[1].substring(0, 1)
+        ).toUpperCase();
+    }
+
+    private record DateRange(
+            LocalDate startDate,
+            LocalDate endDate
+    ) {
+    }
 }

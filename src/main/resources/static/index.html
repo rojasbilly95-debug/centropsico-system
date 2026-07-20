@@ -25,171 +25,301 @@
 
         <main class="main-content">
 
-            <!-- INICIO / DASHBOARD ADMIN PREMIUM -->
+            <!-- INICIO / DASHBOARD SEGÚN ROL -->
             <section id="home" class="section active">
+
                 <div class="admin-dashboard">
 
-                    <!-- TOPBAR -->
+                    <!-- ENCABEZADO -->
                     <div class="admin-dashboard-topbar">
+
                         <div>
-                            <span class="dashboard-eyebrow">Dashboard administrativo</span>
-                            <h1 id="adminWelcomeTitle">CentroPsico | Administración</h1>
-                            <p>Indicadores operativos, agenda clínica y control financiero del centro.</p>
+                            <span
+                                id="dashboardEyebrow"
+                                class="dashboard-eyebrow"
+                            >
+                                Dashboard
+                            </span>
+
+                            <h1 id="adminWelcomeTitle">
+                                Bienvenido a CentroPsico
+                            </h1>
+
+                            <p id="dashboardMainSubtitle">
+                                Indicadores y actividades principales del sistema.
+                            </p>
                         </div>
 
                         <div class="dashboard-period-box">
-                            <label for="dashboardGlobalPeriod">Periodo</label>
-                            <select id="dashboardGlobalPeriod" class="dashboard-period-filter"
-                                onchange="handleDashboardPeriodChange(this.value)">
-                                <option value="day">Hoy</option>
-                                <option value="week">Esta semana</option>
-                                <option value="month" selected>Este mes</option>
-                                <option value="year">Este año</option>
+                            <label for="dashboardGlobalPeriod">
+                                Periodo
+                            </label>
+
+                            <select
+                                id="dashboardGlobalPeriod"
+                                class="dashboard-period-filter"
+                                onchange="handleDashboardPeriodChange(this.value)"
+                            >
+                                <option value="day">
+                                    Hoy
+                                </option>
+
+                                <option value="week">
+                                    Esta semana
+                                </option>
+
+                                <option value="month" selected>
+                                    Este mes
+                                </option>
+
+                                <option value="year">
+                                    Este año
+                                </option>
                             </select>
                         </div>
+
                     </div>
 
-                    <!-- KPI CARDS -->
+                    <!-- INDICADORES PRINCIPALES -->
                     <div class="premium-kpi-grid">
 
+                        <!-- PACIENTES -->
                         <div class="premium-kpi-card kpi-purple">
+
                             <div class="kpi-icon">
                                 <i data-lucide="users"></i>
                             </div>
+
                             <div class="kpi-content">
-                                <span>Pacientes</span>
-                                <strong id="dashPatients">0</strong>
-                                <small>Total registrados</small>
+                                <span id="dashPatientsTitle">
+                                    Pacientes
+                                </span>
+
+                                <strong id="dashPatients">
+                                    0
+                                </strong>
+
+                                <small id="dashPatientsSubtitle">
+                                    Total registrados
+                                </small>
                             </div>
-                            <div class="kpi-trend positive">
-                                <i data-lucide="trending-up"></i>
-                                12% vs. mes anterior
-                            </div>
+
                         </div>
 
+                        <!-- CITAS DEL PERIODO -->
                         <div class="premium-kpi-card kpi-blue">
+
                             <div class="kpi-icon">
                                 <i data-lucide="calendar-days"></i>
                             </div>
+
                             <div class="kpi-content">
-                                <span id="dashAppointmentsTitle">Citas (Hoy)</span>
-                                <strong id="dashAppointments">0</strong>
-                                <small>Citas programadas</small>
+                                <span id="dashAppointmentsTitle">
+                                    Citas
+                                </span>
+
+                                <strong id="dashAppointments">
+                                    0
+                                </strong>
+
+                                <small id="dashAppointmentsSubtitle">
+                                    Citas registradas en el periodo
+                                </small>
                             </div>
-                            <div class="kpi-trend positive">
-                                <i data-lucide="trending-up"></i>
-                                8% vs. ayer
-                            </div>
+
                         </div>
 
-                        <div class="premium-kpi-card kpi-green admin-dashboard-only">
+                        <!-- INGRESOS: SOLO ADMIN -->
+                        <div
+                            class="premium-kpi-card kpi-green admin-dashboard-only"
+                        >
+
                             <div class="kpi-icon">
                                 <i data-lucide="circle-dollar-sign"></i>
                             </div>
+
                             <div class="kpi-content">
-                                <span id="dashIncomeTitle">Ingresos (Mes)</span>
-                                <strong id="dashIncome">S/ 0.00</strong>
-                                <small>Total ingresos</small>
+                                <span id="dashIncomeTitle">
+                                    Ingresos
+                                </span>
+
+                                <strong id="dashIncome">
+                                    S/ 0.00
+                                </strong>
+
+                                <small>
+                                    Total de ingresos del periodo
+                                </small>
                             </div>
-                            <div class="kpi-trend positive green">
-                                <i data-lucide="trending-up"></i>
-                                18% vs. mes anterior
-                            </div>
+
                         </div>
 
-                        <div class="premium-kpi-card kpi-orange admin-dashboard-only">
+                        <!-- PAGOS PENDIENTES: SOLO ADMIN -->
+                        <div
+                            class="premium-kpi-card kpi-orange admin-dashboard-only"
+                        >
+
                             <div class="kpi-icon">
                                 <i data-lucide="wallet-cards"></i>
                             </div>
+
                             <div class="kpi-content">
-                                <span id="dashPendingPaymentsTitle">Pendientes de Pago</span>
-                                <strong id="dashPendingPayments">0</strong>
-                                <small>Citas pendientes</small>
+                                <span id="dashPendingPaymentsTitle">
+                                    Pendientes de pago
+                                </span>
+
+                                <strong id="dashPendingPayments">
+                                    0
+                                </strong>
+
+                                <small>
+                                    Operaciones pendientes de revisión
+                                </small>
                             </div>
-                            <div class="kpi-trend warning">
-                                <i data-lucide="alert-circle"></i>
-                                Requiere revisión
-                            </div>
+
                         </div>
 
                     </div>
 
-                    <!-- ANALYTICS -->
+                    <!-- GRÁFICOS -->
                     <div class="premium-dashboard-grid">
 
+                        <!-- CITAS POR ESTADO -->
                         <div class="premium-panel">
+
                             <div class="premium-panel-header">
                                 <div>
-                                    <h3 id="dashAppointmentStatusTitle">Citas por estado</h3>
-                                    <span id="dashAppointmentStatusSubtitle">Distribución mensual de citas</span>
-                                </div>
+                                    <h3 id="dashAppointmentStatusTitle">
+                                        Citas por estado
+                                    </h3>
 
+                                    <span id="dashAppointmentStatusSubtitle">
+                                        Distribución de citas del periodo
+                                    </span>
+                                </div>
                             </div>
 
                             <div class="appointments-status-layout">
+
                                 <div class="donut-wrapper">
-                                    <canvas id="dashboardAppointmentsChart"></canvas>
+
+                                    <canvas
+                                        id="dashboardAppointmentsChart"
+                                    ></canvas>
+
                                     <div class="donut-center">
-                                        <span>Total</span>
-                                        <strong id="dashAppointmentsTotalMonth">0</strong>
+                                        <span>
+                                            Total
+                                        </span>
+
+                                        <strong id="dashAppointmentsTotalMonth">
+                                            0
+                                        </strong>
                                     </div>
+
                                 </div>
 
-                                <div id="appointmentStatusLegend" class="status-legend"></div>
+                                <div
+                                    id="appointmentStatusLegend"
+                                    class="status-legend"
+                                ></div>
+
                             </div>
+
                         </div>
 
+                        <!-- FINANZAS: SOLO ADMIN -->
                         <div class="premium-panel admin-dashboard-only">
+
                             <div class="premium-panel-header">
                                 <div>
-                                    <h3 id="dashFinanceChartTitle">Ingresos vs Gastos (Mes)</h3>
-                                    <span id="dashFinanceChartSubtitle">Comparación mensual</span>
-                                </div>
+                                    <h3 id="dashFinanceChartTitle">
+                                        Ingresos vs. gastos
+                                    </h3>
 
+                                    <span id="dashFinanceChartSubtitle">
+                                        Comparación financiera del periodo
+                                    </span>
+                                </div>
                             </div>
 
                             <div class="bar-chart-wrapper">
                                 <canvas id="dashboardFinanceChart"></canvas>
                             </div>
+
                         </div>
 
                     </div>
 
-                    <!-- BOTTOM -->
+                    <!-- AGENDA Y RECORDATORIOS -->
                     <div class="premium-bottom-grid">
 
+                        <!-- PRÓXIMAS CITAS -->
                         <div class="premium-panel">
+
                             <div class="premium-panel-header">
+
                                 <div>
-                                    <h3>Citas próximas</h3>
-                                    <span>Agenda relevante del día</span>
+                                    <h3 id="dashUpcomingAppointmentsTitle">
+                                        Citas próximas
+                                    </h3>
+
+                                    <span id="dashUpcomingAppointmentsSubtitle">
+                                        Próximas atenciones registradas
+                                    </span>
                                 </div>
-                                <button class="panel-link" onclick="openAppointmentsAgenda()">
-                                    Ver agenda <i data-lucide="arrow-right"></i>
+
+                                <button
+                                    class="panel-link"
+                                    type="button"
+                                    onclick="openAppointmentsAgenda()"
+                                >
+                                    Ver agenda
+
+                                    <i data-lucide="arrow-right"></i>
                                 </button>
+
                             </div>
 
-                            <div id="todaySchedule" class="premium-appointments-list">
-                                Cargando cronograma...
+                            <div
+                                id="todaySchedule"
+                                class="premium-appointments-list"
+                            >
+                                Cargando citas próximas...
                             </div>
+
                         </div>
 
+                        <!-- RECORDATORIOS -->
                         <div class="premium-panel">
+
                             <div class="premium-panel-header">
+
                                 <div>
-                                    <h3>Recordatorios</h3>
-                                    <span>Alertas importantes del sistema</span>
+                                    <h3 id="dashRemindersTitle">
+                                        Recordatorios
+                                    </h3>
+
+                                    <span id="dashRemindersSubtitle">
+                                        Alertas importantes del sistema
+                                    </span>
                                 </div>
+
                             </div>
 
-                            <div id="dashboardSummary" class="premium-reminders-list">
+                            <div
+                                id="dashboardSummary"
+                                class="premium-reminders-list"
+                            >
                                 Cargando recordatorios...
                             </div>
+
                         </div>
 
                     </div>
 
                 </div>
+
             </section>
 
             <!-- PACIENTES -->
@@ -1662,11 +1792,11 @@
 
     <script src="/js/notification.js"></script>
     <script src="/js/auth.js"></script>
-    <script src="/js/profile.js?v=5"></script>
+    <script src="/js/profile.js?v=9"></script>
     <script src="/js/reports-export.js"></script>
     <script src="/js/layout.js"></script>
     <script src="/js/audit-logs.js"></script>
-    <script src="/js/dashboard.js"></script>
+    <script src="/js/dashboard.js?v=11"></script>
     <script src="/js/patients.js"></script>
     <script src="/js/users.js"></script>
     <script src="/js/psychologists.js"></script>

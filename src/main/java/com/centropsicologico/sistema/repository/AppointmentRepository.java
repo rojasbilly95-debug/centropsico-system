@@ -9,36 +9,81 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
-public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
+public interface AppointmentRepository
+        extends JpaRepository<Appointment, Long> {
 
-    List<Appointment> findByPsychologistId(Long psychologistId);
+    /*
+     * =========================================================
+     * CONSULTAS GENERALES
+     * =========================================================
+     */
 
-    List<Appointment> findByDate(LocalDate date);
-
-    List<Appointment> findByDateBetween(LocalDate startDate, LocalDate endDate);
-
-    List<Appointment> findByDateGreaterThanEqualOrderByDateAscStartTimeAsc(LocalDate date);
-
-    boolean existsByPsychologistAndDateAndStartTimeLessThanAndEndTimeGreaterThan(
-            Psychologist psychologist,
-            LocalDate date,
-            LocalTime endTime,
-            LocalTime startTime
+    List<Appointment> findByDate(
+            LocalDate date
     );
 
-    boolean existsByPsychologistAndDateAndStartTimeLessThanAndEndTimeGreaterThanAndIdNot(
-            Psychologist psychologist,
-            LocalDate date,
-            LocalTime endTime,
-            LocalTime startTime,
-            Long id
+    List<Appointment> findByDateBetween(
+            LocalDate startDate,
+            LocalDate endDate
     );
 
-    List<Appointment> findByPsychologistEmail(String email);
+    List<Appointment>
+    findByDateGreaterThanEqualOrderByDateAscStartTimeAsc(
+            LocalDate date
+    );
 
-    List<Appointment> findByPsychologistEmailAndDate(String email, LocalDate date);
 
-    List<Appointment> findByPsychologistIdAndDate(Long psychologistId, LocalDate date);
+    /*
+     * =========================================================
+     * CONSULTAS POR PSICÓLOGO
+     * =========================================================
+     */
+
+    List<Appointment> findByPsychologistId(
+            Long psychologistId
+    );
+
+    List<Appointment> findByPsychologistEmail(
+            String email
+    );
+
+    List<Appointment> findByPsychologistEmailAndDate(
+            String email,
+            LocalDate date
+    );
+
+    List<Appointment> findByPsychologistIdAndDate(
+            Long psychologistId,
+            LocalDate date
+    );
+
+    /*
+     * Citas del psicólogo autenticado dentro del periodo
+     * seleccionado: día, semana, mes o año.
+     */
+    List<Appointment>
+    findByPsychologistEmailAndDateBetween(
+            String email,
+            LocalDate startDate,
+            LocalDate endDate
+    );
+
+    /*
+     * Próximas citas del psicólogo autenticado,
+     * ordenadas por fecha y hora.
+     */
+    List<Appointment>
+    findByPsychologistEmailAndDateGreaterThanEqualOrderByDateAscStartTimeAsc(
+            String email,
+            LocalDate date
+    );
+
+
+    /*
+     * =========================================================
+     * CONSULTAS POR ESTADO
+     * =========================================================
+     */
 
     List<Appointment> findByStatusAndDateBetween(
             AppointmentStatus status,
@@ -46,20 +91,51 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
             LocalDate endDate
     );
 
-    List<Appointment> findByStatusAndDateBetweenAndPsychologistId(
+    List<Appointment>
+    findByStatusAndDateBetweenAndPsychologistId(
             AppointmentStatus status,
             LocalDate startDate,
             LocalDate endDate,
             Long psychologistId
     );
 
+
     /*
-     * Valida si un paciente está vinculado a un psicólogo
-     * mediante una cita registrada.
+     * =========================================================
+     * VALIDACIÓN DE CRUCES DE HORARIO
+     * =========================================================
+     */
+
+    boolean
+    existsByPsychologistAndDateAndStartTimeLessThanAndEndTimeGreaterThan(
+            Psychologist psychologist,
+            LocalDate date,
+            LocalTime endTime,
+            LocalTime startTime
+    );
+
+    boolean
+    existsByPsychologistAndDateAndStartTimeLessThanAndEndTimeGreaterThanAndIdNot(
+            Psychologist psychologist,
+            LocalDate date,
+            LocalTime endTime,
+            LocalTime startTime,
+            Long id
+    );
+
+
+    /*
+     * =========================================================
+     * SEGURIDAD DE HISTORIA CLÍNICA
+     * =========================================================
+     */
+
+    /*
+     * Comprueba si un paciente está relacionado con un
+     * psicólogo mediante una cita registrada.
      *
-     * Se usará para proteger la historia clínica:
-     * el psicólogo solo podrá ver historias clínicas
-     * de pacientes asignados a sus citas.
+     * Se utiliza para impedir que el psicólogo consulte
+     * historias clínicas de pacientes no asignados.
      */
     boolean existsByPatientIdAndPsychologistEmail(
             Long patientId,
