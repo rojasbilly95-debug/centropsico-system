@@ -115,6 +115,7 @@ function renderAppointmentTable(data) {
 
         const paymentInfo = getAppointmentPaymentInfo(appointment);
         const canManagePayments = currentUser.role === "ADMIN" || currentUser.role === "RECEPCIONISTA";
+        const isPsychologist = currentUser.role === "PSICOLOGO";
         const canUpdateStatus = currentUser.role === "ADMIN" || currentUser.role === "RECEPCIONISTA" || currentUser.role === "PSICOLOGO";
 
         const canPay = canManagePayments && canRegisterAppointmentPayment(appointment, paymentInfo);
@@ -131,17 +132,19 @@ function renderAppointmentTable(data) {
                 <td>${appointment.endTime ?? ""}</td>
                 <td>${statusLabel[currentStatus] ?? currentStatus}</td>
 
-                <td>
-                    <span class="status-pill ${getPaymentStatusClass(paymentInfo.status)}">
-                        ${formatPaymentStatus(paymentInfo.status)}
-                    </span>
-                </td>
+                ${!isPsychologist ? `
+                    <td>
+                        <span class="status-pill ${getPaymentStatusClass(paymentInfo.status)}">
+                            ${formatPaymentStatus(paymentInfo.status)}
+                        </span>
+                    </td>
 
-                <td>
-                    <strong>S/ ${paymentInfo.paidAmount.toFixed(2)}</strong>
-                    <br>
-                    <small>Saldo: S/ ${paymentInfo.pendingAmount.toFixed(2)}</small>
-                </td>
+                    <td>
+                        <strong>S/ ${paymentInfo.paidAmount.toFixed(2)}</strong>
+                        <br>
+                        <small>Saldo: S/ ${paymentInfo.pendingAmount.toFixed(2)}</small>
+                    </td>
+                ` : ""}
 
                 <td>
                     ${canPay
@@ -838,8 +841,10 @@ function showCalendarAppointmentDetail(event) {
                 <p><strong>Estado:</strong> ${formatAppointmentStatus(props.status)}</p>
                 <p><strong>Inicio:</strong> ${formatCalendarDateTime(event.start)}</p>
                 <p><strong>Fin:</strong> ${formatCalendarDateTime(event.end)}</p>
+            ${currentUser.role !== "PSICOLOGO" ? `
                 <p><strong>Pago:</strong> ${props.paid ? "Pagado" : "Pendiente"}</p>
                 <p><strong>Monto:</strong> ${props.paidAmount ? "S/ " + Number(props.paidAmount).toFixed(2) : "-"}</p>
+            ` : ""}
                 <p><strong>Observación:</strong> ${props.observation || "Sin observación"}</p>
             </div>
         `,

@@ -52,4 +52,17 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
             LocalDate endDate,
             Long psychologistId
     );
+
+    /*
+     * Valida si un paciente está vinculado a un psicólogo
+     * mediante una cita registrada.
+     *
+     * Se usará para proteger la historia clínica:
+     * el psicólogo solo podrá ver historias clínicas
+     * de pacientes asignados a sus citas.
+     */
+    boolean existsByPatientIdAndPsychologistEmail(
+            Long patientId,
+            String psychologistEmail
+    );
 }

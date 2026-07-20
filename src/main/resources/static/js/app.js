@@ -106,19 +106,33 @@ function applyRoleVisibility() {
 
     const role = currentUser.role;
 
-    document.querySelectorAll(".admin-dashboard-only").forEach(element => {
-        element.style.display = role === "ADMIN" ? "" : "none";
-    });
-
+    // SOLO ADMIN
     document.querySelectorAll(".admin-only").forEach(element => {
         element.style.display = role === "ADMIN" ? "" : "none";
     });
 
-    document.querySelectorAll(".recepcion-only").forEach(element => {
+    // ADMIN + RECEPCIONISTA
+    document.querySelectorAll(".admin-recepcion-only").forEach(element => {
         element.style.display = role === "ADMIN" || role === "RECEPCIONISTA" ? "" : "none";
     });
 
-    document.querySelectorAll(".admin-recepcion-only").forEach(element => {
-        element.style.display = role === "ADMIN" || role === "RECEPCIONISTA" ? "" : "none";
+    // SOLO PSICÓLOGO
+    document.querySelectorAll(".psychologist-only").forEach(element => {
+        element.style.display = role === "PSICOLOGO" ? "" : "none";
+    });
+
+    // ADMIN + PSICÓLOGO
+    document.querySelectorAll(".admin-psychologist-only").forEach(element => {
+        element.style.display = role === "ADMIN" || role === "PSICOLOGO" ? "" : "none";
+    });
+
+    // TODOS MENOS PSICÓLOGO
+    document.querySelectorAll(".not-psychologist-only").forEach(element => {
+        element.style.display = role !== "PSICOLOGO" ? "" : "none";
+    });
+
+    // DASHBOARD SOLO ADMIN
+    document.querySelectorAll(".admin-dashboard-only").forEach(element => {
+        element.style.display = role === "ADMIN" ? "" : "none";
     });
 }

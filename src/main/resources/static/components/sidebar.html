@@ -27,14 +27,27 @@
             <span>Solicitudes</span>
         </button>
 
-        <button class="sidebar-link recepcion-only" onclick="showSectionById('patients')">
+        <button class="sidebar-link admin-recepcion-only" onclick="showSectionById('patients')">
             <i data-lucide="users"></i>
             <span>Pacientes</span>
         </button>
 
-        <button class="sidebar-link" onclick="showSectionById('appointments')">
+        <!-- CITAS PARA ADMIN Y RECEPCIONISTA -->
+        <button class="sidebar-link admin-recepcion-only" onclick="showSectionById('appointments')">
             <i data-lucide="calendar"></i>
             <span>Citas</span>
+        </button>
+
+        <!-- MIS CITAS PARA PSICÓLOGO -->
+        <button class="sidebar-link psychologist-only" onclick="showSectionById('appointments')">
+            <i data-lucide="calendar-check"></i>
+            <span>Mis citas</span>
+        </button>
+
+        <!-- HISTORIA CLÍNICA PARA ADMIN Y PSICÓLOGO -->
+        <button class="sidebar-link admin-psychologist-only" onclick="showSectionById('appointments')">
+            <i data-lucide="file-heart"></i>
+            <span>Historia clínica</span>
         </button>
 
         <button class="sidebar-link admin-only" onclick="showSectionById('finances')">
