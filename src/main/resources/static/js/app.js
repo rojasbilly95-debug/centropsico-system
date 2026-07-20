@@ -10,7 +10,7 @@ window.onload = async () => {
     await safeRun(loadSidebar);
 
     if (typeof refreshSidebarUser === "function") {
-        refreshSidebarUser();
+        await safeRun(refreshSidebarUser);
     }
 
     if (typeof initProfileSidebarClick === "function") {

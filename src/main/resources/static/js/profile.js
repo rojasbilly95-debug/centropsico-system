@@ -8,8 +8,8 @@ async function openProfileModal() {
         }
 
         syncCurrentUser(profile);
+        renderSidebarUser(currentUser);
 
-        const imageUrl = getProfileImageUrl(profile.profileImageUrl);
         const initials = getUserInitials(profile);
 
         await Swal.fire({
@@ -20,16 +20,26 @@ async function openProfileModal() {
 
                     <div class="profile-header-card">
                         <div class="profile-avatar-preview" id="profileAvatarPreview">
-                            ${imageUrl
-                    ? `<img src="${imageUrl}?t=${Date.now()}" alt="Foto de perfil">`
-                    : `<span>${initials}</span>`
-                }
+                            ${buildProfileAvatarHtml(
+                                profile,
+                                initials,
+                                "Foto de perfil"
+                            )}
                         </div>
 
                         <div class="profile-header-info">
-                            <strong>${escapeProfileHtml(profile.firstName)} ${escapeProfileHtml(profile.lastName)}</strong>
-                            <span>${escapeProfileHtml(profile.email)}</span>
-                            <small>${formatProfileRole(profile.role)}</small>
+                            <strong>
+                                ${escapeProfileHtml(profile.firstName)}
+                                ${escapeProfileHtml(profile.lastName)}
+                            </strong>
+
+                            <span>
+                                ${escapeProfileHtml(profile.email)}
+                            </span>
+
+                            <small>
+                                ${formatProfileRole(profile.role)}
+                            </small>
                         </div>
                     </div>
 
@@ -37,10 +47,33 @@ async function openProfileModal() {
                         <h4>Datos personales</h4>
 
                         <div class="profile-grid">
-                            <input id="profileFirstName" type="text" placeholder="Nombres" value="${escapeProfileAttr(profile.firstName)}">
-                            <input id="profileLastName" type="text" placeholder="Apellidos" value="${escapeProfileAttr(profile.lastName)}">
-                            <input id="profilePhone" type="text" placeholder="Teléfono" value="${escapeProfileAttr(profile.phone)}">
-                            <input id="profileEmail" type="email" value="${escapeProfileAttr(profile.email)}" disabled>
+                            <input
+                                id="profileFirstName"
+                                type="text"
+                                placeholder="Nombres"
+                                value="${escapeProfileAttr(profile.firstName)}"
+                            >
+
+                            <input
+                                id="profileLastName"
+                                type="text"
+                                placeholder="Apellidos"
+                                value="${escapeProfileAttr(profile.lastName)}"
+                            >
+
+                            <input
+                                id="profilePhone"
+                                type="text"
+                                placeholder="Teléfono"
+                                value="${escapeProfileAttr(profile.phone)}"
+                            >
+
+                            <input
+                                id="profileEmail"
+                                type="email"
+                                value="${escapeProfileAttr(profile.email)}"
+                                disabled
+                            >
                         </div>
                     </div>
 
@@ -48,15 +81,24 @@ async function openProfileModal() {
                         <h4>Foto de perfil</h4>
 
                         <div class="profile-photo-actions">
-                            <input id="profilePhotoInput" type="file" accept="image/png,image/jpeg,image/webp">
+                            <input
+                                id="profilePhotoInput"
+                                type="file"
+                                accept="image/png,image/jpeg,image/webp"
+                            >
                         </div>
 
                         <p class="profile-help">
-                            Selecciona una imagen JPG, PNG o WEBP. La foto se subirá automáticamente. Tamaño máximo: 5MB.
+                            Selecciona una imagen JPG, PNG o WEBP.
+                            La foto se subirá automáticamente.
+                            Tamaño máximo: 2 MB.
                         </p>
                     </div>
 
-                    <div id="profileModalResult" class="profile-result"></div>
+                    <div
+                        id="profileModalResult"
+                        class="profile-result"
+                    ></div>
 
                 </div>
             `,
@@ -66,19 +108,25 @@ async function openProfileModal() {
             denyButtonText: "Cambiar contraseña",
             cancelButtonText: "Cerrar",
             focusConfirm: false,
+
             didOpen: () => {
-                const photoInput = document.getElementById("profilePhotoInput");
+                const photoInput =
+                    document.getElementById("profilePhotoInput");
 
                 if (photoInput) {
                     photoInput.addEventListener("change", async () => {
                         previewSelectedProfilePhoto();
 
-                        showProfileModalMessage("Subiendo foto de perfil...", true);
+                        showProfileModalMessage(
+                            "Subiendo foto de perfil...",
+                            true
+                        );
 
                         await uploadProfilePhotoFromModal();
                     });
                 }
             },
+
             preConfirm: async () => {
                 const updated = await updateMyProfileFromModal();
 
@@ -106,204 +154,444 @@ async function openProfileModal() {
 
     } catch (error) {
         console.error("Error al abrir perfil:", error);
-        Swal.fire("Error", "No se pudo abrir el perfil.", "error");
+
+        Swal.fire(
+            "Error",
+            "No se pudo abrir el perfil.",
+            "error"
+        );
     }
 }
+
+
+/* =========================================================
+   OBTENER PERFIL DEL USUARIO
+========================================================= */
 
 async function fetchMyProfile() {
-    const response = await authFetch(`${baseUrl}/profile/me`);
+    try {
+        const response = await authFetch(
+            `${baseUrl}/profile/me`
+        );
 
-    if (!response) return null;
+        if (!response) {
+            return null;
+        }
 
-    const result = await response.json();
+        const result = await readProfileJsonResponse(response);
 
-    if (!response.ok) {
+        if (!response.ok) {
+            console.error(
+                "No se pudo cargar el perfil:",
+                result
+            );
+
+            return null;
+        }
+
+        return result;
+
+    } catch (error) {
+        console.error(
+            "Error al consultar el perfil:",
+            error
+        );
+
         return null;
     }
-
-    return result;
 }
 
+
+/* =========================================================
+   ACTUALIZAR DATOS PERSONALES
+========================================================= */
+
 async function updateMyProfileFromModal() {
-    const firstName = document.getElementById("profileFirstName").value.trim();
-    const lastName = document.getElementById("profileLastName").value.trim();
-    const phone = document.getElementById("profilePhone").value.trim();
+    const firstNameInput =
+        document.getElementById("profileFirstName");
+
+    const lastNameInput =
+        document.getElementById("profileLastName");
+
+    const phoneInput =
+        document.getElementById("profilePhone");
+
+    const firstName =
+        firstNameInput?.value.trim() || "";
+
+    const lastName =
+        lastNameInput?.value.trim() || "";
+
+    const phone =
+        phoneInput?.value.trim() || "";
 
     if (!firstName) {
-        Swal.showValidationMessage("Ingresa tus nombres.");
+        Swal.showValidationMessage(
+            "Ingresa tus nombres."
+        );
+
         return false;
     }
 
     if (!lastName) {
-        Swal.showValidationMessage("Ingresa tus apellidos.");
+        Swal.showValidationMessage(
+            "Ingresa tus apellidos."
+        );
+
         return false;
     }
 
-    const response = await authFetch(`${baseUrl}/profile/me`, {
-        method: "PUT",
-        body: JSON.stringify({
-            firstName,
-            lastName,
-            phone
-        })
-    });
+    try {
+        const response = await authFetch(
+            `${baseUrl}/profile/me`,
+            {
+                method: "PUT",
+                body: JSON.stringify({
+                    firstName,
+                    lastName,
+                    phone
+                })
+            }
+        );
 
-    if (!response) return false;
+        if (!response) {
+            return false;
+        }
 
-    const result = await response.json();
+        const result =
+            await readProfileJsonResponse(response);
 
     if (!response.ok) {
-        Swal.showValidationMessage(result.message || "No se pudo actualizar el perfil.");
+        Swal.showValidationMessage(
+            result.detail ||
+            result.message ||
+            result.error ||
+            "No se pudo actualizar el perfil."
+        );
+
         return false;
     }
 
-    syncCurrentUser(result);
-    refreshSidebarUser();
+        syncCurrentUser(result);
+        renderSidebarUser(currentUser);
+
+        return result;
+
+    } catch (error) {
+        console.error(
+            "Error al actualizar el perfil:",
+            error
+        );
+
+        Swal.showValidationMessage(
+            "Error de conexión al actualizar el perfil."
+        );
+
+        return false;
+    }
+}
+
+
+/* =========================================================
+   SUBIR FOTO DESDE EL MODAL
+========================================================= */
+
+async function uploadProfilePhotoFromModal() {
+    const input =
+        document.getElementById("profilePhotoInput");
+
+    if (!input) {
+        showProfileModalMessage(
+            "No se encontró el campo para seleccionar la foto.",
+            false
+        );
+
+        return null;
+    }
+
+    const result = await uploadProfilePhoto(input);
+
+    if (!result) {
+        return null;
+    }
+
+    updateProfileModalAvatar(result);
+
+    showProfileModalMessage(
+        "Foto actualizada correctamente.",
+        true
+    );
+
+    input.value = "";
 
     return result;
 }
 
-async function uploadProfilePhotoFromModal() {
-    const input = document.getElementById("profilePhotoInput");
 
-    if (!input) {
-        showProfileModalMessage("No se encontró el campo para seleccionar la foto.", false);
-        return;
-    }
+/* =========================================================
+   SUBIR FOTO AL ENDPOINT DEL BACKEND
+========================================================= */
 
-    if (!input.files || input.files.length === 0) {
-        showProfileModalMessage("Primero selecciona una imagen.", false);
-        return;
+async function uploadProfilePhoto(input) {
+    if (
+        !input?.files ||
+        input.files.length === 0
+    ) {
+        showProfileModalMessage(
+            "Primero selecciona una imagen.",
+            false
+        );
+
+        return null;
     }
 
     const file = input.files[0];
 
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    const allowedTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/webp"
+    ];
 
     if (!allowedTypes.includes(file.type)) {
-        showProfileModalMessage("Formato no permitido. Usa JPG, PNG o WEBP.", false);
-        return;
+        showProfileModalMessage(
+            "Formato no permitido. Usa JPG, PNG o WEBP.",
+            false
+        );
+
+        input.value = "";
+
+        return null;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-        showProfileModalMessage("La imagen no debe superar 5MB.", false);
-        return;
-    }
+        if (file.size > 2 * 1024 * 1024) {
+            showProfileModalMessage(
+                "La imagen no debe superar 2 MB.",
+                false
+            );
+
+            input.value = "";
+
+            return null;
+        }
 
     try {
         const formData = new FormData();
+
+        /*
+         * El nombre "photo" debe coincidir con:
+         *
+         * @RequestParam("photo") MultipartFile photo
+         *
+         * en ProfileController.java.
+         */
         formData.append("photo", file);
 
-        const token = localStorage.getItem("token");
+        const token =
+            localStorage.getItem("token");
 
-        const response = await fetch(`${baseUrl}/profile/photo`, {
-            method: "POST",
-            headers: {
-                "Authorization": "Bearer " + token
-            },
-            body: formData
-        });
+        const headers = {};
 
-        const responseText = await response.text();
-
-        let result = {};
-
-        try {
-            result = responseText ? JSON.parse(responseText) : {};
-        } catch (error) {
-            console.error("Respuesta no JSON:", responseText);
+        if (token) {
+            headers.Authorization =
+                `Bearer ${token}`;
         }
 
-        if (response.status === 401) {
-            localStorage.clear();
+        /*
+         * No agregar Content-Type manualmente.
+         * El navegador debe generar automáticamente
+         * multipart/form-data con su boundary.
+         */
+        const response = await fetch(
+            `${baseUrl}/profile/photo`,
+            {
+                method: "POST",
+                headers,
+                body: formData
+            }
+        );
+
+        const result =
+            await readProfileJsonResponse(response);
+
+            if (response.status === 401) {
+            localStorage.removeItem("token");
+            localStorage.removeItem("currentUser");
+            localStorage.removeItem("profileImageBase64");
+
             window.location.href = "/login.html";
-            return;
+
+            return null;
+        }
+
+        if (response.status === 403) {
+            showProfileModalMessage(
+                result.detail ||
+                result.message ||
+                result.error ||
+                "No tienes permiso para actualizar la foto.",
+                false
+            );
+
+            return null;
         }
 
         if (!response.ok) {
             showProfileModalMessage(
+                result.detail ||
                 result.message ||
                 result.error ||
-                responseText ||
                 `No se pudo subir la foto. Código: ${response.status}`,
                 false
             );
-            return;
+
+            return null;
         }
 
+        /*
+         * El backend debe devolver:
+         *
+         * profileImageBase64
+         * profileImageUrl
+         */
         syncCurrentUser(result);
-        refreshSidebarUser();
-        updateProfileModalAvatar(result);
+        renderSidebarUser(currentUser);
 
-        showProfileModalMessage("Foto actualizada correctamente.", true);
-
-        input.value = "";
+        return result;
 
     } catch (error) {
-        console.error("Error al subir foto:", error);
-        showProfileModalMessage("Error de conexión al subir la foto.", false);
+        console.error(
+            "Error al subir foto:",
+            error
+        );
+
+        showProfileModalMessage(
+            "Error de conexión al subir la foto.",
+            false
+        );
+
+        return null;
     }
 }
+
+
+/* =========================================================
+   CAMBIAR CONTRASEÑA
+========================================================= */
 
 async function openChangePasswordModal() {
     await Swal.fire({
         title: "Cambiar contraseña",
         width: 520,
+
         html: `
             <div class="profile-password-modal">
-                <input id="profileCurrentPassword" type="password" placeholder="Contraseña actual">
-                <input id="profileNewPassword" type="password" placeholder="Nueva contraseña">
-                <input id="profileConfirmPassword" type="password" placeholder="Confirmar nueva contraseña">
+                <input
+                    id="profileCurrentPassword"
+                    type="password"
+                    placeholder="Contraseña actual"
+                >
+
+                <input
+                    id="profileNewPassword"
+                    type="password"
+                    placeholder="Nueva contraseña"
+                >
+
+                <input
+                    id="profileConfirmPassword"
+                    type="password"
+                    placeholder="Confirmar nueva contraseña"
+                >
 
                 <p>
-                    La nueva contraseña debe tener al menos 6 caracteres.
+                    La nueva contraseña debe tener
+                    al menos 6 caracteres.
                 </p>
             </div>
         `,
+
         showCancelButton: true,
         confirmButtonText: "Actualizar contraseña",
         cancelButtonText: "Cancelar",
         focusConfirm: false,
+
         preConfirm: async () => {
-            const currentPassword = document.getElementById("profileCurrentPassword").value;
-            const newPassword = document.getElementById("profileNewPassword").value;
-            const confirmPassword = document.getElementById("profileConfirmPassword").value;
+            const currentPassword =
+                document.getElementById(
+                    "profileCurrentPassword"
+                )?.value || "";
+
+            const newPassword =
+                document.getElementById(
+                    "profileNewPassword"
+                )?.value || "";
+
+            const confirmPassword =
+                document.getElementById(
+                    "profileConfirmPassword"
+                )?.value || "";
 
             if (!currentPassword) {
-                Swal.showValidationMessage("Ingresa tu contraseña actual.");
+                Swal.showValidationMessage(
+                    "Ingresa tu contraseña actual."
+                );
+
                 return false;
             }
 
-            if (!newPassword || newPassword.length < 6) {
-                Swal.showValidationMessage("La nueva contraseña debe tener al menos 6 caracteres.");
+            if (
+                !newPassword ||
+                newPassword.length < 6
+            ) {
+                Swal.showValidationMessage(
+                    "La nueva contraseña debe tener al menos 6 caracteres."
+                );
+
                 return false;
             }
 
             if (newPassword !== confirmPassword) {
-                Swal.showValidationMessage("Las contraseñas no coinciden.");
+                Swal.showValidationMessage(
+                    "Las contraseñas no coinciden."
+                );
+
                 return false;
             }
 
-            const response = await authFetch(`${baseUrl}/profile/change-password`, {
-                method: "PUT",
-                body: JSON.stringify({
-                    currentPassword,
-                    newPassword,
-                    confirmPassword
-                })
-            });
+            const response = await authFetch(
+                `${baseUrl}/profile/change-password`,
+                {
+                    method: "PUT",
+                    body: JSON.stringify({
+                        currentPassword,
+                        newPassword,
+                        confirmPassword
+                    })
+                }
+            );
 
-            if (!response) return false;
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                Swal.showValidationMessage(result.message || "No se pudo cambiar la contraseña.");
+            if (!response) {
                 return false;
             }
+
+            const result =
+                await readProfileJsonResponse(response);
+
+        if (!response.ok) {
+            Swal.showValidationMessage(
+                result.detail ||
+                result.message ||
+                result.error ||
+                "No se pudo cambiar la contraseña."
+            );
+
+            return false;
+        }
 
             return result;
         }
+
     }).then(result => {
         if (result.isConfirmed) {
             Swal.fire({
@@ -317,115 +605,453 @@ async function openChangePasswordModal() {
     });
 }
 
-function previewSelectedProfilePhoto() {
-    const input = document.getElementById("profilePhotoInput");
-    const preview = document.getElementById("profileAvatarPreview");
 
-    if (!input || !preview || !input.files || input.files.length === 0) return;
+/* =========================================================
+   VISTA PREVIA DE LA FOTO
+========================================================= */
+
+function previewSelectedProfilePhoto() {
+    const input =
+        document.getElementById("profilePhotoInput");
+
+    const preview =
+        document.getElementById(
+            "profileAvatarPreview"
+        );
+
+    if (
+        !input ||
+        !preview ||
+        !input.files ||
+        input.files.length === 0
+    ) {
+        return;
+    }
 
     const file = input.files[0];
-    const imageUrl = URL.createObjectURL(file);
 
-    preview.innerHTML = `<img src="${imageUrl}" alt="Vista previa">`;
+    if (!file.type.startsWith("image/")) {
+        return;
+    }
+
+    const temporaryUrl =
+        URL.createObjectURL(file);
+
+    preview.innerHTML = `
+        <img
+            src="${escapeProfileAttr(temporaryUrl)}"
+            alt="Vista previa"
+        >
+    `;
+
+    const previewImage =
+        preview.querySelector("img");
+
+    if (previewImage) {
+        previewImage.onload = () => {
+            URL.revokeObjectURL(temporaryUrl);
+        };
+    }
 }
+
+
+/* =========================================================
+   ACTUALIZAR FOTO DEL MODAL
+========================================================= */
 
 function updateProfileModalAvatar(profile) {
-    const preview = document.getElementById("profileAvatarPreview");
+    const preview =
+        document.getElementById(
+            "profileAvatarPreview"
+        );
 
-    if (!preview) return;
+    if (!preview) {
+        return;
+    }
 
-    const imageUrl = getProfileImageUrl(profile.profileImageUrl);
-    const initials = getUserInitials(profile);
-
-    preview.innerHTML = imageUrl
-        ? `<img src="${imageUrl}?t=${Date.now()}" alt="Foto de perfil">`
-        : `<span>${initials}</span>`;
+    preview.innerHTML =
+        buildProfileAvatarHtml(
+            profile,
+            getUserInitials(profile),
+            "Foto de perfil"
+        );
 }
 
-function refreshSidebarUser() {
-    if (!currentUser) return;
 
-    const avatar = document.getElementById("sidebarUserAvatar");
-    const name = document.getElementById("sidebarUserName");
-    const role = document.getElementById("sidebarUserRole");
+/* =========================================================
+   ACTUALIZAR USUARIO DEL SIDEBAR DESDE EL BACKEND
+========================================================= */
+
+async function refreshSidebarUser() {
+    /*
+     * Primero muestra la información disponible
+     * mientras llega la respuesta del servidor.
+     */
+    if (
+        typeof currentUser !== "undefined" &&
+        currentUser
+    ) {
+        renderSidebarUser(currentUser);
+    }
+
+    /*
+     * Después consulta MySQL mediante el backend.
+     * Aquí se recupera profileImageBase64 después
+     * de un redeploy de Render.
+     */
+    const profile = await fetchMyProfile();
+
+    if (!profile) {
+        return;
+    }
+
+    syncCurrentUser(profile);
+    renderSidebarUser(currentUser);
+}
+
+
+/* =========================================================
+   MOSTRAR USUARIO EN EL SIDEBAR
+========================================================= */
+
+function renderSidebarUser(user) {
+    if (!user) {
+        return;
+    }
+
+    const avatar =
+        document.getElementById(
+            "sidebarUserAvatar"
+        );
+
+    const name =
+        document.getElementById(
+            "sidebarUserName"
+        );
+
+    const role =
+        document.getElementById(
+            "sidebarUserRole"
+        );
 
     if (name) {
-        name.textContent = `${currentUser.firstName || ""} ${currentUser.lastName || ""}`.trim() || "Usuario";
+        const fullName = `
+            ${user.firstName || ""}
+            ${user.lastName || ""}
+        `.replace(/\s+/g, " ").trim();
+
+        name.textContent =
+            fullName || "Usuario";
     }
 
     if (role) {
-        role.textContent = formatProfileRole(currentUser.role);
+        role.textContent =
+            formatProfileRole(user.role);
     }
 
     if (avatar) {
-        const imageUrl = getProfileImageUrl(currentUser.profileImageUrl);
-
-        if (imageUrl) {
-            avatar.innerHTML = `<img src="${imageUrl}?t=${Date.now()}" alt="Foto de perfil">`;
-        } else {
-            avatar.textContent = getUserInitials(currentUser);
-        }
+        avatar.innerHTML =
+            buildProfileAvatarHtml(
+                user,
+                getUserInitials(user),
+                "Foto de perfil",
+                "sidebar-profile-img"
+            );
     }
 }
 
+
+/* =========================================================
+   SINCRONIZAR CURRENT USER
+========================================================= */
+
 function syncCurrentUser(profile) {
+    if (!profile) {
+        return;
+    }
+
+    const previousUser =
+        typeof currentUser !== "undefined" &&
+        currentUser
+            ? currentUser
+            : {};
+
     currentUser = {
-        ...currentUser,
-        id: profile.id,
-        firstName: profile.firstName,
-        lastName: profile.lastName,
-        email: profile.email,
-        role: profile.role,
-        phone: profile.phone || "",
-        profileImageUrl: profile.profileImageUrl || ""
+        ...previousUser,
+
+        id:
+            profile.id ??
+            previousUser.id,
+
+        firstName:
+            profile.firstName ??
+            previousUser.firstName ??
+            "",
+
+        lastName:
+            profile.lastName ??
+            previousUser.lastName ??
+            "",
+
+        email:
+            profile.email ??
+            previousUser.email ??
+            "",
+
+        role:
+            profile.role ??
+            previousUser.role ??
+            "",
+
+        phone:
+            profile.phone ??
+            previousUser.phone ??
+            "",
+
+        /*
+         * Primera opción:
+         * imagen persistente guardada en MySQL.
+         */
+        profileImageBase64:
+            profile.profileImageBase64 ??
+            previousUser.profileImageBase64 ??
+            "",
+
+        /*
+         * Segunda opción:
+         * URL antigua como respaldo.
+         */
+        profileImageUrl:
+            profile.profileImageUrl ??
+            previousUser.profileImageUrl ??
+            ""
     };
 
-    localStorage.setItem("currentUser", JSON.stringify(currentUser));
+    try {
+        /*
+         * No guardamos la imagen Base64 en localStorage,
+         * porque una imagen grande puede superar su límite.
+         *
+         * La imagen siempre se volverá a consultar
+         * desde el backend y MySQL.
+         */
+        const userForStorage = {
+            ...currentUser,
+            profileImageBase64: ""
+        };
+
+        localStorage.setItem(
+            "currentUser",
+            JSON.stringify(userForStorage)
+        );
+
+        /*
+         * Elimina datos antiguos que pudieron quedar
+         * guardados por la versión anterior.
+         */
+        localStorage.removeItem(
+            "profileImageBase64"
+        );
+
+    } catch (error) {
+        console.warn(
+            "No se pudo actualizar currentUser en localStorage:",
+            error
+        );
+    }
 }
 
-function showProfileModalMessage(message, success) {
-    const resultBox = document.getElementById("profileModalResult");
 
-    if (!resultBox) return;
+/* =========================================================
+   CONSTRUIR HTML DEL AVATAR
+========================================================= */
 
-    resultBox.className = success
-        ? "profile-result success"
-        : "profile-result error";
+function buildProfileAvatarHtml(
+    user,
+    initials,
+    altText,
+    imageClass = ""
+) {
+    const imageSource =
+        getProfileImageSource(user);
+
+    if (!imageSource) {
+        return `
+            <span>
+                ${escapeProfileHtml(initials)}
+            </span>
+        `;
+    }
+
+    const finalSource =
+        addProfileImageCacheBuster(imageSource);
+
+    const classAttribute =
+        imageClass
+            ? ` class="${escapeProfileAttr(imageClass)}"`
+            : "";
+
+    return `
+        <img
+            src="${escapeProfileAttr(finalSource)}"
+            alt="${escapeProfileAttr(altText)}"
+            ${classAttribute}
+        >
+    `;
+}
+
+
+/* =========================================================
+   OBTENER FUENTE DE LA IMAGEN
+========================================================= */
+
+function getProfileImageSource(user) {
+    /*
+     * Prioridad 1:
+     * Base64 almacenado en MySQL.
+     */
+    const base64Image = String(
+        user?.profileImageBase64 || ""
+    ).trim();
+
+    if (
+        /^data:image\/(jpeg|jpg|png|webp);base64,/i
+            .test(base64Image)
+    ) {
+        return base64Image;
+    }
+
+    /*
+     * Prioridad 2:
+     * URL antigua como respaldo.
+     */
+    return getProfileImageUrl(
+        user?.profileImageUrl
+    );
+}
+
+
+/* =========================================================
+   EVITAR CACHÉ SOLO PARA URL
+========================================================= */
+
+function addProfileImageCacheBuster(source) {
+    /*
+     * Nunca agregar ?t= a una imagen Base64.
+     * Eso dañaría el Data URI.
+     */
+    if (
+        !source ||
+        source.startsWith("data:")
+    ) {
+        return source || "";
+    }
+
+    const separator =
+        source.includes("?")
+            ? "&"
+            : "?";
+
+    return `${source}${separator}t=${Date.now()}`;
+}
+
+
+/* =========================================================
+   MENSAJE EN EL MODAL
+========================================================= */
+
+function showProfileModalMessage(
+    message,
+    success
+) {
+    const resultBox =
+        document.getElementById(
+            "profileModalResult"
+        );
+
+    if (!resultBox) {
+        return;
+    }
+
+    resultBox.className =
+        success
+            ? "profile-result success"
+            : "profile-result error";
 
     resultBox.textContent = message;
 }
 
-function getProfileImageUrl(url) {
-    if (!url || String(url).trim() === "") return "";
 
-    if (String(url).startsWith("http://") || String(url).startsWith("https://")) {
-        return url;
+/* =========================================================
+   NORMALIZAR URL DE FOTO ANTIGUA
+========================================================= */
+
+function getProfileImageUrl(url) {
+    const normalizedUrl =
+        String(url || "").trim();
+
+    if (!normalizedUrl) {
+        return "";
     }
 
-    return url;
+    if (
+        normalizedUrl.startsWith("http://") ||
+        normalizedUrl.startsWith("https://") ||
+        normalizedUrl.startsWith("/")
+    ) {
+        return normalizedUrl;
+    }
+
+    return normalizedUrl;
 }
 
-function getUserInitials(user) {
-    const first = user?.firstName ? user.firstName.charAt(0) : "";
-    const last = user?.lastName ? user.lastName.charAt(0) : "";
 
-    const initials = `${first}${last}`.toUpperCase();
+/* =========================================================
+   OBTENER INICIALES
+========================================================= */
+
+function getUserInitials(user) {
+    const first =
+        user?.firstName
+            ? user.firstName.charAt(0)
+            : "";
+
+    const last =
+        user?.lastName
+            ? user.lastName.charAt(0)
+            : "";
+
+    const initials =
+        `${first}${last}`.toUpperCase();
 
     return initials || "US";
 }
+
+
+/* =========================================================
+   FORMATEAR ROL
+========================================================= */
 
 function formatProfileRole(role) {
     switch (role) {
         case "ADMIN":
             return "ADMIN";
+
         case "RECEPCIONISTA":
             return "RECEPCIÓN";
+
         case "PSICOLOGO":
             return "PSICÓLOGO";
+
         default:
             return role || "USUARIO";
     }
 }
+
+
+/* =========================================================
+   ESCAPAR HTML
+========================================================= */
 
 function escapeProfileHtml(value) {
     return String(value ?? "")
@@ -440,123 +1066,68 @@ function escapeProfileAttr(value) {
     return escapeProfileHtml(value);
 }
 
-function initProfileSidebarClick() {
-    const sidebarUser = document.getElementById("sidebarUserProfile")
-        || document.querySelector(".sidebar-user");
 
-    if (!sidebarUser) {
-        console.warn("No se encontró el bloque del usuario en el sidebar.");
-        return;
-    }
+/* =========================================================
+   LEER RESPUESTAS DEL BACKEND
+========================================================= */
 
-    sidebarUser.onclick = async function (event) {
-        event.preventDefault();
-        event.stopPropagation();
+async function readProfileJsonResponse(response) {
+    const responseText =
+        await response.text();
 
-        if (typeof openProfileModal !== "function") {
-            console.error("openProfileModal no está disponible.");
-            Swal.fire("Error", "No se encontró la función del perfil.", "error");
-            return;
-        }
-
-        await openProfileModal();
-    };
-
-    sidebarUser.style.cursor = "pointer";
-    sidebarUser.setAttribute("title", "Abrir mi perfil");
-}
-
-async function uploadProfileImage(input) {
-    const file = input.files[0];
-
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-        Swal.fire("Validación", "Selecciona una imagen válida.", "warning");
-        return;
-    }
-
-    if (file.size > 1024 * 1024) {
-        Swal.fire("Validación", "La imagen no debe superar 1 MB.", "warning");
-        return;
-    }
-
-    const reader = new FileReader();
-
-    reader.onload = async function () {
-        const base64Image = reader.result;
-
-        const response = await authFetch(`${baseUrl}/profile/image`, {
-            method: "PUT",
-            body: JSON.stringify({
-                profileImageBase64: base64Image
-            })
-        });
-
-        if (!response || !response.ok) {
-            Swal.fire("Error", "No se pudo guardar la foto de perfil.", "error");
-            return;
-        }
-
-        localStorage.setItem("profileImageBase64", base64Image);
-        updateSidebarProfileImage(base64Image);
-
-        Swal.fire("Correcto", "Foto de perfil guardada correctamente.", "success");
-    };
-
-    reader.readAsDataURL(file);
-}
-
-function updateSidebarProfileImage(base64Image) {
-    const avatar = document.getElementById("sidebarUserAvatar");
-
-    if (!avatar) return;
-
-    if (base64Image) {
-        avatar.innerHTML = `
-            <img src="${base64Image}" alt="Foto de perfil" class="sidebar-profile-img">
-        `;
-    }
-}
-
-async function refreshSidebarUser() {
-    const nameElement = document.getElementById("sidebarUserName");
-    const roleElement = document.getElementById("sidebarUserRole");
-    const avatarElement = document.getElementById("sidebarUserAvatar");
-
-    if (!currentUser) return;
-
-    if (nameElement) {
-        nameElement.textContent = `${currentUser.firstName} ${currentUser.lastName}`;
-    }
-
-    if (roleElement) {
-        roleElement.textContent = currentUser.role;
+    if (!responseText) {
+        return {};
     }
 
     try {
-        const response = await authFetch(`${baseUrl}/profile`);
+        return JSON.parse(responseText);
 
-        if (response && response.ok) {
-            const profile = await response.json();
-
-            if (profile.profileImageBase64) {
-                localStorage.setItem("profileImageBase64", profile.profileImageBase64);
-                updateSidebarProfileImage(profile.profileImageBase64);
-                return;
-            }
-        }
     } catch (error) {
-        console.error("Error al cargar perfil:", error);
+        console.error(
+            "La respuesta del servidor no es JSON:",
+            responseText
+        );
+
+        return {
+            message: responseText
+        };
+    }
+}
+
+
+/* =========================================================
+   ABRIR PERFIL DESDE EL SIDEBAR
+========================================================= */
+
+function initProfileSidebarClick() {
+    const sidebarUser =
+        document.getElementById(
+            "sidebarUserProfile"
+        ) ||
+        document.querySelector(
+            ".sidebar-user"
+        );
+
+    if (!sidebarUser) {
+        console.warn(
+            "No se encontró el bloque del usuario en el sidebar."
+        );
+
+        return;
     }
 
-    const savedImage = localStorage.getItem("profileImageBase64");
+    sidebarUser.onclick =
+        async function (event) {
+            event.preventDefault();
+            event.stopPropagation();
 
-    if (savedImage) {
-        updateSidebarProfileImage(savedImage);
-    } else if (avatarElement) {
-        const firstInitial = currentUser.firstName?.charAt(0) || "";
-        const lastInitial = currentUser.lastName?.charAt(0) || "";
-        avatarElement.textContent = `${firstInitial}${lastInitial}` || "U";
-    }
+            await openProfileModal();
+        };
+
+    sidebarUser.style.cursor = "pointer";
+
+    sidebarUser.setAttribute(
+        "title",
+        "Abrir mi perfil"
+    );
 }

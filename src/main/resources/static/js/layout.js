@@ -1,8 +1,27 @@
 async function loadSidebar() {
-    const res = await fetch("/components/sidebar.html");
-    const html = await res.text();
+    const container =
+        document.getElementById("sidebar-container");
 
-    document.getElementById("sidebar-container").innerHTML = html;
+    if (!container) {
+        throw new Error(
+            "No se encontró #sidebar-container."
+        );
+    }
+
+    const response = await fetch(
+        "/components/sidebar.html",
+        {
+            cache: "no-store"
+        }
+    );
+
+    if (!response.ok) {
+        throw new Error(
+            `No se pudo cargar el sidebar. Código: ${response.status}`
+        );
+    }
+
+    container.innerHTML = await response.text();
 
     loadSidebarUser();
     applyRoleTheme();
@@ -37,8 +56,30 @@ function toggleModuleMenu(id) {
 function getRestrictedSections() {
     return {
         ADMIN: [],
-        RECEPCIONISTA: ["finances", "reports", "users", "psychologists", "services", "availability"],
-        PSICOLOGO: ["patients", "leads", "finances", "reports", "users", "psychologists", "services", "availability"]
+
+        RECEPCIONISTA: [
+            "finances",
+            "reports",
+            "promotions",
+            "auditLogs",
+            "users",
+            "psychologists",
+            "services",
+            "availability"
+        ],
+
+        PSICOLOGO: [
+            "patients",
+            "leads",
+            "finances",
+            "reports",
+            "promotions",
+            "auditLogs",
+            "users",
+            "psychologists",
+            "services",
+            "availability"
+        ]
     };
 }
 
@@ -67,8 +108,14 @@ function showSectionById(id) {
         btn.classList.remove("active");
     });
 
-    const activeButton = [...document.querySelectorAll(".sidebar-link")]
-        .find(btn => btn.getAttribute("onclick")?.includes(`'${id}'`));
+const activeButton = [...document.querySelectorAll(".sidebar-link")]
+    .find(btn => {
+        const isVisible = btn.offsetParent !== null;
+        const matchesSection =
+            btn.getAttribute("onclick")?.includes(`'${id}'`);
+
+        return isVisible && matchesSection;
+    });
 
     if (activeButton) activeButton.classList.add("active");
 
@@ -87,24 +134,6 @@ function showSectionById(id) {
     if (typeof closeMobileSidebar === "function") {
         closeMobileSidebar();
     }
-}
-
-function applyRoleVisibility() {
-    if (!currentUser) return;
-
-    const role = currentUser.role;
-
-    document.querySelectorAll(".admin-only").forEach(el => {
-        el.style.display = role === "ADMIN" ? "" : "none";
-    });
-
-    document.querySelectorAll(".recepcion-only").forEach(el => {
-        el.style.display = role === "ADMIN" || role === "RECEPCIONISTA" ? "" : "none";
-    });
-
-    document.querySelectorAll(".admin-recepcion-only").forEach(el => {
-        el.style.display = role === "ADMIN" || role === "RECEPCIONISTA" ? "" : "none";
-    });
 }
 
 function applySectionSecurity() {
