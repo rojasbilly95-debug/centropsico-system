@@ -1099,60 +1099,7 @@
                     </div>
                 </div>
 
-                <!-- RESULTADO DEL PERIODO FILTRADO -->
-                <div class="finance-period-result-panel">
 
-                    <div class="finance-period-result-item income">
-                        <span>Total ingresos filtrados</span>
-                        <strong id="financePeriodIncome">S/ 0.00</strong>
-                    </div>
-
-                    <div class="finance-period-result-item expense">
-                        <span>Total gastos filtrados</span>
-                        <strong id="financePeriodExpense">S/ 0.00</strong>
-                    </div>
-
-                    <div class="finance-period-result-item result">
-                        <span>Resultado del filtro</span>
-                        <strong id="financePeriodProfit">S/ 0.00</strong>
-                        <small id="financePeriodProfitStatus">Sin resultado</small>
-                    </div>
-
-                </div>
-
-                <!-- LEYENDA Y RESUMEN COMPACTO -->
-                <div class="finance-compact-panel">
-
-                    <div class="finance-compact-info">
-                        <strong>Movimientos financieros</strong>
-                        <span id="financeCompactSummary">
-                            Filtra por día, semana o mes para revisar los movimientos.
-                        </span>
-                    </div>
-
-                    <div class="finance-status-legend">
-                        <span class="legend-item legend-pending">
-                            Pendiente
-                        </span>
-
-                        <span class="legend-item legend-reviewed">
-                            Revisado
-                        </span>
-
-                        <span class="legend-item legend-counted">
-                            Contabilizado
-                        </span>
-
-                        <span class="legend-item legend-observed">
-                            Observado
-                        </span>
-
-                        <span class="legend-item legend-cancelled">
-                            Anulado
-                        </span>
-                    </div>
-
-                </div>
 
                 <!-- FILTROS PRINCIPALES -->
                 <div class="card finance-filter-card">
@@ -1251,27 +1198,85 @@
                     </div>
                 </div>
 
+                <!-- RESULTADO DEL PERIODO FILTRADO -->
+                <div class="finance-period-result-panel">
+
+                    <div class="finance-period-result-item income">
+                        <span>Total ingresos filtrados</span>
+                        <strong id="financePeriodIncome">S/ 0.00</strong>
+                    </div>
+
+                    <div class="finance-period-result-item expense">
+                        <span>Total gastos filtrados</span>
+                        <strong id="financePeriodExpense">S/ 0.00</strong>
+                    </div>
+
+                    <div class="finance-period-result-item result">
+                        <span>Resultado del filtro</span>
+                        <strong id="financePeriodProfit">S/ 0.00</strong>
+                        <small id="financePeriodProfitStatus">Sin resultado</small>
+                    </div>
+
+                </div>
+
+                <!-- LEYENDA Y RESUMEN COMPACTO -->
+                <div class="finance-compact-panel">
+
+                    <div class="finance-compact-info">
+                        <strong>Movimientos financieros</strong>
+                        <span id="financeCompactSummary">
+                            Filtra por día, semana o mes para revisar los movimientos.
+                        </span>
+                    </div>
+
+                    <div class="finance-status-legend">
+                        <span class="legend-item legend-pending">
+                            Pendiente
+                        </span>
+
+                        <span class="legend-item legend-reviewed">
+                            Revisado
+                        </span>
+
+                        <span class="legend-item legend-counted">
+                            Contabilizado
+                        </span>
+
+                        <span class="legend-item legend-observed">
+                            Observado
+                        </span>
+
+                        <span class="legend-item legend-cancelled">
+                            Anulado
+                        </span>
+                    </div>
+
+                </div>
+
                 <!-- HISTORIAL FINANCIERO -->
                 <div class="card table-card finance-table-card">
-                    <div class="table-header">
+
+                    <div class="table-header finance-table-header">
                         <div>
                             <h3>Historial financiero</h3>
                             <span>
-                                Ingresos y gastos registrados, con estado de revisión y trazabilidad.
+                                Visualiza ingresos y gastos filtrados, valida estados de revisión y controla el resultado financiero.
                             </span>
                         </div>
 
-                        <button class="btn-secondary" type="button" onclick="loadFinanceMovements()">
-                            Actualizar
-                        </button>
+                        <div class="finance-table-actions">
+                            <button class="btn-secondary" type="button" onclick="loadFinanceMovements()">
+                                Actualizar
+                            </button>
+                        </div>
                     </div>
 
                     <div id="financeMainResult" class="result-box compact-result">
                         Cargando movimientos financieros...
                     </div>
 
-                    <div class="table-wrapper">
-                        <table>
+                    <div class="table-wrapper finance-table-wrapper">
+                        <table class="finance-movement-table">
                             <thead>
                                 <tr>
                                     <th>Fecha</th>
@@ -1295,33 +1300,36 @@
                         </table>
                     </div>
 
-                <div class="finance-pagination-footer">
+                    <div class="finance-pagination-footer">
 
-                    <div class="finance-page-total-box">
-                        <span>Total página actual</span>
-                        <strong id="financeCurrentPageTotal">S/ 0.00</strong>
+                        <div class="finance-page-total-box">
+                            <span>Total página actual</span>
+                            <strong id="financeCurrentPageTotal">S/ 0.00</strong>
+                            <small>Según los movimientos visibles</small>
+                        </div>
+
+                        <div class="pagination-bar finance-pagination-center">
+                            <button class="btn-secondary" type="button" onclick="changeFinanceMovementPage(-1)">
+                                Anterior
+                            </button>
+
+                            <span id="financeMovementPageInfo">
+                                Página 1 de 1
+                            </span>
+
+                            <button class="btn-secondary" type="button" onclick="changeFinanceMovementPage(1)">
+                                Siguiente
+                            </button>
+                        </div>
+
+                        <div class="finance-filtered-total-box">
+                            <span>Total resultado filtrado</span>
+                            <strong id="financeFilteredTotal">S/ 0.00</strong>
+                            <small>Ingresos menos gastos del filtro aplicado</small>
+                        </div>
+
                     </div>
 
-                    <div class="pagination-bar finance-pagination-center">
-                        <button class="btn-secondary" onclick="changeFinanceMovementPage(-1)">
-                            Anterior
-                        </button>
-
-                        <span id="financeMovementPageInfo">
-                            Página 1 de 1
-                        </span>
-
-                        <button class="btn-secondary" onclick="changeFinanceMovementPage(1)">
-                            Siguiente
-                        </button>
-                    </div>
-
-                    <div class="finance-filtered-total-box">
-                        <span>Total resultado filtrado</span>
-                        <strong id="financeFilteredTotal">S/ 0.00</strong>
-                    </div>
-
-                </div>
                 </div>
 
                 <!-- MODAL REGISTRAR INGRESO -->
