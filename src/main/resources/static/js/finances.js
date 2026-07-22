@@ -597,18 +597,23 @@ function buildFinanceFilterParams() {
         }
     }
 
-    if (period === "custom") {
-        const startDate = getValue("financeStartDateFilter");
-        const endDate = getValue("financeEndDateFilter");
+if (period === "custom") {
+    const startDate = getValue("financeStartDateFilter");
+    const endDate = getValue("financeEndDateFilter");
 
-        if (startDate) {
-            params.append("startDate", startDate);
-        }
+    if (!startDate || !endDate) {
+        Swal.fire(
+            "Rango incompleto",
+            "Para filtrar por rango personalizado debes seleccionar la fecha Desde y Hasta.",
+            "warning"
+        );
 
-        if (endDate) {
-            params.append("endDate", endDate);
-        }
+        throw new Error("Rango personalizado incompleto");
     }
+
+    params.append("startDate", startDate);
+    params.append("endDate", endDate);
+}
 
     return params;
 }
@@ -761,6 +766,7 @@ function renderFinanceMovementTable() {
             </tr>
         `;
 
+        updateFinanceFooterTotals([]);
         updateFinancePagination(1);
         return;
     }
@@ -774,6 +780,8 @@ function renderFinanceMovementTable() {
     const start = (currentFinanceMovementPage - 1) * financeRowsPerPage;
     const end = start + financeRowsPerPage;
     const pageData = financeMovementsData.slice(start, end);
+
+    updateFinanceFooterTotals(pageData);
 
     pageData.forEach((movement) => {
         const status = movement.reviewStatus || "PENDIENTE";
@@ -834,6 +842,54 @@ function updateFinancePagination(totalPages) {
 
     if (pageInfo) {
         pageInfo.textContent = `Página ${currentFinanceMovementPage} de ${totalPages}`;
+    }
+}
+
+function updateFinanceFooterTotals(pageData = []) {
+    let currentPageTotal = 0;
+    let filteredTotal = 0;
+
+    pageData.forEach((movement) => {
+        if (movement.reviewStatus === "ANULADO" || movement.active === false) {
+            return;
+        }
+
+        if (movement.type === "INGRESO") {
+            currentPageTotal += movement.amount;
+        }
+
+        if (movement.type === "GASTO") {
+            currentPageTotal -= movement.amount;
+        }
+    });
+
+    financeMovementsData.forEach((movement) => {
+        if (movement.reviewStatus === "ANULADO" || movement.active === false) {
+            return;
+        }
+
+        if (movement.type === "INGRESO") {
+            filteredTotal += movement.amount;
+        }
+
+        if (movement.type === "GASTO") {
+            filteredTotal -= movement.amount;
+        }
+    });
+
+    const currentPageTotalElement = document.getElementById("financeCurrentPageTotal");
+    const filteredTotalElement = document.getElementById("financeFilteredTotal");
+
+    if (currentPageTotalElement) {
+        currentPageTotalElement.textContent = `S/ ${currentPageTotal.toFixed(2)}`;
+        currentPageTotalElement.className =
+            currentPageTotal >= 0 ? "finance-total-positive" : "finance-total-negative";
+    }
+
+    if (filteredTotalElement) {
+        filteredTotalElement.textContent = `S/ ${filteredTotal.toFixed(2)}`;
+        filteredTotalElement.className =
+            filteredTotal >= 0 ? "finance-total-positive" : "finance-total-negative";
     }
 }
 
@@ -932,6 +988,7 @@ async function submitFinanceReview() {
 function updateFinanceSummaryCards() {
     let totalIncome = 0;
     let totalExpense = 0;
+
     let pendingCount = 0;
     let reviewedCount = 0;
     let countedCount = 0;
@@ -970,6 +1027,29 @@ function updateFinanceSummaryCards() {
             totalExpense += movement.amount;
         }
     });
+
+    const profit = totalIncome - totalExpense;
+
+    setText("financePeriodIncome", `S/ ${totalIncome.toFixed(2)}`);
+    setText("financePeriodExpense", `S/ ${totalExpense.toFixed(2)}`);
+    setText("financePeriodProfit", `S/ ${profit.toFixed(2)}`);
+
+    const profitStatus = document.getElementById("financePeriodProfitStatus");
+
+    if (profitStatus) {
+        profitStatus.className = "";
+
+        if (profit > 0) {
+            profitStatus.textContent = "Ganancia del periodo filtrado";
+            profitStatus.classList.add("finance-profit-positive");
+        } else if (profit < 0) {
+            profitStatus.textContent = "Pérdida del periodo filtrado";
+            profitStatus.classList.add("finance-profit-negative");
+        } else {
+            profitStatus.textContent = "Sin ganancia ni pérdida";
+            profitStatus.classList.add("finance-profit-neutral");
+        }
+    }
 
     const compactSummary = document.getElementById("financeCompactSummary");
 

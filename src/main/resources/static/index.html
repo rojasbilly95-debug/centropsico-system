@@ -1274,10 +1274,32 @@
                         </table>
                     </div>
 
-                    <div class="pagination-bar">
-                        <button class="btn-secondary" onclick="changeFinanceMovementPage(-1)">Anterior</button>
-                        <span id="financeMovementPageInfo">Página 1 de 1</span>
-                        <button class="btn-secondary" onclick="changeFinanceMovementPage(1)">Siguiente</button>
+                    <div class="finance-pagination-footer">
+
+                        <div class="finance-page-total-box">
+                            <span>Total página actual</span>
+                            <strong id="financeCurrentPageTotal">S/ 0.00</strong>
+                        </div>
+
+                        <div class="pagination-bar finance-pagination-center">
+                            <button class="btn-secondary" onclick="changeFinanceMovementPage(-1)">
+                                Anterior
+                            </button>
+
+                            <span id="financeMovementPageInfo">
+                                Página 1 de 1
+                            </span>
+
+                            <button class="btn-secondary" onclick="changeFinanceMovementPage(1)">
+                                Siguiente
+                            </button>
+                        </div>
+
+                        <div class="finance-filtered-total-box">
+                            <span>Total resultado filtrado</span>
+                            <strong id="financeFilteredTotal">S/ 0.00</strong>
+                        </div>
+
                     </div>
                 </div>
 
