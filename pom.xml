@@ -91,6 +91,12 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- EMAIL / GMAIL SMTP -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
         <!-- DEVTOOLS -->
 
         <dependency>

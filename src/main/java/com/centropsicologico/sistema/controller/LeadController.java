@@ -18,6 +18,7 @@ import com.centropsicologico.sistema.service.NotificationService;
 import com.centropsicologico.sistema.service.AuditLogService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.transaction.annotation.Transactional;
+import com.centropsicologico.sistema.service.EmailService;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -38,6 +39,7 @@ public class LeadController {
         private final IncomeRepository incomeRepository;
         private final NotificationService notificationService;
         private final AuditLogService auditLogService;
+        private final EmailService emailService;
 
         public LeadController(
                         LeadRepository leadRepository,
@@ -47,7 +49,8 @@ public class LeadController {
                         AppointmentRepository appointmentRepository,
                         IncomeRepository incomeRepository,
                         NotificationService notificationService,
-                        AuditLogService auditLogService) {
+                        AuditLogService auditLogService,
+                        EmailService emailService) {
 
                 this.leadRepository = leadRepository;
                 this.patientRepository = patientRepository;
@@ -57,6 +60,7 @@ public class LeadController {
                 this.incomeRepository = incomeRepository;
                 this.notificationService = notificationService;
                 this.auditLogService = auditLogService;
+                this.emailService = emailService;
         }
 
         @GetMapping
@@ -372,6 +376,7 @@ public class LeadController {
 
                 notifyAppointmentCreatedFromLead(lead, patient, psychologist, savedAppointment, paidAmount);
 
+                emailService.notifyAdminsNewAppointmentFromLead(savedAppointment, lead);
                 auditLogService.record(
                                 "PRE-RESERVAS",
                                 "CONVERSIÓN A CITA",

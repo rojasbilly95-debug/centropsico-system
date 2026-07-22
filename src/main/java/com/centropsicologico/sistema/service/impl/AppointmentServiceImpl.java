@@ -21,6 +21,7 @@ import com.centropsicologico.sistema.service.AppointmentService;
 import com.centropsicologico.sistema.service.AuditLogService;
 import com.centropsicologico.sistema.service.NotificationService;
 import org.springframework.stereotype.Service;
+import com.centropsicologico.sistema.service.EmailService;
 
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
@@ -43,26 +44,29 @@ public class AppointmentServiceImpl implements AppointmentService {
     private final PsychologistAvailabilityRepository availabilityRepository;
     private final NotificationService notificationService;
     private final AuditLogService auditLogService;
+    private final EmailService emailService;
 
-    public AppointmentServiceImpl(
-            AppointmentRepository appointmentRepository,
-            PatientRepository patientRepository,
-            PsychologistRepository psychologistRepository,
-            ServiceRepository serviceRepository,
-            IncomeRepository incomeRepository,
-            PsychologistAvailabilityRepository availabilityRepository,
-            NotificationService notificationService,
-            AuditLogService auditLogService
-    ) {
-        this.appointmentRepository = appointmentRepository;
-        this.patientRepository = patientRepository;
-        this.psychologistRepository = psychologistRepository;
-        this.serviceRepository = serviceRepository;
-        this.incomeRepository = incomeRepository;
-        this.availabilityRepository = availabilityRepository;
-        this.notificationService = notificationService;
-        this.auditLogService = auditLogService;
-    }
+public AppointmentServiceImpl(
+        AppointmentRepository appointmentRepository,
+        PatientRepository patientRepository,
+        PsychologistRepository psychologistRepository,
+        ServiceRepository serviceRepository,
+        IncomeRepository incomeRepository,
+        PsychologistAvailabilityRepository availabilityRepository,
+        NotificationService notificationService,
+        AuditLogService auditLogService,
+        EmailService emailService
+) {
+    this.appointmentRepository = appointmentRepository;
+    this.patientRepository = patientRepository;
+    this.psychologistRepository = psychologistRepository;
+    this.serviceRepository = serviceRepository;
+    this.incomeRepository = incomeRepository;
+    this.availabilityRepository = availabilityRepository;
+    this.notificationService = notificationService;
+    this.auditLogService = auditLogService;
+    this.emailService = emailService;
+}
 
     /*
      * =========================================================
@@ -154,6 +158,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                 savedAppointment
         );
 
+        emailService.notifyAdminsNewAppointment(savedAppointment);
         auditLogService.record(
                 "CITAS",
                 "REGISTRO DE CITA",

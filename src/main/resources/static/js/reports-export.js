@@ -154,27 +154,98 @@ async function printExportReport(type) {
         return;
     }
 
+    /*
+     * IMPORTANTE:
+     * La ventana debe abrirse inmediatamente al hacer clic.
+     * Si se abre después de un await, el navegador puede bloquearla.
+     */
+    const printWindow = window.open("", "_blank");
+
+    if (!printWindow) {
+        Swal.fire(
+            "Ventana bloqueada",
+            "El navegador bloqueó la ventana de impresión. Permite ventanas emergentes para este sitio.",
+            "warning"
+        );
+        return;
+    }
+
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>Generando reporte...</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        padding: 40px;
+                        color: #1f2937;
+                    }
+
+                    .loading-box {
+                        border: 1px solid #d0d5dd;
+                        border-radius: 14px;
+                        padding: 24px;
+                        background: #f8fafc;
+                    }
+
+                    h2 {
+                        color: #0f3d66;
+                        margin: 0 0 10px;
+                    }
+
+                    p {
+                        color: #667085;
+                        margin: 0;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="loading-box">
+                    <h2>Generando reporte...</h2>
+                    <p>Espera un momento mientras se prepara la vista imprimible.</p>
+                </div>
+            </body>
+        </html>
+    `);
+
+    printWindow.document.close();
+
     try {
         const data = await fetchReportData(config);
 
         if (!data || data.length === 0) {
-            Swal.fire("Sin datos", "No hay información para imprimir.", "info");
+            printWindow.close();
+
+            Swal.fire(
+                "Sin datos",
+                "No hay información para imprimir.",
+                "info"
+            );
             return;
         }
 
         const html = buildPrintableReport(config.title, data, config.columns);
-        const printWindow = window.open("", "_blank");
 
+        printWindow.document.open();
         printWindow.document.write(html);
         printWindow.document.close();
 
+        printWindow.focus();
+
         setTimeout(() => {
             printWindow.print();
-        }, 500);
+        }, 700);
 
     } catch (error) {
         console.error("Error imprimiendo reporte:", error);
-        Swal.fire("Error", "No se pudo generar el reporte para imprimir.", "error");
+
+        printWindow.close();
+
+        Swal.fire(
+            "Error",
+            "No se pudo generar el reporte para imprimir.",
+            "error"
+        );
     }
 }
 
