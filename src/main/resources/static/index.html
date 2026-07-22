@@ -1099,37 +1099,36 @@
                     </div>
                 </div>
 
-                <!-- RESUMEN FINANCIERO -->
-                <div class="finance-summary-grid">
+                <!-- LEYENDA Y RESUMEN COMPACTO -->
+                <div class="finance-compact-panel">
 
-                    <div class="finance-summary-card income">
-                        <span>Ingresos del periodo</span>
-                        <strong id="financeTotalIncome">S/ 0.00</strong>
-                        <small>Total de entradas registradas</small>
+                    <div class="finance-compact-info">
+                        <strong>Movimientos financieros</strong>
+                        <span id="financeCompactSummary">
+                            Filtra por día, semana o mes para revisar los movimientos.
+                        </span>
                     </div>
 
-                    <div class="finance-summary-card expense">
-                        <span>Gastos del periodo</span>
-                        <strong id="financeTotalExpense">S/ 0.00</strong>
-                        <small>Total de salidas registradas</small>
-                    </div>
+                    <div class="finance-status-legend">
+                        <span class="legend-item legend-pending">
+                            Pendiente
+                        </span>
 
-                    <div class="finance-summary-card profit">
-                        <span>Resultado</span>
-                        <strong id="financeProfit">S/ 0.00</strong>
-                        <small id="financeProfitLabel">Ganancia o pérdida</small>
-                    </div>
+                        <span class="legend-item legend-reviewed">
+                            Revisado
+                        </span>
 
-                    <div class="finance-summary-card pending">
-                        <span>Pendientes</span>
-                        <strong id="financePendingCount">0</strong>
-                        <small>Movimientos sin revisar</small>
-                    </div>
+                        <span class="legend-item legend-counted">
+                            Contabilizado
+                        </span>
 
-                    <div class="finance-summary-card reviewed">
-                        <span>Revisados</span>
-                        <strong id="financeReviewedCount">0</strong>
-                        <small>Movimientos verificados</small>
+                        <span class="legend-item legend-observed">
+                            Observado
+                        </span>
+
+                        <span class="legend-item legend-cancelled">
+                            Anulado
+                        </span>
                     </div>
 
                 </div>

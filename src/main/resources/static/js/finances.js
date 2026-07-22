@@ -934,6 +934,9 @@ function updateFinanceSummaryCards() {
     let totalExpense = 0;
     let pendingCount = 0;
     let reviewedCount = 0;
+    let countedCount = 0;
+    let observedCount = 0;
+    let cancelledCount = 0;
 
     financeMovementsData.forEach((movement) => {
         const status = movement.reviewStatus || "PENDIENTE";
@@ -946,7 +949,16 @@ function updateFinanceSummaryCards() {
             reviewedCount++;
         }
 
+        if (status === "CONTABILIZADO") {
+            countedCount++;
+        }
+
+        if (status === "OBSERVADO") {
+            observedCount++;
+        }
+
         if (status === "ANULADO" || movement.active === false) {
+            cancelledCount++;
             return;
         }
 
@@ -959,18 +971,16 @@ function updateFinanceSummaryCards() {
         }
     });
 
-    const profit = totalIncome - totalExpense;
+    const compactSummary = document.getElementById("financeCompactSummary");
 
-    setText("financeTotalIncome", `S/ ${totalIncome.toFixed(2)}`);
-    setText("financeTotalExpense", `S/ ${totalExpense.toFixed(2)}`);
-    setText("financeProfit", `S/ ${profit.toFixed(2)}`);
-    setText("financePendingCount", pendingCount);
-    setText("financeReviewedCount", reviewedCount);
-
-    const profitLabel = document.getElementById("financeProfitLabel");
-
-    if (profitLabel) {
-        profitLabel.textContent = profit >= 0 ? "Ganancia del periodo" : "Pérdida del periodo";
+    if (compactSummary) {
+        compactSummary.textContent =
+            `${financeMovementsData.length} movimientos encontrados · ` +
+            `${pendingCount} pendientes · ` +
+            `${reviewedCount} revisados · ` +
+            `${countedCount} contabilizados · ` +
+            `${observedCount} observados · ` +
+            `${cancelledCount} anulados`;
     }
 }
 

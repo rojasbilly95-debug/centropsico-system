@@ -3782,3 +3782,126 @@ body.modal-open {
         width: 100%;
     }
 }
+
+.finance-compact-panel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    padding: 16px 18px;
+    margin-bottom: 18px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+}
+
+.finance-compact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.finance-compact-info strong {
+    color: #0f172a;
+    font-size: 15px;
+}
+
+.finance-compact-info span {
+    color: #64748b;
+    font-size: 13px;
+}
+
+.finance-status-legend {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 6px 11px;
+    font-size: 12px;
+    font-weight: 700;
+    border: 1px solid transparent;
+}
+
+.legend-pending {
+    background: #ffffff;
+    color: #334155;
+    border-color: #cbd5e1;
+}
+
+.legend-reviewed {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.legend-counted {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.legend-observed {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.legend-cancelled {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.finance-amount-income {
+    color: #047857;
+    font-weight: 700;
+}
+
+.finance-amount-expense {
+    color: #b91c1c;
+    font-weight: 700;
+}
+
+.finance-type-income {
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.finance-type-expense {
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.btn-table {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #0f172a;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.btn-table:hover {
+    background: #f1f5f9;
+}
+
+.table-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 900px) {
+    .finance-compact-panel {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .finance-status-legend {
+        justify-content: flex-start;
+    }
+}
