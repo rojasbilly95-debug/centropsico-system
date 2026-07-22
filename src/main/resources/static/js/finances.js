@@ -998,21 +998,10 @@ function updateFinanceSummaryCards() {
     financeMovementsData.forEach((movement) => {
         const status = movement.reviewStatus || "PENDIENTE";
 
-        if (status === "PENDIENTE") {
-            pendingCount++;
-        }
-
-        if (status === "REVISADO") {
-            reviewedCount++;
-        }
-
-        if (status === "CONTABILIZADO") {
-            countedCount++;
-        }
-
-        if (status === "OBSERVADO") {
-            observedCount++;
-        }
+        if (status === "PENDIENTE") pendingCount++;
+        if (status === "REVISADO") reviewedCount++;
+        if (status === "CONTABILIZADO") countedCount++;
+        if (status === "OBSERVADO") observedCount++;
 
         if (status === "ANULADO" || movement.active === false) {
             cancelledCount++;
@@ -1040,10 +1029,10 @@ function updateFinanceSummaryCards() {
         profitStatus.className = "";
 
         if (profit > 0) {
-            profitStatus.textContent = "Ganancia del periodo filtrado";
+            profitStatus.textContent = "Ganancia del filtro aplicado";
             profitStatus.classList.add("finance-profit-positive");
         } else if (profit < 0) {
-            profitStatus.textContent = "Pérdida del periodo filtrado";
+            profitStatus.textContent = "Pérdida del filtro aplicado";
             profitStatus.classList.add("finance-profit-negative");
         } else {
             profitStatus.textContent = "Sin ganancia ni pérdida";
