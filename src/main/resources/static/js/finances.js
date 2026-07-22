@@ -1324,8 +1324,14 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => {
         const financeSection = document.getElementById("finances");
 
-        if (financeSection) {
-            initFinanceModule();
+        if (!financeSection) {
+            return;
         }
+
+        if (!currentUser || currentUser.role !== "ADMIN") {
+            return;
+        }
+
+        initFinanceModule();
     }, 400);
 });
