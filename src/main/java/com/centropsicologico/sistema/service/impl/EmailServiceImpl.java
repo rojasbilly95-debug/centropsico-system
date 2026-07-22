@@ -7,8 +7,8 @@ import com.centropsicologico.sistema.repository.UserRepository;
 import com.centropsicologico.sistema.service.EmailService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -35,8 +35,11 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void notifyAdminsNewAppointment(Appointment appointment) {
         if (appointment == null) {
+            System.err.println("EMAIL: No se envió correo porque la cita es null.");
             return;
         }
+
+        System.out.println("EMAIL: Preparando correo por nueva cita desde panel. ID cita: " + appointment.getId());
 
         String subject = "Nueva cita registrada - CentroPsico";
 
@@ -55,8 +58,11 @@ public class EmailServiceImpl implements EmailService {
             Lead lead
     ) {
         if (appointment == null) {
+            System.err.println("EMAIL: No se envió correo porque la cita desde pre-reserva es null.");
             return;
         }
+
+        System.out.println("EMAIL: Preparando correo por cita creada desde pre-reserva. ID cita: " + appointment.getId());
 
         String subject = "Nueva cita desde pre-reserva - CentroPsico";
 
@@ -85,25 +91,53 @@ public class EmailServiceImpl implements EmailService {
             String subject,
             String body
     ) {
-        List<User> admins =
-                userRepository.findByRoleAndActiveTrue("ADMIN");
+        System.out.println("====================================");
+        System.out.println("INICIANDO ENVÍO DE CORREO A ADMIN");
+        System.out.println("MAIL_FROM CONFIGURADO: " + mailFrom);
+
+        if (mailFrom == null || mailFrom.isBlank()) {
+            System.err.println("EMAIL ERROR: spring.mail.username está vacío. Revisa MAIL_USERNAME en Render.");
+            System.out.println("====================================");
+            return;
+        }
+
+        List<User> admins = userRepository.findByRoleAndActiveTrue("ADMIN");
+
+        System.out.println("ADMINISTRADORES ENCONTRADOS: " + (admins != null ? admins.size() : 0));
 
         if (admins == null || admins.isEmpty()) {
-            System.err.println("No se encontraron administradores activos para enviar correo.");
+            System.err.println("EMAIL ERROR: No se encontraron administradores activos para enviar correo.");
+            System.out.println("====================================");
             return;
         }
 
         for (User admin : admins) {
+            if (admin == null) {
+                continue;
+            }
+
+            System.out.println("ADMIN DETECTADO: "
+                    + safe(admin.getFirstName())
+                    + " "
+                    + safe(admin.getLastName())
+                    + " | correo: "
+                    + admin.getEmail()
+            );
+
             if (admin.getEmail() == null || admin.getEmail().isBlank()) {
+                System.err.println("EMAIL WARNING: Admin sin correo, se omite.");
                 continue;
             }
 
             sendEmail(
-                    admin.getEmail(),
+                    admin.getEmail().trim(),
                     subject,
                     body
             );
         }
+
+        System.out.println("FIN DEL PROCESO DE ENVÍO DE CORREO");
+        System.out.println("====================================");
     }
 
     private void sendEmail(
@@ -112,25 +146,27 @@ public class EmailServiceImpl implements EmailService {
             String body
     ) {
         try {
+            System.out.println("EMAIL: Intentando enviar correo a: " + to);
+
             SimpleMailMessage message = new SimpleMailMessage();
 
-            if (mailFrom != null && !mailFrom.isBlank()) {
-                message.setFrom(mailFrom);
-            }
-
+            message.setFrom(mailFrom);
             message.setTo(to);
             message.setSubject(subject);
             message.setText(body);
 
             mailSender.send(message);
 
+            System.out.println("EMAIL OK: Correo enviado correctamente a: " + to);
+
         } catch (MailException exception) {
-            System.err.println(
-                    "No se pudo enviar correo a "
-                            + to
-                            + ": "
-                            + exception.getMessage()
-            );
+            System.err.println("EMAIL ERROR: No se pudo enviar correo a " + to);
+            System.err.println("EMAIL ERROR MESSAGE: " + exception.getMessage());
+            exception.printStackTrace();
+        } catch (Exception exception) {
+            System.err.println("EMAIL ERROR GENERAL: Falló el envío de correo a " + to);
+            System.err.println("EMAIL ERROR MESSAGE: " + exception.getMessage());
+            exception.printStackTrace();
         }
     }
 
