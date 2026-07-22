@@ -6,6 +6,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "ingreso")
@@ -32,4 +33,58 @@ public class Income {
 
     @Column(name = "estado", nullable = false)
     private Boolean active = true;
+
+    /*
+     * Estado de revisión financiera:
+     * PENDIENTE, REVISADO, CONTABILIZADO, OBSERVADO, ANULADO
+     */
+    @Column(name = "estado_revision", length = 30)
+    private String reviewStatus = "PENDIENTE";
+
+    /*
+     * Usuario que revisó o validó el ingreso.
+     */
+    @Column(name = "revisado_por", length = 120)
+    private String reviewedBy;
+
+    /*
+     * Fecha y hora en que se revisó el ingreso.
+     */
+    @Column(name = "fecha_revision")
+    private LocalDateTime reviewedAt;
+
+    /*
+     * Observación escrita al momento de revisar el ingreso.
+     */
+    @Column(name = "observacion_revision", length = 255)
+    private String reviewObservation;
+
+    /*
+     * Origen del ingreso:
+     * MANUAL, CITA, ADELANTO, PAGO_FINAL, OTRO
+     */
+    @Column(name = "origen", length = 80)
+    private String origin;
+
+    /*
+     * Referencia del ingreso:
+     * código de operación, número de cita, comprobante, etc.
+     */
+    @Column(name = "referencia", length = 120)
+    private String reference;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.active == null) {
+            this.active = true;
+        }
+
+        if (this.reviewStatus == null || this.reviewStatus.trim().isEmpty()) {
+            this.reviewStatus = "PENDIENTE";
+        }
+
+        if (this.origin == null || this.origin.trim().isEmpty()) {
+            this.origin = "MANUAL";
+        }
+    }
 }

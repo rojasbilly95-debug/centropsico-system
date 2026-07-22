@@ -22,9 +22,17 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
               AND (:endDate IS NULL OR e.date <= :endDate)
               AND (:categoryId IS NULL OR c.id = :categoryId)
               AND (:active IS NULL OR e.active = :active)
+              AND (:reviewStatus IS NULL OR e.reviewStatus = :reviewStatus)
               AND (
                     :responsible IS NULL
                     OR LOWER(COALESCE(e.responsible, '')) LIKE LOWER(CONCAT('%', :responsible, '%'))
+                  )
+              AND (
+                    :search IS NULL
+                    OR LOWER(COALESCE(e.description, '')) LIKE LOWER(CONCAT('%', :search, '%'))
+                    OR LOWER(COALESCE(e.origin, '')) LIKE LOWER(CONCAT('%', :search, '%'))
+                    OR LOWER(COALESCE(e.reference, '')) LIKE LOWER(CONCAT('%', :search, '%'))
+                    OR LOWER(COALESCE(c.name, '')) LIKE LOWER(CONCAT('%', :search, '%'))
                   )
             ORDER BY e.date DESC, e.id DESC
             """)
@@ -33,6 +41,8 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
             @Param("endDate") LocalDate endDate,
             @Param("categoryId") Long categoryId,
             @Param("active") Boolean active,
-            @Param("responsible") String responsible
+            @Param("responsible") String responsible,
+            @Param("reviewStatus") String reviewStatus,
+            @Param("search") String search
     );
 }

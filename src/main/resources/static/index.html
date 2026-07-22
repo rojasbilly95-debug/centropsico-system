@@ -1075,20 +1075,223 @@
 
             <!-- FINANZAS -->
             <section id="finances" class="section admin-only">
+
                 <div class="module-header">
                     <div>
                         <h2 class="section-title">Módulo de Finanzas</h2>
                         <p class="section-subtitle">
-                            Registra ingresos, gastos, categorías y analiza el resultado mensual del centro psicológico.
+                            Control de ingresos, gastos, revisión financiera y análisis de movimientos del sistema.
                         </p>
+                    </div>
+
+                    <div class="finance-header-actions">
+                        <button class="btn-primary" type="button" onclick="openIncomeModal()">
+                            + Registrar ingreso
+                        </button>
+
+                        <button class="btn-secondary" type="button" onclick="openExpenseModal()">
+                            + Registrar gasto
+                        </button>
+
+                        <button class="btn-secondary" type="button" onclick="openExpenseCategoryModal()">
+                            Categorías
+                        </button>
                     </div>
                 </div>
 
-                <div class="module-grid finance-main-grid">
-                    <div class="card form-card">
-                        <div class="card-header">
-                            <h3>Registrar ingreso</h3>
-                            <span>Pagos, entradas y movimientos positivos</span>
+                <!-- RESUMEN FINANCIERO -->
+                <div class="finance-summary-grid">
+
+                    <div class="finance-summary-card income">
+                        <span>Ingresos del periodo</span>
+                        <strong id="financeTotalIncome">S/ 0.00</strong>
+                        <small>Total de entradas registradas</small>
+                    </div>
+
+                    <div class="finance-summary-card expense">
+                        <span>Gastos del periodo</span>
+                        <strong id="financeTotalExpense">S/ 0.00</strong>
+                        <small>Total de salidas registradas</small>
+                    </div>
+
+                    <div class="finance-summary-card profit">
+                        <span>Resultado</span>
+                        <strong id="financeProfit">S/ 0.00</strong>
+                        <small id="financeProfitLabel">Ganancia o pérdida</small>
+                    </div>
+
+                    <div class="finance-summary-card pending">
+                        <span>Pendientes</span>
+                        <strong id="financePendingCount">0</strong>
+                        <small>Movimientos sin revisar</small>
+                    </div>
+
+                    <div class="finance-summary-card reviewed">
+                        <span>Revisados</span>
+                        <strong id="financeReviewedCount">0</strong>
+                        <small>Movimientos verificados</small>
+                    </div>
+
+                </div>
+
+                <!-- FILTROS PRINCIPALES -->
+                <div class="card finance-filter-card">
+                    <div class="card-header">
+                        <h3>Filtros financieros</h3>
+                        <span>Filtra los movimientos por periodo, tipo y estado de revisión.</span>
+                    </div>
+
+                    <div class="finance-filter-grid">
+
+                        <div class="finance-filter-field">
+                            <label>Periodo</label>
+                            <select id="financePeriodFilter" onchange="handleFinancePeriodChange()">
+                                <option value="day">Día</option>
+                                <option value="week">Semana</option>
+                                <option value="month" selected>Mes</option>
+                                <option value="custom">Rango personalizado</option>
+                            </select>
+                        </div>
+
+                        <div class="finance-filter-field">
+                            <label>Fecha</label>
+                            <input type="date" id="financeSingleDate">
+                        </div>
+
+                        <div class="finance-filter-field">
+                            <label>Año</label>
+                            <input type="number" id="financeYearFilter" placeholder="2026">
+                        </div>
+
+                        <div class="finance-filter-field">
+                            <label>Mes</label>
+                            <select id="financeMonthFilter">
+                                <option value="">Seleccione mes</option>
+                                <option value="1">Enero</option>
+                                <option value="2">Febrero</option>
+                                <option value="3">Marzo</option>
+                                <option value="4">Abril</option>
+                                <option value="5">Mayo</option>
+                                <option value="6">Junio</option>
+                                <option value="7">Julio</option>
+                                <option value="8">Agosto</option>
+                                <option value="9">Septiembre</option>
+                                <option value="10">Octubre</option>
+                                <option value="11">Noviembre</option>
+                                <option value="12">Diciembre</option>
+                            </select>
+                        </div>
+
+                        <div class="finance-filter-field finance-custom-range hidden">
+                            <label>Desde</label>
+                            <input type="date" id="financeStartDateFilter">
+                        </div>
+
+                        <div class="finance-filter-field finance-custom-range hidden">
+                            <label>Hasta</label>
+                            <input type="date" id="financeEndDateFilter">
+                        </div>
+
+                        <div class="finance-filter-field">
+                            <label>Tipo</label>
+                            <select id="financeTypeFilter">
+                                <option value="">Todos</option>
+                                <option value="INGRESO">Ingresos</option>
+                                <option value="GASTO">Gastos</option>
+                            </select>
+                        </div>
+
+                        <div class="finance-filter-field">
+                            <label>Estado de revisión</label>
+                            <select id="financeReviewStatusFilter">
+                                <option value="">Todos</option>
+                                <option value="PENDIENTE">Pendientes / sin revisar</option>
+                                <option value="REVISADO">Revisados</option>
+                                <option value="CONTABILIZADO">Contabilizados</option>
+                                <option value="OBSERVADO">Observados</option>
+                                <option value="ANULADO">Anulados</option>
+                            </select>
+                        </div>
+
+                        <div class="finance-filter-field">
+                            <label>Buscar</label>
+                            <input type="text" id="financeSearchFilter" placeholder="Descripción, origen o referencia">
+                        </div>
+
+                    </div>
+
+                    <div class="form-actions">
+                        <button class="btn-primary" type="button" onclick="loadFinanceMovements()">
+                            Aplicar filtros
+                        </button>
+
+                        <button class="btn-secondary" type="button" onclick="clearFinanceFilters()">
+                            Limpiar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- HISTORIAL FINANCIERO -->
+                <div class="card table-card finance-table-card">
+                    <div class="table-header">
+                        <div>
+                            <h3>Historial financiero</h3>
+                            <span>
+                                Ingresos y gastos registrados, con estado de revisión y trazabilidad.
+                            </span>
+                        </div>
+
+                        <button class="btn-secondary" type="button" onclick="loadFinanceMovements()">
+                            Actualizar
+                        </button>
+                    </div>
+
+                    <div id="financeMainResult" class="result-box compact-result">
+                        Cargando movimientos financieros...
+                    </div>
+
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Tipo</th>
+                                    <th>Descripción</th>
+                                    <th>Categoría / Método</th>
+                                    <th>Origen</th>
+                                    <th>Referencia</th>
+                                    <th>Monto</th>
+                                    <th>Estado revisión</th>
+                                    <th>Revisado por</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="financeMovementTableBody">
+                                <tr>
+                                    <td colspan="10">Cargando movimientos...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="pagination-bar">
+                        <button class="btn-secondary" onclick="changeFinanceMovementPage(-1)">Anterior</button>
+                        <span id="financeMovementPageInfo">Página 1 de 1</span>
+                        <button class="btn-secondary" onclick="changeFinanceMovementPage(1)">Siguiente</button>
+                    </div>
+                </div>
+
+                <!-- MODAL REGISTRAR INGRESO -->
+                <div id="incomeModal" class="floating-modal hidden">
+                    <div class="finance-modal-content">
+                        <div class="floating-modal-header">
+                            <div>
+                                <h3>Registrar ingreso</h3>
+                                <span>Entradas de dinero, pagos manuales o movimientos positivos.</span>
+                            </div>
+
+                            <button class="modal-close-btn" onclick="closeIncomeModal()">×</button>
                         </div>
 
                         <div class="form-grid">
@@ -1103,18 +1306,39 @@
                                 <option value="TRANSFERENCIA">TRANSFERENCIA</option>
                                 <option value="TARJETA">TARJETA</option>
                             </select>
+
+                            <select id="incomeOrigin">
+                                <option value="MANUAL">MANUAL</option>
+                                <option value="CITA">CITA</option>
+                                <option value="ADELANTO">ADELANTO</option>
+                                <option value="PAGO_FINAL">PAGO FINAL</option>
+                                <option value="OTRO">OTRO</option>
+                            </select>
+
+                            <input type="text" id="incomeReference" placeholder="Referencia o código de operación">
+                        </div>
+
+                        <div id="incomeResult" class="result-box compact-result">
+                            Complete los datos del ingreso.
                         </div>
 
                         <div class="form-actions">
                             <button class="btn-primary" onclick="createIncome()">Guardar ingreso</button>
-                            <button class="btn-secondary" onclick="toggleIncomeList()">Listar ingresos</button>
+                            <button class="btn-secondary" onclick="closeIncomeModal()">Cancelar</button>
                         </div>
                     </div>
+                </div>
 
-                    <div class="card form-card">
-                        <div class="card-header">
-                            <h3>Registrar gasto</h3>
-                            <span>Salidas de dinero, pagos operativos o campañas</span>
+                <!-- MODAL REGISTRAR GASTO -->
+                <div id="expenseModal" class="floating-modal hidden">
+                    <div class="finance-modal-content">
+                        <div class="floating-modal-header">
+                            <div>
+                                <h3>Registrar gasto</h3>
+                                <span>Salidas de dinero, pagos operativos o gastos administrativos.</span>
+                            </div>
+
+                            <button class="modal-close-btn" onclick="closeExpenseModal()">×</button>
                         </div>
 
                         <div class="form-grid">
@@ -1123,43 +1347,42 @@
                             <input type="number" id="expenseAmount" placeholder="Monto">
                             <input type="date" id="expenseDate">
                             <input type="text" id="expenseResponsible" placeholder="Responsable">
+
+                            <select id="expenseOrigin">
+                                <option value="MANUAL">MANUAL</option>
+                                <option value="OPERATIVO">OPERATIVO</option>
+                                <option value="SERVICIO">SERVICIO</option>
+                                <option value="CAMPAÑA">CAMPAÑA</option>
+                                <option value="OTRO">OTRO</option>
+                            </select>
+
+                            <input type="text" id="expenseReference" placeholder="Referencia o comprobante">
+                        </div>
+
+                        <div id="expenseResult" class="result-box compact-result">
+                            Complete los datos del gasto.
                         </div>
 
                         <div class="form-actions">
                             <button class="btn-primary" onclick="createExpense()">Guardar gasto</button>
-                            <button class="btn-secondary" onclick="toggleExpenseList()">Listar gastos</button>
+                            <button class="btn-secondary" onclick="closeExpenseModal()">Cancelar</button>
                         </div>
                     </div>
                 </div>
 
-                <div class="module-grid finance-secondary-grid">
-                    <div class="card message-card">
-                        <div class="card-header">
-                            <h3>Resumen financiero</h3>
-                            <span>Consulta ganancia o pérdida mensual</span>
+                <!-- MODAL CATEGORÍAS -->
+                <div id="expenseCategoryModal" class="floating-modal hidden">
+                    <div class="finance-modal-content">
+                        <div class="floating-modal-header">
+                            <div>
+                                <h3>Categorías de gasto</h3>
+                                <span>Organiza los gastos por tipo o finalidad.</span>
+                            </div>
+
+                            <button class="modal-close-btn" onclick="closeExpenseCategoryModal()">×</button>
                         </div>
 
-                        <div class="form-grid single-column">
-                            <input type="number" id="summaryYear" placeholder="Año, ejemplo: 2026">
-                            <input type="number" id="summaryMonth" placeholder="Mes, ejemplo: 6">
-                        </div>
-
-                        <div class="form-actions">
-                            <button class="btn-primary" onclick="loadFinanceSummary()">Ver resumen</button>
-                        </div>
-
-                        <div id="financeSummaryResult" class="result-box finance-result">
-                            Aquí verás ingresos, gastos y ganancia/pérdida.
-                        </div>
-                    </div>
-
-                    <div class="card message-card">
-                        <div class="card-header">
-                            <h3>Categorías de gasto</h3>
-                            <span>Organiza talleres, campañas, alquiler u otros gastos</span>
-                        </div>
-
-                        <div class="form-grid single-column">
+                        <div class="form-grid">
                             <input type="text" id="expenseCategoryName" placeholder="Nombre de categoría">
                             <input type="text" id="expenseCategoryDescription" placeholder="Descripción">
                         </div>
@@ -1178,193 +1401,58 @@
                     </div>
                 </div>
 
-                <!-- HISTORIAL MENSUAL DE GASTOS -->
-                <div class="finance-monthly-history monthly-history-professional">
+                <!-- MODAL DETALLE FINANCIERO -->
+                <div id="financeDetailModal" class="floating-modal hidden">
+                    <div class="finance-modal-content finance-detail-modal-content">
+                        <div class="floating-modal-header">
+                            <div>
+                                <h3>Detalle del movimiento</h3>
+                                <span>Información completa del ingreso o gasto seleccionado.</span>
+                            </div>
 
-                    <div class="finance-monthly-header professional-history-header">
-                        <div>
-                            <span>Historial mensual</span>
-                            <h3>Gastos por mes</h3>
-                            <p>
-                                Consulta el total gastado, las categorías utilizadas y el detalle de gastos
-                                registrados en un periodo específico.
-                            </p>
+                            <button class="modal-close-btn" onclick="closeFinanceDetailModal()">×</button>
+                        </div>
+
+                        <div id="financeDetailContent" class="finance-detail-content">
+                            Cargando detalle...
                         </div>
                     </div>
-
-                    <div class="finance-monthly-filters professional-history-filters">
-                        <input id="monthlyExpenseYear" type="number" placeholder="Año. Ejemplo: 2026">
-
-                        <select id="monthlyExpenseMonth">
-                            <option value="">Seleccione mes</option>
-                            <option value="1">Enero</option>
-                            <option value="2">Febrero</option>
-                            <option value="3">Marzo</option>
-                            <option value="4">Abril</option>
-                            <option value="5">Mayo</option>
-                            <option value="6">Junio</option>
-                            <option value="7">Julio</option>
-                            <option value="8">Agosto</option>
-                            <option value="9">Septiembre</option>
-                            <option value="10">Octubre</option>
-                            <option value="11">Noviembre</option>
-                            <option value="12">Diciembre</option>
-                        </select>
-
-                        <button class="btn-primary" onclick="viewMonthlyExpenses()">
-                            Ver gastos
-                        </button>
-                    </div>
-
-                    <div id="monthlyExpenseResult" class="monthly-expense-result professional-monthly-result">
-                        <div class="monthly-expense-empty">
-                            Selecciona un año y mes para visualizar el historial mensual de gastos.
-                        </div>
-                    </div>
-
                 </div>
 
-                <!-- MODAL INGRESOS -->
-                <div id="incomeListModal" class="floating-modal hidden">
+                <!-- MODAL REVISAR MOVIMIENTO -->
+                <div id="financeReviewModal" class="floating-modal hidden">
                     <div class="finance-modal-content">
                         <div class="floating-modal-header">
                             <div>
-                                <h3>Ingresos registrados</h3>
-                                <span>Historial de entradas de dinero</span>
+                                <h3>Revisar movimiento</h3>
+                                <span>Marca el movimiento como revisado, contabilizado, observado o anulado.</span>
                             </div>
 
-                            <button class="modal-close-btn" onclick="closeIncomeList()">×</button>
+                            <button class="modal-close-btn" onclick="closeFinanceReviewModal()">×</button>
                         </div>
 
-                        <div class="floating-modal-tools">
-                            <input class="table-search" type="text" placeholder="Buscar ingreso..."
-                                oninput="filterIncomeTable()">
+                        <input type="hidden" id="financeReviewType">
+                        <input type="hidden" id="financeReviewId">
+
+                        <div class="form-grid single-column">
+                            <select id="financeReviewStatus">
+                                <option value="REVISADO">REVISADO</option>
+                                <option value="CONTABILIZADO">CONTABILIZADO</option>
+                                <option value="OBSERVADO">OBSERVADO</option>
+                                <option value="ANULADO">ANULADO</option>
+                            </select>
+
+                            <textarea id="financeReviewObservation" rows="4"
+                                placeholder="Observación de revisión"></textarea>
                         </div>
 
-                        <div id="incomeResult" class="result-box compact-result">
-                            Mensajes de ingresos...
-                        </div>
-
-                        <div class="table-wrapper floating-table-wrapper">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Descripción</th>
-                                        <th>Monto</th>
-                                        <th>Fecha</th>
-                                        <th>Método</th>
-                                        <th>Estado</th>
-                                    </tr>
-                                </thead>
-
-                                <tbody id="incomeTableBody"></tbody>
-                            </table>
-                        </div>
-
-                        <div class="pagination-bar">
-                            <button class="btn-secondary" onclick="changeIncomePage(-1)">Anterior</button>
-                            <span id="incomePageInfo">Página 1 de 1</span>
-                            <button class="btn-secondary" onclick="changeIncomePage(1)">Siguiente</button>
+                        <div class="form-actions">
+                            <button class="btn-primary" onclick="submitFinanceReview()">Guardar revisión</button>
+                            <button class="btn-secondary" onclick="closeFinanceReviewModal()">Cancelar</button>
                         </div>
                     </div>
                 </div>
 
-                <!-- MODAL GASTOS -->
-                <div id="expenseListModal" class="floating-modal hidden">
-                    <div class="finance-modal-content">
-
-                        <div class="floating-modal-header">
-                            <div>
-                                <h3>Gastos registrados</h3>
-                                <span>Historial de gastos del centro</span>
-                            </div>
-
-                            <button class="modal-close-btn" onclick="closeExpenseList()">×</button>
-                        </div>
-
-                        <div class="floating-modal-tools finance-filter-tools">
-                            <input type="number" id="expenseFilterYear" placeholder="Año. Ejemplo: 2026">
-
-                            <select id="expenseFilterMonth">
-                                <option value="">Todos los meses</option>
-                                <option value="1">Enero</option>
-                                <option value="2">Febrero</option>
-                                <option value="3">Marzo</option>
-                                <option value="4">Abril</option>
-                                <option value="5">Mayo</option>
-                                <option value="6">Junio</option>
-                                <option value="7">Julio</option>
-                                <option value="8">Agosto</option>
-                                <option value="9">Septiembre</option>
-                                <option value="10">Octubre</option>
-                                <option value="11">Noviembre</option>
-                                <option value="12">Diciembre</option>
-                            </select>
-
-                            <select id="expenseFilterCategoryId">
-                                <option value="">Todas las categorías</option>
-                            </select>
-
-                            <select id="expenseFilterStatus">
-                                <option value="true" selected>Activos</option>
-                                <option value="false">Eliminados/Inactivos</option>
-                                <option value="">Todos los estados</option>
-                            </select>
-
-                            <select id="expenseFilterResponsible">
-                                <option value="">Todos los responsables</option>
-                            </select>
-
-                            <button class="btn-primary" onclick="filterExpensesByAdvancedFilters()">
-                                Filtrar gastos
-                            </button>
-
-                            <button class="btn-secondary" onclick="clearExpenseFilters()">
-                                Limpiar filtros
-                            </button>
-
-                            <input id="expenseSearchInput" class="table-search" type="text"
-                                placeholder="Buscar dentro del resultado..." oninput="filterExpenseTable()">
-                        </div>
-
-                        <div class="finance-modal-results">
-
-                            <div id="expenseFilterSummary" class="finance-filter-summary hidden"></div>
-
-                            <div id="expenseResult" class="result-box compact-result">
-                                Mensajes de gastos...
-                            </div>
-
-                            <div class="table-wrapper floating-table-wrapper">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Categoría</th>
-                                            <th>Descripción</th>
-                                            <th>Monto</th>
-                                            <th>Fecha</th>
-                                            <th>Responsable</th>
-                                            <th>Estado</th>
-                                            <th>Acción</th>
-                                        </tr>
-                                    </thead>
-
-                                    <tbody id="expenseTableBody"></tbody>
-                                </table>
-                            </div>
-
-                            <div class="pagination-bar">
-                                <button class="btn-secondary" onclick="changeExpensePage(-1)">Anterior</button>
-                                <span id="expensePageInfo">Página 1 de 1</span>
-                                <button class="btn-secondary" onclick="changeExpensePage(1)">Siguiente</button>
-                            </div>
-
-                        </div>
-
-                    </div>
-                </div>
             </section>
 
             <!-- PRE-RESERVAS DE ATENCIÓN -->

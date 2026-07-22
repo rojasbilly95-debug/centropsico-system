@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -32,8 +33,8 @@ public class FinanceServiceImpl implements FinanceService {
             ExpenseRepository expenseRepository,
             ExpenseCategoryRepository expenseCategoryRepository,
             NotificationService notificationService,
-            AuditLogService auditLogService) {
-
+            AuditLogService auditLogService
+    ) {
         this.incomeRepository = incomeRepository;
         this.expenseRepository = expenseRepository;
         this.expenseCategoryRepository = expenseCategoryRepository;
@@ -41,6 +42,9 @@ public class FinanceServiceImpl implements FinanceService {
         this.auditLogService = auditLogService;
     }
 
+    /*
+     * INGRESOS
+     */
     @Override
     public Income saveIncome(Income income) {
 
@@ -64,6 +68,22 @@ public class FinanceServiceImpl implements FinanceService {
         income.setPaymentMethod(income.getPaymentMethod().trim());
         income.setActive(true);
 
+        if (income.getReviewStatus() == null || income.getReviewStatus().trim().isEmpty()) {
+            income.setReviewStatus("PENDIENTE");
+        } else {
+            income.setReviewStatus(normalizeReviewStatus(income.getReviewStatus()));
+        }
+
+        if (income.getOrigin() == null || income.getOrigin().trim().isEmpty()) {
+            income.setOrigin("MANUAL");
+        } else {
+            income.setOrigin(income.getOrigin().trim().toUpperCase());
+        }
+
+        if (income.getReference() != null) {
+            income.setReference(income.getReference().trim());
+        }
+
         Income savedIncome = incomeRepository.save(income);
 
         notificationService.createForRole(
@@ -85,6 +105,8 @@ public class FinanceServiceImpl implements FinanceService {
                         + savedIncome.getDescription()
                         + ". Método de pago: "
                         + savedIncome.getPaymentMethod()
+                        + ". Estado de revisión: "
+                        + savedIncome.getReviewStatus()
         );
 
         return savedIncome;
@@ -92,10 +114,91 @@ public class FinanceServiceImpl implements FinanceService {
 
     @Override
     public List<Income> findAllIncomes() {
-    return incomeRepository.findByActiveTrueOrderByDateDescIdDesc();
-}
+        return incomeRepository.findByActiveTrueOrderByDateDescIdDesc();
+    }
+
     @Override
-    
+    public List<Income> filterIncomes(
+            Integer year,
+            Integer month,
+            LocalDate startDate,
+            LocalDate endDate,
+            Boolean active,
+            String reviewStatus,
+            String paymentMethod,
+            String search
+    ) {
+        LocalDate[] range = resolveDateRange(year, month, startDate, endDate);
+
+        String cleanReviewStatus = normalizeNullable(reviewStatus);
+        String cleanPaymentMethod = normalizeNullable(paymentMethod);
+        String cleanSearch = cleanNullable(search);
+
+        if (cleanReviewStatus != null) {
+            cleanReviewStatus = normalizeReviewStatus(cleanReviewStatus);
+        }
+
+        return incomeRepository.filterIncomes(
+                range[0],
+                range[1],
+                active,
+                cleanReviewStatus,
+                cleanPaymentMethod,
+                cleanSearch
+        );
+    }
+
+    @Override
+    public Income reviewIncome(
+            Long id,
+            String reviewStatus,
+            String observation,
+            String reviewedBy
+    ) {
+        Income income = incomeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ingreso no encontrado"));
+
+        String status = normalizeReviewStatus(reviewStatus);
+
+        income.setReviewStatus(status);
+        income.setReviewedBy(cleanNullable(reviewedBy));
+        income.setReviewedAt(LocalDateTime.now());
+        income.setReviewObservation(cleanNullable(observation));
+
+        if ("ANULADO".equals(status)) {
+            income.setActive(false);
+        }
+
+        Income saved = incomeRepository.save(income);
+
+        notificationService.createForRole(
+                "Ingreso revisado",
+                "El ingreso de S/ " + saved.getAmount()
+                        + " fue marcado como " + saved.getReviewStatus(),
+                "INGRESO_REVISADO",
+                "ADMIN"
+        );
+
+        auditLogService.record(
+                "FINANZAS",
+                "REVISIÓN DE INGRESO",
+                "Income",
+                saved.getId(),
+                "El ingreso de S/ "
+                        + saved.getAmount()
+                        + " fue marcado como "
+                        + saved.getReviewStatus()
+                        + ". Observación: "
+                        + safe(saved.getReviewObservation())
+        );
+
+        return saved;
+    }
+
+    /*
+     * CATEGORÍAS DE GASTO
+     */
+    @Override
     public ExpenseCategory saveExpenseCategory(ExpenseCategory category) {
         if (category == null || category.getName() == null || category.getName().trim().isEmpty()) {
             throw new BusinessRuleException("El nombre de la categoría es obligatorio");
@@ -126,6 +229,9 @@ public class FinanceServiceImpl implements FinanceService {
         return expenseCategoryRepository.findAll();
     }
 
+    /*
+     * GASTOS
+     */
     @Override
     public Expense saveExpense(Expense expense) {
 
@@ -156,6 +262,22 @@ public class FinanceServiceImpl implements FinanceService {
 
         expense.setCategory(category);
         expense.setActive(true);
+
+        if (expense.getReviewStatus() == null || expense.getReviewStatus().trim().isEmpty()) {
+            expense.setReviewStatus("PENDIENTE");
+        } else {
+            expense.setReviewStatus(normalizeReviewStatus(expense.getReviewStatus()));
+        }
+
+        if (expense.getOrigin() == null || expense.getOrigin().trim().isEmpty()) {
+            expense.setOrigin("MANUAL");
+        } else {
+            expense.setOrigin(expense.getOrigin().trim().toUpperCase());
+        }
+
+        if (expense.getReference() != null) {
+            expense.setReference(expense.getReference().trim());
+        }
 
         Expense savedExpense = expenseRepository.save(expense);
 
@@ -189,6 +311,8 @@ public class FinanceServiceImpl implements FinanceService {
                         + category.getName()
                         + " por "
                         + savedExpense.getDescription()
+                        + ". Estado de revisión: "
+                        + savedExpense.getReviewStatus()
         );
 
         return savedExpense;
@@ -203,43 +327,89 @@ public class FinanceServiceImpl implements FinanceService {
     public List<Expense> filterExpenses(
             Integer year,
             Integer month,
+            LocalDate startDate,
+            LocalDate endDate,
             Long categoryId,
             Boolean active,
-            String responsible
+            String responsible,
+            String reviewStatus,
+            String search
     ) {
-        LocalDate startDate = null;
-        LocalDate endDate = null;
+        LocalDate[] range = resolveDateRange(year, month, startDate, endDate);
 
-        if (month != null && year == null) {
-            throw new BusinessRuleException("Debe ingresar el año para filtrar por mes");
-        }
+        String responsibleFilter = cleanNullable(responsible);
+        String cleanReviewStatus = normalizeNullable(reviewStatus);
+        String cleanSearch = cleanNullable(search);
 
-        if (month != null && (month < 1 || month > 12)) {
-            throw new BusinessRuleException("El mes debe estar entre 1 y 12");
-        }
-
-        if (year != null && month != null) {
-            startDate = LocalDate.of(year, month, 1);
-            endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
-        } else if (year != null) {
-            startDate = LocalDate.of(year, 1, 1);
-            endDate = LocalDate.of(year, 12, 31);
-        }
-
-        String responsibleFilter = null;
-
-        if (responsible != null && !responsible.trim().isEmpty()) {
-            responsibleFilter = responsible.trim();
+        if (cleanReviewStatus != null) {
+            cleanReviewStatus = normalizeReviewStatus(cleanReviewStatus);
         }
 
         return expenseRepository.filterExpenses(
-                startDate,
-                endDate,
+                range[0],
+                range[1],
                 categoryId,
                 active,
-                responsibleFilter
+                responsibleFilter,
+                cleanReviewStatus,
+                cleanSearch
         );
     }
+
+    @Override
+    public Expense reviewExpense(
+            Long id,
+            String reviewStatus,
+            String observation,
+            String reviewedBy
+    ) {
+        Expense expense = expenseRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Gasto no encontrado"));
+
+        String status = normalizeReviewStatus(reviewStatus);
+
+        expense.setReviewStatus(status);
+        expense.setReviewedBy(cleanNullable(reviewedBy));
+        expense.setReviewedAt(LocalDateTime.now());
+        expense.setReviewObservation(cleanNullable(observation));
+
+        if ("ANULADO".equals(status)) {
+            expense.setActive(false);
+        }
+
+        Expense saved = expenseRepository.save(expense);
+
+        String categoryName = saved.getCategory() != null
+                ? saved.getCategory().getName()
+                : "Sin categoría";
+
+        notificationService.createForRole(
+                "Gasto revisado",
+                "El gasto de S/ " + saved.getAmount()
+                        + " en " + categoryName
+                        + " fue marcado como " + saved.getReviewStatus(),
+                "GASTO_REVISADO",
+                "ADMIN"
+        );
+
+        auditLogService.record(
+                "FINANZAS",
+                "REVISIÓN DE GASTO",
+                "Expense",
+                saved.getId(),
+                "El gasto de S/ "
+                        + saved.getAmount()
+                        + " en "
+                        + categoryName
+                        + " fue marcado como "
+                        + saved.getReviewStatus()
+                        + ". Observación: "
+                        + safe(saved.getReviewObservation())
+        );
+
+        return saved;
+    }
+
     @Override
     public void deleteExpense(Long id) {
         Expense expense = expenseRepository.findById(id)
@@ -254,6 +424,9 @@ public class FinanceServiceImpl implements FinanceService {
                 : "Sin categoría";
 
         expense.setActive(false);
+        expense.setReviewStatus("ANULADO");
+        expense.setReviewedAt(LocalDateTime.now());
+        expense.setReviewObservation("Gasto anulado mediante eliminación lógica.");
 
         Expense deletedExpense = expenseRepository.save(expense);
 
@@ -284,6 +457,9 @@ public class FinanceServiceImpl implements FinanceService {
         );
     }
 
+    /*
+     * RESUMEN FINANCIERO MENSUAL
+     */
     @Override
     public FinanceSummaryDto getMonthlySummary(Integer year, Integer month) {
         if (year == null) {
@@ -322,4 +498,84 @@ public class FinanceServiceImpl implements FinanceService {
 
         return new FinanceSummaryDto(totalIncome, totalExpense, profit, result);
     }
+
+    /*
+     * MÉTODOS AUXILIARES
+     */
+    private LocalDate[] resolveDateRange(
+            Integer year,
+            Integer month,
+            LocalDate startDate,
+            LocalDate endDate
+    ) {
+        if (month != null && year == null) {
+            throw new BusinessRuleException("Debe ingresar el año para filtrar por mes");
+        }
+
+        if (month != null && (month < 1 || month > 12)) {
+            throw new BusinessRuleException("El mes debe estar entre 1 y 12");
+        }
+
+        if (year != null && (year < 2000 || year > 2100)) {
+            throw new BusinessRuleException("El año ingresado no es válido");
+        }
+
+        if (startDate != null || endDate != null) {
+            if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+                throw new BusinessRuleException("La fecha de inicio no puede ser mayor que la fecha final");
+            }
+
+            return new LocalDate[]{startDate, endDate};
+        }
+
+        if (year != null && month != null) {
+            LocalDate start = LocalDate.of(year, month, 1);
+            LocalDate end = start.withDayOfMonth(start.lengthOfMonth());
+            return new LocalDate[]{start, end};
+        }
+
+        if (year != null) {
+            return new LocalDate[]{
+                    LocalDate.of(year, 1, 1),
+                    LocalDate.of(year, 12, 31)
+            };
+        }
+
+        return new LocalDate[]{null, null};
     }
+
+    private String normalizeReviewStatus(String reviewStatus) {
+        if (reviewStatus == null || reviewStatus.trim().isEmpty()) {
+            throw new BusinessRuleException("Debe indicar el estado de revisión");
+        }
+
+        String status = reviewStatus.trim().toUpperCase();
+
+        return switch (status) {
+            case "PENDIENTE", "REVISADO", "CONTABILIZADO", "OBSERVADO", "ANULADO" -> status;
+            default -> throw new BusinessRuleException(
+                    "Estado de revisión no válido. Use PENDIENTE, REVISADO, CONTABILIZADO, OBSERVADO o ANULADO"
+            );
+        };
+    }
+
+    private String normalizeNullable(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+
+        return value.trim().toUpperCase();
+    }
+
+    private String cleanNullable(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+
+        return value.trim();
+    }
+
+    private String safe(String value) {
+        return value == null ? "" : value;
+    }
+}

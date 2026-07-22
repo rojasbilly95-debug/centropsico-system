@@ -1,144 +1,385 @@
-let incomesData = [];
-let expensesData = [];
-let monthlyExpensesData = [];
-let currentIncomePage = 1;
-let currentExpensePage = 1;
+let financeMovementsData = [];
 let expenseCategoryListVisible = false;
-let expenseAdvancedFilterActive = false;
+let currentFinanceMovementPage = 1;
 
 const financeRowsPerPage = 10;
 
+/* =========================================================
+   INIT FINANZAS
+========================================================= */
+
+function initFinanceModule() {
+    setDefaultFinanceDates();
+    handleFinancePeriodChange();
+
+    loadExpenseCategoryOptions();
+    loadFinanceMovements();
+}
+
+function setDefaultFinanceDates() {
+    const today = new Date();
+    const todayText = formatDateInput(today);
+
+    const yearInput = document.getElementById("financeYearFilter");
+    const monthInput = document.getElementById("financeMonthFilter");
+    const singleDateInput = document.getElementById("financeSingleDate");
+
+    if (singleDateInput && !singleDateInput.value) {
+        singleDateInput.value = todayText;
+    }
+
+    if (yearInput && !yearInput.value) {
+        yearInput.value = today.getFullYear();
+    }
+
+    if (monthInput && !monthInput.value) {
+        monthInput.value = today.getMonth() + 1;
+    }
+
+    const incomeDate = document.getElementById("incomeDate");
+    const expenseDate = document.getElementById("expenseDate");
+
+    if (incomeDate && !incomeDate.value) {
+        incomeDate.value = todayText;
+    }
+
+    if (expenseDate && !expenseDate.value) {
+        expenseDate.value = todayText;
+    }
+}
+
+/* =========================================================
+   MODALES
+========================================================= */
+
+function openIncomeModal() {
+    const modal = document.getElementById("incomeModal");
+    if (!modal) return;
+
+    clearIncomeForm();
+    setDefaultFinanceDates();
+    modal.classList.remove("hidden");
+}
+
+function closeIncomeModal() {
+    const modal = document.getElementById("incomeModal");
+    if (!modal) return;
+
+    modal.classList.add("hidden");
+}
+
+function openExpenseModal() {
+    const modal = document.getElementById("expenseModal");
+    if (!modal) return;
+
+    clearExpenseForm();
+    setDefaultFinanceDates();
+    loadExpenseCategoryOptions();
+    modal.classList.remove("hidden");
+}
+
+function closeExpenseModal() {
+    const modal = document.getElementById("expenseModal");
+    if (!modal) return;
+
+    modal.classList.add("hidden");
+}
+
+function openExpenseCategoryModal() {
+    const modal = document.getElementById("expenseCategoryModal");
+    if (!modal) return;
+
+    modal.classList.remove("hidden");
+    loadExpenseCategories();
+}
+
+function closeExpenseCategoryModal() {
+    const modal = document.getElementById("expenseCategoryModal");
+    if (!modal) return;
+
+    modal.classList.add("hidden");
+}
+
+function openFinanceDetailModal(type, id) {
+    const movement = financeMovementsData.find(
+        (item) => item.type === type && String(item.id) === String(id)
+    );
+
+    if (!movement) {
+        Swal.fire("Aviso", "No se encontró el movimiento seleccionado.", "warning");
+        return;
+    }
+
+    const modal = document.getElementById("financeDetailModal");
+    const content = document.getElementById("financeDetailContent");
+
+    if (!modal || !content) return;
+
+    content.innerHTML = buildFinanceDetailHtml(movement);
+    modal.classList.remove("hidden");
+}
+
+function closeFinanceDetailModal() {
+    const modal = document.getElementById("financeDetailModal");
+    if (!modal) return;
+
+    modal.classList.add("hidden");
+}
+
+function openFinanceReviewModal(type, id) {
+    const movement = financeMovementsData.find(
+        (item) => item.type === type && String(item.id) === String(id)
+    );
+
+    if (!movement) {
+        Swal.fire("Aviso", "No se encontró el movimiento seleccionado.", "warning");
+        return;
+    }
+
+    document.getElementById("financeReviewType").value = type;
+    document.getElementById("financeReviewId").value = id;
+    document.getElementById("financeReviewStatus").value =
+        movement.reviewStatus && movement.reviewStatus !== "PENDIENTE"
+            ? movement.reviewStatus
+            : "REVISADO";
+
+    document.getElementById("financeReviewObservation").value =
+        movement.reviewObservation || "";
+
+    const modal = document.getElementById("financeReviewModal");
+    if (!modal) return;
+
+    modal.classList.remove("hidden");
+}
+
+function closeFinanceReviewModal() {
+    const modal = document.getElementById("financeReviewModal");
+    if (!modal) return;
+
+    modal.classList.add("hidden");
+
+    document.getElementById("financeReviewType").value = "";
+    document.getElementById("financeReviewId").value = "";
+    document.getElementById("financeReviewObservation").value = "";
+}
+
+/* =========================================================
+   INGRESOS
+========================================================= */
+
 async function createIncome() {
+    const resultBox = document.getElementById("incomeResult");
+
     const data = {
-        description: document.getElementById("incomeDescription").value.trim(),
-        amount: parseFloat(document.getElementById("incomeAmount").value),
-        date: document.getElementById("incomeDate").value,
-        paymentMethod: document.getElementById("incomePaymentMethod").value,
+        description: getValue("incomeDescription"),
+        amount: parseFloat(getValue("incomeAmount")),
+        date: getValue("incomeDate"),
+        paymentMethod: getValue("incomePaymentMethod"),
+        origin: getValue("incomeOrigin") || "MANUAL",
+        reference: getValue("incomeReference"),
+        reviewStatus: "PENDIENTE",
         active: true,
     };
+
+    if (!data.description) {
+        showFinanceMessage(resultBox, "Ingresa la descripción del ingreso.", "error");
+        return;
+    }
+
+    if (!data.amount || data.amount <= 0) {
+        showFinanceMessage(resultBox, "Ingresa un monto válido mayor a cero.", "error");
+        return;
+    }
+
+    if (!data.date) {
+        showFinanceMessage(resultBox, "Selecciona la fecha del ingreso.", "error");
+        return;
+    }
+
+    if (!data.paymentMethod) {
+        showFinanceMessage(resultBox, "Selecciona el método de pago.", "error");
+        return;
+    }
 
     try {
         const response = await authFetch(`${baseUrl}/finances/incomes`, {
             method: "POST",
             body: JSON.stringify(data),
         });
+
         if (!response) return;
 
         const result = await response.json();
 
         if (!response.ok) {
-            document.getElementById("incomeResult").textContent =
-                result.message || "Error al guardar ingreso";
+            showFinanceMessage(
+                resultBox,
+                result.message || "Error al guardar ingreso.",
+                "error"
+            );
             return;
         }
 
-        document.getElementById("incomeResult").textContent =
-            "Ingreso guardado correctamente";
+        showFinanceMessage(resultBox, "Ingreso guardado correctamente.", "success");
 
         clearIncomeForm();
-        loadIncomes();
+        closeIncomeModal();
+
+        await loadFinanceMovements();
 
         if (typeof loadDashboard === "function") {
-            loadDashboard();
+            await loadDashboard();
         }
 
         if (typeof loadNotifications === "function") {
-            loadNotifications();
+            await loadNotifications();
         }
 
         Swal.fire({
             icon: "success",
             title: "Ingreso registrado",
-            text: "El ingreso fue guardado y notificado al administrador.",
-            timer: 1800,
+            text: "El ingreso quedó pendiente de revisión.",
+            timer: 1700,
             showConfirmButton: false,
         });
     } catch (error) {
-        document.getElementById("incomeResult").textContent =
-            "Error de conexión con el servidor";
-    }
-}
-
-async function loadIncomes() {
-    try {
-        const response = await authFetch(`${baseUrl}/finances/incomes`);
-        if (!response) return;
-
-        incomesData = await response.json();
-        currentIncomePage = 1;
-
-        renderIncomeTable(incomesData);
-
-        document.getElementById("incomeResult").textContent =
-            "Ingresos cargados correctamente";
-    } catch (error) {
-        document.getElementById("incomeResult").textContent =
-            "Error al listar ingresos";
-    }
-}
-
-function renderIncomeTable(data) {
-    const tbody = document.getElementById("incomeTableBody");
-    tbody.innerHTML = "";
-
-    const totalPages = Math.ceil(data.length / financeRowsPerPage) || 1;
-
-    if (currentIncomePage > totalPages) {
-        currentIncomePage = totalPages;
-    }
-
-    const start = (currentIncomePage - 1) * financeRowsPerPage;
-    const end = start + financeRowsPerPage;
-    const pageData = data.slice(start, end);
-
-    pageData.forEach((income) => {
-        tbody.innerHTML += `
-            <tr>
-                <td>${income.id ?? ""}</td>
-                <td>${income.description ?? ""}</td>
-                <td>S/ ${Number(income.amount || 0).toFixed(2)}</td>
-                <td>${income.date ?? ""}</td>
-                <td>${income.paymentMethod ?? ""}</td>
-                <td>
-                    <span class="status-pill ${income.active ? "active" : "inactive"}">
-                        ${income.active ? "Activo" : "Inactivo"}
-                    </span>
-                </td>
-            </tr>
-        `;
-    });
-
-    const pageInfo = document.getElementById("incomePageInfo");
-    if (pageInfo) {
-        pageInfo.textContent = `Página ${currentIncomePage} de ${totalPages}`;
+        console.error(error);
+        showFinanceMessage(resultBox, "Error de conexión con el servidor.", "error");
     }
 }
 
 function clearIncomeForm() {
-    document.getElementById("incomeDescription").value = "";
-    document.getElementById("incomeAmount").value = "";
-    document.getElementById("incomeDate").value = "";
-    document.getElementById("incomePaymentMethod").value = "EFECTIVO";
+    setValue("incomeDescription", "");
+    setValue("incomeAmount", "");
+    setValue("incomeDate", formatDateInput(new Date()));
+    setValue("incomePaymentMethod", "EFECTIVO");
+    setValue("incomeOrigin", "MANUAL");
+    setValue("incomeReference", "");
+
+    const resultBox = document.getElementById("incomeResult");
+    if (resultBox) {
+        resultBox.textContent = "Complete los datos del ingreso.";
+    }
 }
+
+/* =========================================================
+   GASTOS
+========================================================= */
+
+async function createExpense() {
+    const resultBox = document.getElementById("expenseResult");
+
+    const categoryId = getValue("expenseCategoryId");
+
+    const data = {
+        category: categoryId ? { id: parseInt(categoryId) } : null,
+        description: getValue("expenseDescription"),
+        amount: parseFloat(getValue("expenseAmount")),
+        date: getValue("expenseDate"),
+        responsible: getValue("expenseResponsible"),
+        origin: getValue("expenseOrigin") || "MANUAL",
+        reference: getValue("expenseReference"),
+        reviewStatus: "PENDIENTE",
+        active: true,
+    };
+
+    if (!data.category) {
+        showFinanceMessage(resultBox, "Selecciona una categoría de gasto.", "error");
+        return;
+    }
+
+    if (!data.description) {
+        showFinanceMessage(resultBox, "Ingresa la descripción del gasto.", "error");
+        return;
+    }
+
+    if (!data.amount || data.amount <= 0) {
+        showFinanceMessage(resultBox, "Ingresa un monto válido mayor a cero.", "error");
+        return;
+    }
+
+    if (!data.date) {
+        showFinanceMessage(resultBox, "Selecciona la fecha del gasto.", "error");
+        return;
+    }
+
+    try {
+        const response = await authFetch(`${baseUrl}/finances/expenses`, {
+            method: "POST",
+            body: JSON.stringify(data),
+        });
+
+        if (!response) return;
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            showFinanceMessage(
+                resultBox,
+                result.message || "Error al guardar gasto.",
+                "error"
+            );
+            return;
+        }
+
+        showFinanceMessage(resultBox, "Gasto guardado correctamente.", "success");
+
+        clearExpenseForm();
+        closeExpenseModal();
+
+        await loadFinanceMovements();
+
+        if (typeof loadDashboard === "function") {
+            await loadDashboard();
+        }
+
+        if (typeof loadNotifications === "function") {
+            await loadNotifications();
+        }
+
+        Swal.fire({
+            icon: "success",
+            title: "Gasto registrado",
+            text: "El gasto quedó pendiente de revisión.",
+            timer: 1700,
+            showConfirmButton: false,
+        });
+    } catch (error) {
+        console.error(error);
+        showFinanceMessage(resultBox, "Error de conexión con el servidor.", "error");
+    }
+}
+
+function clearExpenseForm() {
+    setValue("expenseCategoryId", "");
+    setValue("expenseDescription", "");
+    setValue("expenseAmount", "");
+    setValue("expenseDate", formatDateInput(new Date()));
+    setValue("expenseResponsible", "");
+    setValue("expenseOrigin", "MANUAL");
+    setValue("expenseReference", "");
+
+    const resultBox = document.getElementById("expenseResult");
+    if (resultBox) {
+        resultBox.textContent = "Complete los datos del gasto.";
+    }
+}
+
+/* =========================================================
+   CATEGORÍAS
+========================================================= */
 
 async function createExpenseCategory() {
     const resultBox = document.getElementById("expenseCategoryResult");
 
     const data = {
-        name: document.getElementById("expenseCategoryName").value.trim(),
-        description: document
-            .getElementById("expenseCategoryDescription")
-            .value.trim(),
+        name: getValue("expenseCategoryName"),
+        description: getValue("expenseCategoryDescription"),
         active: true,
     };
 
     if (!data.name) {
-        resultBox.style.display = "block";
-        resultBox.innerHTML = `
-            <div class="finance-inline-message error">
-                Ingresa el nombre de la categoría.
-            </div>
-        `;
+        showFinanceMessage(resultBox, "Ingresa el nombre de la categoría.", "error");
         return;
     }
 
@@ -153,62 +394,35 @@ async function createExpenseCategory() {
         const result = await response.json();
 
         if (!response.ok) {
-            resultBox.style.display = "block";
-            resultBox.innerHTML = `
-                <div class="finance-inline-message error">
-                    ${result.message || "Error al guardar categoría."}
-                </div>
-            `;
+            showFinanceMessage(
+                resultBox,
+                result.message || "Error al guardar categoría.",
+                "error"
+            );
             return;
         }
 
-        resultBox.style.display = "block";
-        resultBox.innerHTML = `
-            <div class="finance-inline-message success">
-                Categoría guardada correctamente.
-            </div>
-        `;
+        showFinanceMessage(resultBox, "Categoría guardada correctamente.", "success");
 
         clearExpenseCategoryForm();
-
         await loadExpenseCategoryOptions();
-
-        if (expenseCategoryListVisible) {
-            await loadExpenseCategories();
-        }
+        await loadExpenseCategories();
     } catch (error) {
-        resultBox.style.display = "block";
-        resultBox.innerHTML = `
-            <div class="finance-inline-message error">
-                Error de conexión con el servidor.
-            </div>
-        `;
+        console.error(error);
+        showFinanceMessage(resultBox, "Error de conexión con el servidor.", "error");
     }
 }
 
 async function loadExpenseCategories() {
     const resultBox = document.getElementById("expenseCategoryResult");
-
     if (!resultBox) return;
 
-    if (!expenseCategoryListVisible) {
-        resultBox.style.display = "none";
-        resultBox.innerHTML = "";
-        return;
-    }
-
     try {
-        resultBox.style.display = "block";
-
         const response = await authFetch(`${baseUrl}/finances/expense-categories`);
         if (!response) return;
 
         if (!response.ok) {
-            resultBox.innerHTML = `
-                <div class="finance-inline-message error">
-                    Error al listar categorías.
-                </div>
-            `;
+            showFinanceMessage(resultBox, "Error al listar categorías.", "error");
             return;
         }
 
@@ -228,47 +442,35 @@ async function loadExpenseCategories() {
         data.forEach((category) => {
             html += `
                 <div class="category-item">
-                    <strong>${category.name ?? "Sin nombre"}</strong>
-                    <span>${category.description ?? "Sin descripción"}</span>
+                    <strong>${escapeHtml(category.name ?? "Sin nombre")}</strong>
+                    <span>${escapeHtml(category.description ?? "Sin descripción")}</span>
                 </div>
             `;
         });
 
         html += `</div>`;
-
         resultBox.innerHTML = html;
     } catch (error) {
-        resultBox.innerHTML = `
-            <div class="finance-inline-message error">
-                Error al listar categorías.
-            </div>
-        `;
         console.error(error);
+        showFinanceMessage(resultBox, "Error al listar categorías.", "error");
     }
 }
 
 async function showExpenseCategories() {
+    expenseCategoryListVisible = !expenseCategoryListVisible;
+
     const resultBox = document.getElementById("expenseCategoryResult");
     const button = document.getElementById("expenseCategoryToggleBtn");
 
     if (!resultBox) return;
 
-    expenseCategoryListVisible = !expenseCategoryListVisible;
-
     if (!expenseCategoryListVisible) {
-        resultBox.style.display = "none";
         resultBox.innerHTML = "";
-
-        if (button) {
-            button.textContent = "Listar categorías";
-        }
-
+        if (button) button.textContent = "Listar categorías";
         return;
     }
 
-    if (button) {
-        button.textContent = "Ocultar categorías";
-    }
+    if (button) button.textContent = "Ocultar categorías";
 
     await loadExpenseCategories();
 }
@@ -281,7 +483,6 @@ async function loadExpenseCategoryOptions() {
         const data = await response.json();
 
         const expenseSelect = document.getElementById("expenseCategoryId");
-        const filterSelect = document.getElementById("expenseFilterCategoryId");
 
         if (expenseSelect) {
             expenseSelect.innerHTML = `<option value="">Seleccione categoría</option>`;
@@ -291,19 +492,7 @@ async function loadExpenseCategoryOptions() {
 
                 expenseSelect.innerHTML += `
                     <option value="${category.id}">
-                        ${category.name}
-                    </option>
-                `;
-            });
-        }
-
-        if (filterSelect) {
-            filterSelect.innerHTML = `<option value="">Todas las categorías</option>`;
-
-            data.forEach((category) => {
-                filterSelect.innerHTML += `
-                    <option value="${category.id}">
-                        ${category.name}
+                        ${escapeHtml(category.name)}
                     </option>
                 `;
             });
@@ -314,26 +503,388 @@ async function loadExpenseCategoryOptions() {
 }
 
 function clearExpenseCategoryForm() {
-    document.getElementById("expenseCategoryName").value = "";
-    document.getElementById("expenseCategoryDescription").value = "";
+    setValue("expenseCategoryName", "");
+    setValue("expenseCategoryDescription", "");
 }
 
-async function createExpense() {
-    const categoryId = document.getElementById("expenseCategoryId").value;
+/* =========================================================
+   FILTROS PRINCIPALES
+========================================================= */
 
-    const data = {
-        category: categoryId ? { id: parseInt(categoryId) } : null,
-        description: document.getElementById("expenseDescription").value.trim(),
-        amount: parseFloat(document.getElementById("expenseAmount").value),
-        date: document.getElementById("expenseDate").value,
-        responsible: document.getElementById("expenseResponsible").value.trim(),
-        active: true,
-    };
+function handleFinancePeriodChange() {
+    const period = getValue("financePeriodFilter");
+
+    const singleDate = document.getElementById("financeSingleDate");
+    const year = document.getElementById("financeYearFilter");
+    const month = document.getElementById("financeMonthFilter");
+    const customFields = document.querySelectorAll(".finance-custom-range");
+
+    customFields.forEach((field) => field.classList.add("hidden"));
+
+    if (singleDate) singleDate.disabled = true;
+    if (year) year.disabled = true;
+    if (month) month.disabled = true;
+
+    if (period === "day" || period === "week") {
+        if (singleDate) singleDate.disabled = false;
+    }
+
+    if (period === "month") {
+        if (year) year.disabled = false;
+        if (month) month.disabled = false;
+    }
+
+    if (period === "custom") {
+        customFields.forEach((field) => field.classList.remove("hidden"));
+    }
+}
+
+function clearFinanceFilters() {
+    setValue("financePeriodFilter", "month");
+    setValue("financeTypeFilter", "");
+    setValue("financeReviewStatusFilter", "");
+    setValue("financeSearchFilter", "");
+
+    setDefaultFinanceDates();
+    handleFinancePeriodChange();
+    loadFinanceMovements();
+}
+
+function buildFinanceFilterParams() {
+    const period = getValue("financePeriodFilter");
+    const params = new URLSearchParams();
+
+    const reviewStatus = getValue("financeReviewStatusFilter");
+    const search = getValue("financeSearchFilter");
+
+    if (reviewStatus) {
+        params.append("reviewStatus", reviewStatus);
+    }
+
+    if (search) {
+        params.append("search", search);
+    }
+
+    if (period === "day") {
+        const date = getValue("financeSingleDate");
+
+        if (date) {
+            params.append("startDate", date);
+            params.append("endDate", date);
+        }
+    }
+
+    if (period === "week") {
+        const dateValue = getValue("financeSingleDate");
+
+        if (dateValue) {
+            const range = getWeekRange(dateValue);
+            params.append("startDate", range.startDate);
+            params.append("endDate", range.endDate);
+        }
+    }
+
+    if (period === "month") {
+        const year = getValue("financeYearFilter");
+        const month = getValue("financeMonthFilter");
+
+        if (year) {
+            params.append("year", year);
+        }
+
+        if (month) {
+            params.append("month", month);
+        }
+    }
+
+    if (period === "custom") {
+        const startDate = getValue("financeStartDateFilter");
+        const endDate = getValue("financeEndDateFilter");
+
+        if (startDate) {
+            params.append("startDate", startDate);
+        }
+
+        if (endDate) {
+            params.append("endDate", endDate);
+        }
+    }
+
+    return params;
+}
+
+/* =========================================================
+   MOVIMIENTOS FINANCIEROS
+========================================================= */
+
+async function loadFinanceMovements() {
+    const resultBox = document.getElementById("financeMainResult");
+    const tbody = document.getElementById("financeMovementTableBody");
+
+    if (resultBox) {
+        resultBox.textContent = "Cargando movimientos financieros...";
+    }
+
+    if (tbody) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="10">Cargando movimientos...</td>
+            </tr>
+        `;
+    }
 
     try {
-        const response = await authFetch(`${baseUrl}/finances/expenses`, {
-            method: "POST",
-            body: JSON.stringify(data),
+        const typeFilter = getValue("financeTypeFilter");
+        const params = buildFinanceFilterParams();
+
+        const requests = [];
+
+        if (!typeFilter || typeFilter === "INGRESO") {
+            requests.push(fetchFinanceIncomes(params));
+        }
+
+        if (!typeFilter || typeFilter === "GASTO") {
+            requests.push(fetchFinanceExpenses(params));
+        }
+
+        const results = await Promise.all(requests);
+
+        financeMovementsData = results
+            .flat()
+            .sort((a, b) => {
+                const dateCompare = new Date(b.date) - new Date(a.date);
+                if (dateCompare !== 0) return dateCompare;
+                return Number(b.id || 0) - Number(a.id || 0);
+            });
+
+        currentFinanceMovementPage = 1;
+
+        renderFinanceMovementTable();
+        updateFinanceSummaryCards();
+
+        if (resultBox) {
+            resultBox.textContent =
+                financeMovementsData.length > 0
+                    ? "Movimientos cargados correctamente."
+                    : "No se encontraron movimientos con los filtros seleccionados.";
+        }
+    } catch (error) {
+        console.error(error);
+
+        if (resultBox) {
+            resultBox.textContent = "Error al cargar movimientos financieros.";
+        }
+
+        if (tbody) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="10">Error al cargar movimientos financieros.</td>
+                </tr>
+            `;
+        }
+    }
+}
+
+async function fetchFinanceIncomes(params) {
+    const response = await authFetch(
+        `${baseUrl}/finances/incomes/filter?${params.toString()}`
+    );
+
+    if (!response) return [];
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new Error(data.message || "Error al cargar ingresos.");
+    }
+
+    return data.map((income) => ({
+        id: income.id,
+        type: "INGRESO",
+        description: income.description,
+        amount: Number(income.amount || 0),
+        date: income.date,
+        categoryOrMethod: income.paymentMethod || "Sin método",
+        origin: income.origin || "MANUAL",
+        reference: income.reference || "",
+        active: income.active,
+        reviewStatus: income.reviewStatus || "PENDIENTE",
+        reviewedBy: income.reviewedBy || "",
+        reviewedAt: income.reviewedAt || "",
+        reviewObservation: income.reviewObservation || "",
+        raw: income,
+    }));
+}
+
+async function fetchFinanceExpenses(params) {
+    const response = await authFetch(
+        `${baseUrl}/finances/expenses/filter?${params.toString()}`
+    );
+
+    if (!response) return [];
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new Error(data.message || "Error al cargar gastos.");
+    }
+
+    return data.map((expense) => ({
+        id: expense.id,
+        type: "GASTO",
+        description: expense.description,
+        amount: Number(expense.amount || 0),
+        date: expense.date,
+        categoryOrMethod: expense.category?.name || "Sin categoría",
+        origin: expense.origin || "MANUAL",
+        reference: expense.reference || "",
+        responsible: expense.responsible || "",
+        active: expense.active,
+        reviewStatus: expense.reviewStatus || "PENDIENTE",
+        reviewedBy: expense.reviewedBy || "",
+        reviewedAt: expense.reviewedAt || "",
+        reviewObservation: expense.reviewObservation || "",
+        raw: expense,
+    }));
+}
+
+function renderFinanceMovementTable() {
+    const tbody = document.getElementById("financeMovementTableBody");
+    if (!tbody) return;
+
+    tbody.innerHTML = "";
+
+    if (!financeMovementsData || financeMovementsData.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="10">No hay movimientos financieros para mostrar.</td>
+            </tr>
+        `;
+
+        updateFinancePagination(1);
+        return;
+    }
+
+    const totalPages = Math.ceil(financeMovementsData.length / financeRowsPerPage) || 1;
+
+    if (currentFinanceMovementPage > totalPages) {
+        currentFinanceMovementPage = totalPages;
+    }
+
+    const start = (currentFinanceMovementPage - 1) * financeRowsPerPage;
+    const end = start + financeRowsPerPage;
+    const pageData = financeMovementsData.slice(start, end);
+
+    pageData.forEach((movement) => {
+        const status = movement.reviewStatus || "PENDIENTE";
+        const rowClass = getFinanceRowClass(status);
+        const amountClass = movement.type === "INGRESO" ? "finance-amount-income" : "finance-amount-expense";
+        const amountPrefix = movement.type === "INGRESO" ? "+" : "-";
+
+        tbody.innerHTML += `
+            <tr class="${rowClass}">
+                <td>${escapeHtml(formatDisplayDate(movement.date))}</td>
+
+                <td>
+                    <span class="finance-badge ${movement.type === "INGRESO" ? "finance-type-income" : "finance-type-expense"}">
+                        ${movement.type}
+                    </span>
+                </td>
+
+                <td>${escapeHtml(movement.description || "")}</td>
+
+                <td>${escapeHtml(movement.categoryOrMethod || "")}</td>
+
+                <td>${escapeHtml(movement.origin || "")}</td>
+
+                <td>${escapeHtml(movement.reference || "-")}</td>
+
+                <td class="${amountClass}">
+                    ${amountPrefix} S/ ${movement.amount.toFixed(2)}
+                </td>
+
+                <td>
+                    ${buildReviewBadge(status)}
+                </td>
+
+                <td>${escapeHtml(movement.reviewedBy || "-")}</td>
+
+                <td>
+                    <div class="table-actions">
+                        <button class="btn-table" type="button"
+                            onclick="openFinanceDetailModal('${movement.type}', ${movement.id})">
+                            Ver
+                        </button>
+
+                        <button class="btn-table" type="button"
+                            onclick="openFinanceReviewModal('${movement.type}', ${movement.id})">
+                            Revisar
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+
+    updateFinancePagination(totalPages);
+}
+
+function updateFinancePagination(totalPages) {
+    const pageInfo = document.getElementById("financeMovementPageInfo");
+
+    if (pageInfo) {
+        pageInfo.textContent = `Página ${currentFinanceMovementPage} de ${totalPages}`;
+    }
+}
+
+function changeFinanceMovementPage(direction) {
+    const totalPages = Math.ceil(financeMovementsData.length / financeRowsPerPage) || 1;
+
+    currentFinanceMovementPage += direction;
+
+    if (currentFinanceMovementPage < 1) {
+        currentFinanceMovementPage = 1;
+    }
+
+    if (currentFinanceMovementPage > totalPages) {
+        currentFinanceMovementPage = totalPages;
+    }
+
+    renderFinanceMovementTable();
+}
+
+/* =========================================================
+   REVISIÓN DE MOVIMIENTOS
+========================================================= */
+
+async function submitFinanceReview() {
+    const type = getValue("financeReviewType");
+    const id = getValue("financeReviewId");
+    const reviewStatus = getValue("financeReviewStatus");
+    const observation = getValue("financeReviewObservation");
+
+    if (!type || !id) {
+        Swal.fire("Aviso", "No se encontró el movimiento a revisar.", "warning");
+        return;
+    }
+
+    if (!reviewStatus) {
+        Swal.fire("Aviso", "Selecciona un estado de revisión.", "warning");
+        return;
+    }
+
+    const endpoint =
+        type === "INGRESO"
+            ? `${baseUrl}/finances/incomes/${id}/review`
+            : `${baseUrl}/finances/expenses/${id}/review`;
+
+    try {
+        const response = await authFetch(endpoint, {
+            method: "PUT",
+            body: JSON.stringify({
+                reviewStatus,
+                observation,
+            }),
         });
 
         if (!response) return;
@@ -341,16 +892,17 @@ async function createExpense() {
         const result = await response.json();
 
         if (!response.ok) {
-            document.getElementById("expenseResult").textContent =
-                result.message || "Error al guardar gasto";
+            Swal.fire(
+                "Error",
+                result.message || "No se pudo guardar la revisión.",
+                "error"
+            );
             return;
         }
 
-        document.getElementById("expenseResult").textContent =
-            "Gasto guardado correctamente";
+        closeFinanceReviewModal();
 
-        clearExpenseForm();
-        await loadExpenses();
+        await loadFinanceMovements();
 
         if (typeof loadDashboard === "function") {
             await loadDashboard();
@@ -362,715 +914,312 @@ async function createExpense() {
 
         Swal.fire({
             icon: "success",
-            title: "Gasto registrado",
-            text: "El gasto fue guardado y notificado al administrador.",
-            timer: 1800,
-            showConfirmButton: false,
-        });
-    } catch (error) {
-        document.getElementById("expenseResult").textContent =
-            "Error de conexión con el servidor";
-    }
-}
-
-async function loadExpenses() {
-    try {
-        const response = await authFetch(`${baseUrl}/finances/expenses`);
-        if (!response) return;
-
-        expensesData = await response.json();
-        currentExpensePage = 1;
-        expenseAdvancedFilterActive = false;
-
-        renderExpenseTable(getFilteredExpenses());
-        renderExpenseFilterSummary(
-            expensesData,
-            "Listado general de gastos activos",
-        );
-
-        document.getElementById("expenseResult").textContent =
-            "Gastos cargados correctamente";
-    } catch (error) {
-        document.getElementById("expenseResult").textContent =
-            "Error al listar gastos";
-    }
-}
-
-async function filterExpensesByAdvancedFilters(showMessage = true) {
-    const year = document.getElementById("expenseFilterYear")?.value;
-    const month = document.getElementById("expenseFilterMonth")?.value;
-    const categoryId = document.getElementById("expenseFilterCategoryId")?.value;
-    const status = document.getElementById("expenseFilterStatus")?.value;
-    const responsible = document
-        .getElementById("expenseFilterResponsible")
-        ?.value.trim();
-
-    const params = new URLSearchParams();
-
-    if (year) params.append("year", year);
-    if (month) params.append("month", month);
-    if (categoryId) params.append("categoryId", categoryId);
-    if (status) params.append("active", status);
-    if (responsible) params.append("responsible", responsible);
-
-    try {
-        const url = `${baseUrl}/finances/expenses/filter?${params.toString()}`;
-
-        const response = await authFetch(url);
-        if (!response) return;
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            Swal.fire(
-                "Error",
-                data.message || "No se pudieron filtrar los gastos.",
-                "error",
-            );
-            return;
-        }
-
-        expensesData = data;
-        currentExpensePage = 1;
-        expenseAdvancedFilterActive = true;
-
-        renderExpenseTable(getFilteredExpenses());
-
-        renderExpenseFilterSummary(
-            expensesData,
-            buildExpenseFilterTitle(year, month, categoryId, status, responsible),
-        );
-
-        if (showMessage) {
-            Swal.fire({
-                icon: "success",
-                title: "Filtro aplicado",
-                text: "Los gastos fueron filtrados correctamente.",
-                timer: 1400,
-                showConfirmButton: false,
-            });
-        }
-    } catch (error) {
-        console.error("Error filtrando gastos:", error);
-
-        Swal.fire("Error", "Error de conexión al filtrar gastos.", "error");
-    }
-}
-
-async function clearExpenseFilters() {
-    const yearInput = document.getElementById("expenseFilterYear");
-    const monthInput = document.getElementById("expenseFilterMonth");
-    const categoryInput = document.getElementById("expenseFilterCategoryId");
-    const statusInput = document.getElementById("expenseFilterStatus");
-    const responsibleInput = document.getElementById("expenseFilterResponsible");
-    const searchInput = document.getElementById("expenseSearchInput");
-
-    if (yearInput) yearInput.value = "";
-    if (monthInput) monthInput.value = "";
-    if (categoryInput) categoryInput.value = "";
-    if (statusInput) statusInput.value = "true";
-    if (responsibleInput) responsibleInput.value = "";
-    if (searchInput) searchInput.value = "";
-
-    expenseAdvancedFilterActive = false;
-
-    await loadExpenses();
-}
-
-function buildExpenseFilterTitle(year, month, categoryId, status, responsible) {
-    const parts = [];
-
-    if (year && month) {
-        parts.push(`${getFinanceMonthName(month)} ${year}`);
-    } else if (year) {
-        parts.push(`Año ${year}`);
-    } else {
-        parts.push("Todos los periodos");
-    }
-
-    const categorySelect = document.getElementById("expenseFilterCategoryId");
-    const categoryName =
-        categorySelect && categorySelect.value
-            ? categorySelect.options[categorySelect.selectedIndex].textContent.trim()
-            : "";
-
-    if (categoryName) {
-        parts.push(`Categoría: ${categoryName}`);
-    }
-
-    if (status === "true") {
-        parts.push("Estado: Activos");
-    } else if (status === "false") {
-        parts.push("Estado: Eliminados/Inactivos");
-    } else {
-        parts.push("Estado: Todos");
-    }
-
-    if (responsible) {
-        parts.push(`Responsable: ${responsible}`);
-    }
-
-    return parts.join(" | ");
-}
-
-function renderExpenseFilterSummary(data, title) {
-    const container = document.getElementById("expenseFilterSummary");
-
-    if (!container) return;
-
-    const total = data.reduce((sum, expense) => {
-        return sum + Number(expense.amount || 0);
-    }, 0);
-
-    const count = data.length;
-
-    const categoryTotals = {};
-
-    data.forEach((expense) => {
-        const categoryName = expense.category?.name || "Sin categoría";
-
-        if (!categoryTotals[categoryName]) {
-            categoryTotals[categoryName] = 0;
-        }
-
-        categoryTotals[categoryName] += Number(expense.amount || 0);
-    });
-
-    const categoryHtml = Object.entries(categoryTotals)
-        .map(
-            ([category, amount]) => `
-            <div class="expense-filter-category-row">
-                <span>${escapeFinanceHtml(category)}</span>
-                <strong>S/ ${formatFinanceMoney(amount)}</strong>
-            </div>
-        `,
-        )
-        .join("");
-
-    container.classList.remove("hidden");
-
-    container.innerHTML = `
-        <div class="expense-filter-summary-card">
-            <div class="expense-filter-summary-header">
-                <div>
-                    <strong>${escapeFinanceHtml(title || "Resultado de gastos")}</strong>
-                    <span>${count} gasto(s) encontrado(s)</span>
-                </div>
-
-                <div class="expense-filter-total">
-                    <small>Total filtrado</small>
-                    <strong>S/ ${formatFinanceMoney(total)}</strong>
-                </div>
-            </div>
-
-            <div class="expense-filter-category-list">
-                ${categoryHtml ||
-        `
-                    <div class="expense-filter-category-row">
-                        <span>No hay datos para mostrar</span>
-                        <strong>S/ 0.00</strong>
-                    </div>
-                `
-        }
-            </div>
-        </div>
-    `;
-}
-
-function renderExpenseTable(data) {
-    const tbody = document.getElementById("expenseTableBody");
-
-    if (!tbody) return;
-
-    tbody.innerHTML = "";
-
-    const totalPages = Math.ceil(data.length / financeRowsPerPage) || 1;
-
-    if (currentExpensePage > totalPages) {
-        currentExpensePage = totalPages;
-    }
-
-    const start = (currentExpensePage - 1) * financeRowsPerPage;
-    const end = start + financeRowsPerPage;
-    const pageData = data.slice(start, end);
-
-    if (!pageData || pageData.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="8" class="empty-table-message">
-                    No hay gastos registrados.
-                </td>
-            </tr>
-        `;
-
-        const pageInfo = document.getElementById("expensePageInfo");
-
-        if (pageInfo) {
-            pageInfo.textContent = `Página 1 de 1`;
-        }
-
-        return;
-    }
-
-    pageData.forEach((expense) => {
-        const categoryName = expense.category ? expense.category.name : "";
-        const description = expense.description ?? "";
-        const responsible = expense.responsible ?? "";
-
-        tbody.innerHTML += `
-            <tr>
-                <td>${expense.id ?? ""}</td>
-                <td>${escapeFinanceHtml(categoryName)}</td>
-                <td>${escapeFinanceHtml(description)}</td>
-                <td>S/ ${Number(expense.amount || 0).toFixed(2)}</td>
-                <td>${expense.date ?? ""}</td>
-                <td>${escapeFinanceHtml(responsible)}</td>
-                <td>
-                    <span class="status-pill ${expense.active ? "active" : "inactive"}">
-                        ${expense.active ? "Activo" : "Inactivo"}
-                    </span>
-                </td>
-                <td>
-                    ${expense.active
-                ? `
-                                <button 
-                                    type="button"
-                                    class="table-action-btn danger expense-delete-btn"
-                                    onclick="deleteExpense(${expense.id})">
-                                    Eliminar
-                                </button>
-                            `
-                : `
-                                <span class="expense-deleted-label">
-                                    Eliminado
-                                </span>
-                            `
-            }
-                </td>
-            </tr>
-        `;
-    });
-
-    const pageInfo = document.getElementById("expensePageInfo");
-
-    if (pageInfo) {
-        pageInfo.textContent = `Página ${currentExpensePage} de ${totalPages}`;
-    }
-}
-
-async function deleteExpense(id) {
-    if (!id) return;
-
-    const expense =
-        expensesData.find((item) => Number(item.id) === Number(id)) ||
-        monthlyExpensesData.find((item) => Number(item.id) === Number(id));
-
-    const description = expense?.description || "Gasto seleccionado";
-
-    const confirm = await Swal.fire({
-        icon: "warning",
-        title: "¿Eliminar gasto?",
-        html: `
-            <p>Se eliminará el gasto:</p>
-            <strong>${escapeFinanceHtml(description)}</strong>
-            <br><br>
-            <small>
-                El registro no se borrará de la base de datos. 
-                Solo quedará inactivo para mantener auditoría.
-            </small>
-        `,
-        showCancelButton: true,
-        confirmButtonText: "Sí, eliminar",
-        cancelButtonText: "Cancelar",
-        confirmButtonColor: "#dc2626",
-    });
-
-    if (!confirm.isConfirmed) return;
-
-    try {
-        const response = await authFetch(`${baseUrl}/finances/expenses/${id}`, {
-            method: "DELETE",
-        });
-
-        if (!response) return;
-
-        let result = {};
-
-        try {
-            result = await response.json();
-        } catch (error) {
-            result = {};
-        }
-
-        if (!response.ok) {
-            Swal.fire(
-                "Error",
-                result.message || "No se pudo eliminar el gasto.",
-                "error",
-            );
-            return;
-        }
-
-        Swal.fire({
-            icon: "success",
-            title: "Gasto eliminado",
-            text: "El gasto fue desactivado correctamente.",
+            title: "Movimiento actualizado",
+            text: `El movimiento fue marcado como ${reviewStatus}.`,
             timer: 1700,
             showConfirmButton: false,
         });
-
-        if (expenseAdvancedFilterActive) {
-            await filterExpensesByAdvancedFilters(false);
-        } else {
-            await loadExpenses();
-        }
-
-        const monthlyYear = document.getElementById("monthlyExpenseYear")?.value;
-        const monthlyMonth = document.getElementById("monthlyExpenseMonth")?.value;
-        const monthlyResult = document.getElementById("monthlyExpenseResult");
-
-        if (
-            monthlyYear &&
-            monthlyMonth &&
-            monthlyResult &&
-            monthlyResult.innerHTML.trim() !== ""
-        ) {
-            await viewMonthlyExpenses(false);
-        }
-
-        if (typeof loadDashboard === "function") {
-            await loadDashboard();
-        }
-
-        const year = document.getElementById("summaryYear")?.value;
-        const month = document.getElementById("summaryMonth")?.value;
-
-        if (year && month && typeof loadFinanceSummary === "function") {
-            await loadFinanceSummary();
-        }
-
-        if (typeof loadNotifications === "function") {
-            await loadNotifications();
-        }
     } catch (error) {
-        console.error("Error eliminando gasto:", error);
-
+        console.error(error);
         Swal.fire("Error", "Error de conexión con el servidor.", "error");
     }
 }
 
-function clearExpenseForm() {
-    document.getElementById("expenseCategoryId").value = "";
-    document.getElementById("expenseDescription").value = "";
-    document.getElementById("expenseAmount").value = "";
-    document.getElementById("expenseDate").value = "";
-    document.getElementById("expenseResponsible").value = "";
-}
+/* =========================================================
+   RESUMEN VISUAL
+========================================================= */
 
-async function loadFinanceSummary() {
-    const year = document.getElementById("summaryYear").value;
-    const month = document.getElementById("summaryMonth").value;
-    const resultBox = document.getElementById("financeSummaryResult");
+function updateFinanceSummaryCards() {
+    let totalIncome = 0;
+    let totalExpense = 0;
+    let pendingCount = 0;
+    let reviewedCount = 0;
 
-    if (!year || !month) {
-        resultBox.innerHTML = `
-            <div class="finance-summary-empty">
-                Ingresa el año y mes para consultar el resumen financiero.
-            </div>
-        `;
-        return;
-    }
+    financeMovementsData.forEach((movement) => {
+        const status = movement.reviewStatus || "PENDIENTE";
 
-    try {
-        resultBox.innerHTML = `
-            <div class="finance-summary-loading">
-                Calculando resumen financiero...
-            </div>
-        `;
+        if (status === "PENDIENTE") {
+            pendingCount++;
+        }
 
-        const response = await authFetch(
-            `${baseUrl}/finances/summary?year=${year}&month=${month}`,
-        );
+        if (status === "REVISADO") {
+            reviewedCount++;
+        }
 
-        if (!response) return;
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            resultBox.innerHTML = `
-                <div class="finance-summary-empty">
-                    ${data.message || "No se pudo obtener el resumen financiero."}
-                </div>
-            `;
+        if (status === "ANULADO" || movement.active === false) {
             return;
         }
 
-        renderFinancialSummary(data, year, month);
-    } catch (error) {
-        resultBox.innerHTML = `
-            <div class="finance-summary-empty error">
-                Error al obtener resumen financiero.
-            </div>
-        `;
+        if (movement.type === "INGRESO") {
+            totalIncome += movement.amount;
+        }
+
+        if (movement.type === "GASTO") {
+            totalExpense += movement.amount;
+        }
+    });
+
+    const profit = totalIncome - totalExpense;
+
+    setText("financeTotalIncome", `S/ ${totalIncome.toFixed(2)}`);
+    setText("financeTotalExpense", `S/ ${totalExpense.toFixed(2)}`);
+    setText("financeProfit", `S/ ${profit.toFixed(2)}`);
+    setText("financePendingCount", pendingCount);
+    setText("financeReviewedCount", reviewedCount);
+
+    const profitLabel = document.getElementById("financeProfitLabel");
+
+    if (profitLabel) {
+        profitLabel.textContent = profit >= 0 ? "Ganancia del periodo" : "Pérdida del periodo";
     }
 }
 
-function renderFinancialSummary(data, year, month) {
-    const resultBox = document.getElementById("financeSummaryResult");
+/* =========================================================
+   DETALLE
+========================================================= */
 
-    const totalIncome = Number(data.totalIncome || 0);
-    const totalExpense = Number(data.totalExpense || 0);
-    const profit = Number(data.profit || 0);
+function buildFinanceDetailHtml(movement) {
+    const status = movement.reviewStatus || "PENDIENTE";
 
-    const status = data.result || (profit >= 0 ? "GANANCIA" : "PÉRDIDA");
-    const statusClass = profit >= 0 ? "gain" : "loss";
+    return `
+        <div class="finance-detail-row">
+            <span>Tipo</span>
+            <strong>${escapeHtml(movement.type)}</strong>
+        </div>
 
-    const monthName = getFinanceMonthName(month);
+        <div class="finance-detail-row">
+            <span>Fecha</span>
+            <strong>${escapeHtml(formatDisplayDate(movement.date))}</strong>
+        </div>
 
-    const percentageExpense =
-        totalIncome > 0 ? ((totalExpense / totalIncome) * 100).toFixed(1) : "0.0";
+        <div class="finance-detail-row">
+            <span>Descripción</span>
+            <strong>${escapeHtml(movement.description || "-")}</strong>
+        </div>
 
-    const percentageProfit =
-        totalIncome > 0 ? ((profit / totalIncome) * 100).toFixed(1) : "0.0";
+        <div class="finance-detail-row">
+            <span>${movement.type === "INGRESO" ? "Método de pago" : "Categoría"}</span>
+            <strong>${escapeHtml(movement.categoryOrMethod || "-")}</strong>
+        </div>
 
-    const analysisMessage =
-        profit >= 0
-            ? `Durante ${monthName} de ${year}, el centro obtuvo un resultado positivo. Los ingresos superaron a los gastos registrados, generando una ganancia de S/ ${formatFinanceMoney(profit)}.`
-            : `Durante ${monthName} de ${year}, el centro presenta un resultado negativo. Se recomienda revisar los gastos y reforzar el registro de ingresos.`;
+        <div class="finance-detail-row">
+            <span>Monto</span>
+            <strong>S/ ${movement.amount.toFixed(2)}</strong>
+        </div>
 
-    resultBox.innerHTML = `
-        <div class="finance-summary-container">
+        <div class="finance-detail-row">
+            <span>Origen</span>
+            <strong>${escapeHtml(movement.origin || "-")}</strong>
+        </div>
 
-            <div class="finance-summary-title">
-                <div>
-                    <h3>Resumen financiero de ${monthName} ${year}</h3>
-                    <p>Comparación mensual de ingresos, gastos y resultado económico.</p>
-                </div>
+        <div class="finance-detail-row">
+            <span>Referencia</span>
+            <strong>${escapeHtml(movement.reference || "-")}</strong>
+        </div>
 
-                <span class="finance-summary-badge ${statusClass}">
-                    ${status}
-                </span>
-            </div>
-
-            <div class="finance-summary-grid">
-
-                <div class="finance-summary-card income">
-                    <span>Total ingresos</span>
-                    <strong>S/ ${formatFinanceMoney(totalIncome)}</strong>
-                    <small>Dinero registrado como entrada</small>
-                </div>
-
-                <div class="finance-summary-card expense">
-                    <span>Total gastos</span>
-                    <strong>S/ ${formatFinanceMoney(totalExpense)}</strong>
-                    <small>Dinero registrado como salida</small>
-                </div>
-
-                <div class="finance-summary-card result ${statusClass}">
-                    <span>Resultado</span>
-                    <strong>S/ ${formatFinanceMoney(profit)}</strong>
-                    <small>Ingresos menos gastos</small>
-                </div>
-
-                <div class="finance-summary-card status ${statusClass}">
-                    <span>Estado financiero</span>
-                    <strong>${status}</strong>
-                    <small>Balance del periodo consultado</small>
-                </div>
-
-            </div>
-
-            <div class="finance-summary-analysis">
-                <strong>Análisis del periodo</strong>
-                <p>${analysisMessage}</p>
-            </div>
-
-            <div class="finance-summary-bars">
-
-                <div class="finance-bar-item">
-                    <div class="finance-bar-label">
-                        <span>Gastos sobre ingresos</span>
-                        <strong>${percentageExpense}%</strong>
+        ${
+            movement.type === "GASTO"
+                ? `
+                    <div class="finance-detail-row">
+                        <span>Responsable</span>
+                        <strong>${escapeHtml(movement.responsible || "-")}</strong>
                     </div>
-                    <div class="finance-bar-track">
-                        <div class="finance-bar-fill expense" style="width:${Math.min(percentageExpense, 100)}%;"></div>
-                    </div>
-                </div>
+                `
+                : ""
+        }
 
-                <div class="finance-bar-item">
-                    <div class="finance-bar-label">
-                        <span>Rentabilidad aproximada</span>
-                        <strong>${percentageProfit}%</strong>
-                    </div>
-                    <div class="finance-bar-track">
-                        <div class="finance-bar-fill income" style="width:${Math.max(Math.min(percentageProfit, 100), 0)}%;"></div>
-                    </div>
-                </div>
+        <div class="finance-detail-row">
+            <span>Estado de revisión</span>
+            <strong>${buildReviewBadge(status)}</strong>
+        </div>
 
-            </div>
+        <div class="finance-detail-row">
+            <span>Revisado por</span>
+            <strong>${escapeHtml(movement.reviewedBy || "-")}</strong>
+        </div>
 
+        <div class="finance-detail-row">
+            <span>Fecha de revisión</span>
+            <strong>${escapeHtml(formatDateTime(movement.reviewedAt) || "-")}</strong>
+        </div>
+
+        <div class="finance-detail-row">
+            <span>Observación</span>
+            <strong>${escapeHtml(movement.reviewObservation || "-")}</strong>
         </div>
     `;
 }
 
-function formatFinanceMoney(value) {
-    return Number(value || 0).toLocaleString("es-PE", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    });
+/* =========================================================
+   COMPATIBILIDAD CON FUNCIONES ANTERIORES
+========================================================= */
+
+async function loadIncomes() {
+    await loadFinanceMovements();
 }
 
-function getFinanceMonthName(month) {
-    const months = {
-        1: "enero",
-        2: "febrero",
-        3: "marzo",
-        4: "abril",
-        5: "mayo",
-        6: "junio",
-        7: "julio",
-        8: "agosto",
-        9: "septiembre",
-        10: "octubre",
-        11: "noviembre",
-        12: "diciembre",
-    };
-
-    return months[Number(month)] || `mes ${month}`;
+async function loadExpenses() {
+    await loadFinanceMovements();
 }
 
-function getFilteredIncomes() {
-    const input = document.querySelector("#incomeListModal .table-search");
-    const search = input ? input.value.toLowerCase() : "";
-
-    if (!search) return incomesData;
-
-    return incomesData.filter((income) => {
-        const text = `
-            ${income.id ?? ""}
-            ${income.description ?? ""}
-            ${income.amount ?? ""}
-            ${income.date ?? ""}
-            ${income.paymentMethod ?? ""}
-            ${income.active ? "Activo" : "Inactivo"}
-        `.toLowerCase();
-
-        return text.includes(search);
-    });
-}
-
-function getFilteredExpenses() {
-    const input = document.querySelector("#expenseListModal .table-search");
-    const search = input ? input.value.toLowerCase() : "";
-
-    if (!search) return expensesData;
-
-    return expensesData.filter((expense) => {
-        const text = `
-            ${expense.id ?? ""}
-            ${expense.category ? expense.category.name : ""}
-            ${expense.description ?? ""}
-            ${expense.amount ?? ""}
-            ${expense.date ?? ""}
-            ${expense.responsible ?? ""}
-            ${expense.active ? "Activo" : "Inactivo"}
-        `.toLowerCase();
-
-        return text.includes(search);
-    });
-}
-
-function filterIncomeTable() {
-    currentIncomePage = 1;
-    renderIncomeTable(getFilteredIncomes());
-}
-
-function filterExpenseTable() {
-    currentExpensePage = 1;
-    renderExpenseTable(getFilteredExpenses());
-}
-
-function changeIncomePage(direction) {
-    const filteredData = getFilteredIncomes();
-    const totalPages = Math.ceil(filteredData.length / financeRowsPerPage) || 1;
-
-    currentIncomePage += direction;
-
-    if (currentIncomePage < 1) currentIncomePage = 1;
-    if (currentIncomePage > totalPages) currentIncomePage = totalPages;
-
-    renderIncomeTable(filteredData);
-}
-
-function changeExpensePage(direction) {
-    const filteredData = getFilteredExpenses();
-    const totalPages = Math.ceil(filteredData.length / financeRowsPerPage) || 1;
-
-    currentExpensePage += direction;
-
-    if (currentExpensePage < 1) currentExpensePage = 1;
-    if (currentExpensePage > totalPages) currentExpensePage = totalPages;
-
-    renderExpenseTable(filteredData);
-}
-
-async function toggleIncomeList() {
-    document.getElementById("incomeListModal").classList.remove("hidden");
-    document.body.classList.add("modal-open");
-
-    await loadIncomes();
+function toggleIncomeList() {
+    loadFinanceMovements();
 }
 
 function closeIncomeList() {
-    document.getElementById("incomeListModal").classList.add("hidden");
-    document.body.classList.remove("modal-open");
+    return;
 }
 
-async function toggleExpenseList() {
-    document.getElementById("expenseListModal").classList.remove("hidden");
-    document.body.classList.add("modal-open");
-
-    await loadExpenseCategoryOptions();
-    await loadExpenseResponsibleOptions();
-
-    const statusInput = document.getElementById("expenseFilterStatus");
-
-    if (statusInput && !statusInput.value) {
-        statusInput.value = "true";
-    }
-
-    await loadExpenses();
+function toggleExpenseList() {
+    loadFinanceMovements();
 }
 
 function closeExpenseList() {
-    document.getElementById("expenseListModal").classList.add("hidden");
-    document.body.classList.remove("modal-open");
+    return;
 }
 
-async function refreshFinancesRealtime() {
-    if (currentUser.role !== "ADMIN") return;
+function filterIncomeTable() {
+    return;
+}
 
-    if (typeof loadIncomes === "function") {
-        await loadIncomes();
-    }
+function filterExpenseTable() {
+    return;
+}
 
-    if (typeof loadExpenses === "function") {
-        await loadExpenses();
-    }
+function changeIncomePage() {
+    return;
+}
 
-    if (typeof loadDashboard === "function") {
-        await loadDashboard();
-    }
+function changeExpensePage() {
+    return;
+}
 
-    const year = document.getElementById("summaryYear")?.value;
-    const month = document.getElementById("summaryMonth")?.value;
+async function loadFinanceSummary() {
+    await loadFinanceMovements();
+}
 
-    if (year && month && typeof loadFinanceSummary === "function") {
-        await loadFinanceSummary();
+async function viewMonthlyExpenses() {
+    setValue("financePeriodFilter", "month");
+
+    const year = getValue("monthlyExpenseYear");
+    const month = getValue("monthlyExpenseMonth");
+
+    if (year) setValue("financeYearFilter", year);
+    if (month) setValue("financeMonthFilter", month);
+
+    handleFinancePeriodChange();
+    await loadFinanceMovements();
+}
+
+function filterExpensesByAdvancedFilters() {
+    loadFinanceMovements();
+}
+
+function clearExpenseFilters() {
+    clearFinanceFilters();
+}
+
+/* =========================================================
+   HELPERS VISUALES
+========================================================= */
+
+function getFinanceRowClass(status) {
+    const cleanStatus = (status || "PENDIENTE").toLowerCase();
+
+    return `finance-row-${cleanStatus}`;
+}
+
+function buildReviewBadge(status) {
+    const cleanStatus = status || "PENDIENTE";
+    const className = `finance-badge-${cleanStatus.toLowerCase()}`;
+
+    return `
+        <span class="finance-badge ${className}">
+            ${escapeHtml(cleanStatus)}
+        </span>
+    `;
+}
+
+function showFinanceMessage(element, message, type = "info") {
+    if (!element) return;
+
+    element.innerHTML = `
+        <div class="finance-inline-message ${type}">
+            ${escapeHtml(message)}
+        </div>
+    `;
+}
+
+function setText(id, value) {
+    const element = document.getElementById(id);
+    if (element) {
+        element.textContent = value;
     }
 }
 
-function escapeFinanceHtml(value) {
+function getValue(id) {
+    const element = document.getElementById(id);
+    return element ? element.value.trim() : "";
+}
+
+function setValue(id, value) {
+    const element = document.getElementById(id);
+    if (element) {
+        element.value = value;
+    }
+}
+
+function formatDateInput(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+}
+
+function formatDisplayDate(dateText) {
+    if (!dateText) return "-";
+
+    const parts = dateText.split("-");
+    if (parts.length !== 3) return dateText;
+
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+}
+
+function formatDateTime(value) {
+    if (!value) return "";
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return value;
+    }
+
+    return date.toLocaleString("es-PE", {
+        dateStyle: "short",
+        timeStyle: "short",
+    });
+}
+
+function getWeekRange(dateText) {
+    const date = new Date(`${dateText}T00:00:00`);
+
+    const day = date.getDay();
+    const diffToMonday = day === 0 ? -6 : 1 - day;
+
+    const monday = new Date(date);
+    monday.setDate(date.getDate() + diffToMonday);
+
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+
+    return {
+        startDate: formatDateInput(monday),
+        endDate: formatDateInput(sunday),
+    };
+}
+
+function escapeHtml(value) {
     return String(value ?? "")
         .replaceAll("&", "&amp;")
         .replaceAll("<", "&lt;")
@@ -1079,302 +1228,16 @@ function escapeFinanceHtml(value) {
         .replaceAll("'", "&#039;");
 }
 
-function escapeFinanceAttr(value) {
-    return escapeFinanceHtml(value);
-}
+/* =========================================================
+   AUTO INIT
+========================================================= */
 
-async function viewMonthlyExpenses(showMessage = true) {
-    const year = document.getElementById("monthlyExpenseYear")?.value;
-    const month = document.getElementById("monthlyExpenseMonth")?.value;
-    const resultBox = document.getElementById("monthlyExpenseResult");
+document.addEventListener("DOMContentLoaded", () => {
+    setTimeout(() => {
+        const financeSection = document.getElementById("finances");
 
-    if (!resultBox) return;
-
-    if (!year || !month) {
-        resultBox.innerHTML = `
-            <div class="monthly-expense-empty">
-                Selecciona el año y el mes para consultar los gastos.
-            </div>
-        `;
-        return;
-    }
-
-    try {
-        resultBox.innerHTML = `
-            <div class="monthly-expense-loading">
-                Cargando historial mensual de gastos...
-            </div>
-        `;
-
-        const params = new URLSearchParams();
-        params.append("year", year);
-        params.append("month", month);
-        params.append("active", "true");
-
-        const response = await authFetch(
-            `${baseUrl}/finances/expenses/filter?${params.toString()}`,
-        );
-
-        if (!response) return;
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            resultBox.innerHTML = `
-                <div class="monthly-expense-empty error">
-                    ${data.message || "No se pudo cargar el historial mensual."}
-                </div>
-            `;
-            return;
+        if (financeSection) {
+            initFinanceModule();
         }
-
-        renderMonthlyExpenseHistory(data, year, month);
-
-        if (showMessage) {
-            Swal.fire({
-                icon: "success",
-                title: "Historial cargado",
-                text: "Los gastos del mes fueron consultados correctamente.",
-                timer: 1400,
-                showConfirmButton: false,
-            });
-        }
-    } catch (error) {
-        console.error("Error cargando historial mensual:", error);
-
-        resultBox.innerHTML = `
-            <div class="monthly-expense-empty error">
-                Error de conexión al cargar los gastos del mes.
-            </div>
-        `;
-    }
-}
-
-function renderMonthlyExpenseHistory(data, year, month) {
-    const resultBox = document.getElementById("monthlyExpenseResult");
-
-    if (!resultBox) return;
-
-    const monthName = getFinanceMonthName(month);
-    const expenses = Array.isArray(data) ? data : [];
-    monthlyExpensesData = expenses;
-
-    const total = expenses.reduce((sum, expense) => {
-        return sum + Number(expense.amount || 0);
-    }, 0);
-
-    const categoryTotals = {};
-
-    expenses.forEach((expense) => {
-        const categoryName = expense.category?.name || "Sin categoría";
-
-        if (!categoryTotals[categoryName]) {
-            categoryTotals[categoryName] = 0;
-        }
-
-        categoryTotals[categoryName] += Number(expense.amount || 0);
-    });
-
-    const categoryEntries = Object.entries(categoryTotals).sort(
-        (a, b) => b[1] - a[1],
-    );
-
-    const highestCategory =
-        categoryEntries.length > 0 ? categoryEntries[0][0] : "Sin datos";
-
-    const categoryHtml = categoryEntries
-        .map(([category, amount]) => {
-            const percent = total > 0 ? ((amount / total) * 100).toFixed(1) : "0.0";
-
-            return `
-            <div class="monthly-category-item">
-                <div>
-                    <strong>${escapeFinanceHtml(category)}</strong>
-                    <span>${percent}% del total mensual</span>
-                </div>
-
-                <strong>S/ ${formatFinanceMoney(amount)}</strong>
-            </div>
-        `;
-        })
-        .join("");
-
-    const sortedExpenses = [...expenses].sort((a, b) => {
-        const dateCompare = String(b.date || "").localeCompare(
-            String(a.date || ""),
-        );
-
-        if (dateCompare !== 0) return dateCompare;
-
-        return Number(b.id || 0) - Number(a.id || 0);
-    });
-
-    const detailRows = sortedExpenses
-        .map(
-            (expense) => `
-        <tr>
-            <td>${expense.date ?? ""}</td>
-            <td>${escapeFinanceHtml(expense.category?.name || "Sin categoría")}</td>
-            <td>${escapeFinanceHtml(expense.description || "")}</td>
-            <td>${escapeFinanceHtml(expense.responsible || "No registrado")}</td>
-            <td>S/ ${formatFinanceMoney(expense.amount || 0)}</td>
-            <td>
-            <button 
-                type="button"
-                class="table-action-btn danger expense-delete-btn"
-                onclick="deleteExpense(${expense.id})">
-                Eliminar
-            </button>
-            </td>
-        </tr>
-    `,
-        )
-        .join("");
-
-    resultBox.innerHTML = `
-        <div class="monthly-expense-card">
-
-            <div class="monthly-expense-title">
-                <div>
-                    <span>Historial mensual de gastos</span>
-                    <h3>${capitalizeFinanceText(monthName)} ${year}</h3>
-                </div>
-
-                <div class="monthly-expense-total">
-                    <small>Total gastos del mes</small>
-                    <strong>S/ ${formatFinanceMoney(total)}</strong>
-                </div>
-            </div>
-
-            <div class="monthly-expense-kpis">
-                <div>
-                    <span>Cantidad de gastos</span>
-                    <strong>${expenses.length}</strong>
-                    <small>Registros activos encontrados</small>
-                </div>
-
-                <div>
-                    <span>Categoría principal</span>
-                    <strong>${escapeFinanceHtml(highestCategory)}</strong>
-                    <small>Mayor concentración de gasto</small>
-                </div>
-
-                <div>
-                    <span>Promedio por gasto</span>
-                    <strong>S/ ${formatFinanceMoney(expenses.length > 0 ? total / expenses.length : 0)}</strong>
-                    <small>Total dividido entre registros</small>
-                </div>
-            </div>
-
-            <div class="monthly-expense-section">
-                <h4>Gastos por categoría</h4>
-
-                <div class="monthly-category-list">
-                    ${categoryHtml ||
-        `
-                        <div class="monthly-expense-empty">
-                            No hay gastos registrados en este mes.
-                        </div>
-                    `
-        }
-                </div>
-            </div>
-
-            <div class="monthly-expense-section">
-                <h4>Detalle de gastos</h4>
-
-                <div class="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Categoría</th>
-                                <th>Descripción</th>
-                                <th>Responsable</th>
-                                <th>Monto</th>
-                                <th>Acción</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            ${detailRows ||
-        `
-                                <tr>
-                                    <td colspan="6" class="empty-table-message">
-                                        No hay gastos registrados para este mes.
-                                    </td>
-                                </tr>
-                            `
-        }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-        </div>
-    `;
-}
-
-function capitalizeFinanceText(value) {
-    const text = String(value || "");
-
-    if (!text) return "";
-
-    return text.charAt(0).toUpperCase() + text.slice(1);
-}
-
-async function loadExpenseResponsibleOptions() {
-    const select = document.getElementById("expenseFilterResponsible");
-
-    if (!select) return;
-
-    const selectedValue = select.value;
-
-    try {
-        const response = await authFetch(`${baseUrl}/finances/expenses/filter`);
-
-        if (!response) return;
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            renderExpenseResponsibleOptions(expensesData, selectedValue);
-            return;
-        }
-
-        renderExpenseResponsibleOptions(data, selectedValue);
-    } catch (error) {
-        console.error("Error cargando responsables:", error);
-        renderExpenseResponsibleOptions(expensesData, selectedValue);
-    }
-}
-
-function renderExpenseResponsibleOptions(data, selectedValue = "") {
-    const select = document.getElementById("expenseFilterResponsible");
-
-    if (!select) return;
-
-    const responsibles = [
-        ...new Set(
-            (Array.isArray(data) ? data : [])
-                .map((expense) =>
-                    expense.responsible ? expense.responsible.trim() : "",
-                )
-                .filter((value) => value !== ""),
-        ),
-    ].sort((a, b) => a.localeCompare(b));
-
-    select.innerHTML = `<option value="">Todos los responsables</option>`;
-
-    responsibles.forEach((responsible) => {
-        select.innerHTML += `
-            <option value="${escapeFinanceAttr(responsible)}">
-                ${escapeFinanceHtml(responsible)}
-            </option>
-        `;
-    });
-
-    if (selectedValue && responsibles.includes(selectedValue)) {
-        select.value = selectedValue;
-    }
-}
+    }, 400);
+});
