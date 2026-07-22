@@ -781,8 +781,6 @@ function renderFinanceMovementTable() {
     const end = start + financeRowsPerPage;
     const pageData = financeMovementsData.slice(start, end);
 
-    updateFinanceFooterTotals(pageData);
-
     pageData.forEach((movement) => {
         const status = movement.reviewStatus || "PENDIENTE";
         const rowClass = getFinanceRowClass(status);
@@ -842,54 +840,6 @@ function updateFinancePagination(totalPages) {
 
     if (pageInfo) {
         pageInfo.textContent = `Página ${currentFinanceMovementPage} de ${totalPages}`;
-    }
-}
-
-function updateFinanceFooterTotals(pageData = []) {
-    let currentPageTotal = 0;
-    let filteredTotal = 0;
-
-    pageData.forEach((movement) => {
-        if (movement.reviewStatus === "ANULADO" || movement.active === false) {
-            return;
-        }
-
-        if (movement.type === "INGRESO") {
-            currentPageTotal += movement.amount;
-        }
-
-        if (movement.type === "GASTO") {
-            currentPageTotal -= movement.amount;
-        }
-    });
-
-    financeMovementsData.forEach((movement) => {
-        if (movement.reviewStatus === "ANULADO" || movement.active === false) {
-            return;
-        }
-
-        if (movement.type === "INGRESO") {
-            filteredTotal += movement.amount;
-        }
-
-        if (movement.type === "GASTO") {
-            filteredTotal -= movement.amount;
-        }
-    });
-
-    const currentPageTotalElement = document.getElementById("financeCurrentPageTotal");
-    const filteredTotalElement = document.getElementById("financeFilteredTotal");
-
-    if (currentPageTotalElement) {
-        currentPageTotalElement.textContent = `S/ ${currentPageTotal.toFixed(2)}`;
-        currentPageTotalElement.className =
-            currentPageTotal >= 0 ? "finance-total-positive" : "finance-total-negative";
-    }
-
-    if (filteredTotalElement) {
-        filteredTotalElement.textContent = `S/ ${filteredTotal.toFixed(2)}`;
-        filteredTotalElement.className =
-            filteredTotal >= 0 ? "finance-total-positive" : "finance-total-negative";
     }
 }
 

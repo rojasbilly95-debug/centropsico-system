@@ -4218,55 +4218,95 @@ body.modal-open {
         width: 100%;
     }
 }
-
 /* =========================================
    FINANZAS - RESUMEN DEL FILTRO
 ========================================= */
 
 .finance-summary-strip {
     display: grid;
-    grid-template-columns: repeat(3, minmax(220px, 1fr));
+    grid-template-columns: repeat(3, minmax(240px, 1fr));
     gap: 18px;
     margin: 20px 0 18px;
 }
 
 .finance-summary-card {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 16px;
     background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 20px;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
     padding: 18px 20px;
-    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
+}
+
+.finance-summary-card::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 18px;
+    bottom: 18px;
+    width: 4px;
+    border-radius: 999px;
+}
+
+.finance-summary-card.income-card::before {
+    background: #059669;
+}
+
+.finance-summary-card.expense-card::before {
+    background: #dc2626;
+}
+
+.finance-summary-card.result-card::before {
+    background: #2563eb;
 }
 
 .finance-summary-icon {
-    width: 46px;
-    height: 46px;
-    min-width: 46px;
-    border-radius: 16px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 13px;
     font-weight: 900;
-    font-size: 16px;
+}
+
+.income-card .finance-summary-icon {
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.expense-card .finance-summary-icon {
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.result-card .finance-summary-icon {
+    background: #eff6ff;
+    color: #1d4ed8;
 }
 
 .finance-summary-card .summary-label {
     display: block;
-    color: #64748b;
+    color: #475569;
     font-size: 13px;
     font-weight: 800;
-    margin-bottom: 5px;
+    margin-bottom: 6px;
 }
 
 .finance-summary-card strong {
     display: block;
     font-size: 24px;
+    line-height: 1.1;
     font-weight: 900;
+    letter-spacing: -0.03em;
     color: #0f172a;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
 }
 
 .finance-summary-card small {
@@ -4276,39 +4316,16 @@ body.modal-open {
     font-weight: 600;
 }
 
-.finance-summary-card.income-card {
-    border-left: 6px solid #10b981;
-}
-
-.finance-summary-card.income-card .finance-summary-icon {
-    background: #ecfdf5;
-    color: #047857;
-}
-
 .finance-summary-card.income-card strong {
     color: #047857;
-}
-
-.finance-summary-card.expense-card {
-    border-left: 6px solid #ef4444;
-}
-
-.finance-summary-card.expense-card .finance-summary-icon {
-    background: #fef2f2;
-    color: #b91c1c;
 }
 
 .finance-summary-card.expense-card strong {
     color: #b91c1c;
 }
 
-.finance-summary-card.result-card {
-    border-left: 6px solid #2563eb;
-}
-
-.finance-summary-card.result-card .finance-summary-icon {
-    background: #eff6ff;
-    color: #1d4ed8;
+.finance-summary-card.result-card strong {
+    color: #0f172a;
 }
 
 /* =========================================
@@ -4322,17 +4339,17 @@ body.modal-open {
     gap: 18px;
     flex-wrap: wrap;
     background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 20px;
-    padding: 18px 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.07);
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    padding: 16px 18px;
+    margin-bottom: 18px;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
 }
 
 .finance-overview-text h3 {
-    margin: 0 0 6px;
+    margin: 0 0 4px;
     color: #0f172a;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 900;
 }
 
@@ -4344,13 +4361,13 @@ body.modal-open {
 }
 
 /* =========================================
-   FINANZAS - ESTADOS PREMIUM
+   FINANZAS - ESTADOS PROFESIONALES
 ========================================= */
 
 .finance-status-legend {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 8px;
     justify-content: flex-end;
 }
 
@@ -4358,12 +4375,13 @@ body.modal-open {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 8px 14px;
+    min-height: 30px;
+    padding: 7px 13px;
     border-radius: 999px;
     font-size: 12px;
     font-weight: 900;
     border: 1px solid transparent;
-    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.10);
+    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
 }
 
 .finance-status-pill.pending {
@@ -4395,6 +4413,34 @@ body.modal-open {
     color: #991b1b;
     border-color: #fecaca;
 }
+
+/* =========================================
+   FINANZAS - PAGINACIÓN SIMPLE
+========================================= */
+
+.finance-pagination-footer.simple {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 0 0;
+}
+
+.finance-page-info {
+    min-width: 130px;
+    text-align: center;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 800;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    padding: 8px 14px;
+}
+
+/* =========================================
+   RESPONSIVE
+========================================= */
 
 @media (max-width: 1000px) {
     .finance-summary-strip {

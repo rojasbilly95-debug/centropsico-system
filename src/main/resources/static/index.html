@@ -1281,7 +1281,8 @@
                         <div>
                             <h3>Historial financiero</h3>
                             <span>
-                                Visualiza ingresos y gastos filtrados, valida estados de revisión y controla el resultado financiero.
+                                Visualiza ingresos y gastos filtrados, valida estados de revisión y controla el
+                                resultado financiero.
                             </span>
                         </div>
 
@@ -1321,33 +1322,19 @@
                         </table>
                     </div>
 
-                    <div class="finance-pagination-footer">
+                    <div class="finance-pagination-footer simple">
 
-                        <div class="finance-page-total-box">
-                            <span>Total página actual</span>
-                            <strong id="financeCurrentPageTotal">S/ 0.00</strong>
-                            <small>Según los movimientos visibles</small>
-                        </div>
+                        <button class="btn-secondary" type="button" onclick="changeFinanceMovementPage(-1)">
+                            Anterior
+                        </button>
 
-                        <div class="pagination-bar finance-pagination-center">
-                            <button class="btn-secondary" type="button" onclick="changeFinanceMovementPage(-1)">
-                                Anterior
-                            </button>
+                        <span id="financeMovementPageInfo" class="finance-page-info">
+                            Página 1 de 1
+                        </span>
 
-                            <span id="financeMovementPageInfo">
-                                Página 1 de 1
-                            </span>
-
-                            <button class="btn-secondary" type="button" onclick="changeFinanceMovementPage(1)">
-                                Siguiente
-                            </button>
-                        </div>
-
-                        <div class="finance-filtered-total-box">
-                            <span>Total resultado filtrado</span>
-                            <strong id="financeFilteredTotal">S/ 0.00</strong>
-                            <small>Ingresos menos gastos del filtro aplicado</small>
-                        </div>
+                        <button class="btn-secondary" type="button" onclick="changeFinanceMovementPage(1)">
+                            Siguiente
+                        </button>
 
                     </div>
 
