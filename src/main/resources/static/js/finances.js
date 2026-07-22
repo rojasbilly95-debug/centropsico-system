@@ -990,72 +990,131 @@ function updateFinanceSummaryCards() {
 
 function buildFinanceDetailHtml(movement) {
     const status = movement.reviewStatus || "PENDIENTE";
+    const isIncome = movement.type === "INGRESO";
+    const amountSign = isIncome ? "+" : "-";
+    const amountClass = isIncome ? "detail-income" : "detail-expense";
 
     return `
-        <div class="finance-detail-row">
-            <span>Tipo</span>
-            <strong>${escapeHtml(movement.type)}</strong>
+        <div class="finance-detail-header-card ${amountClass}">
+            <div>
+                <span class="finance-detail-label">Movimiento financiero</span>
+
+                <h2>
+                    ${escapeHtml(movement.type)}
+                </h2>
+
+                <p>
+                    ${escapeHtml(movement.description || "Sin descripción")}
+                </p>
+            </div>
+
+            <div class="finance-detail-amount-box">
+                <small>Monto</small>
+                <strong>${amountSign} S/ ${movement.amount.toFixed(2)}</strong>
+                ${buildReviewBadge(status)}
+            </div>
         </div>
 
-        <div class="finance-detail-row">
-            <span>Fecha</span>
-            <strong>${escapeHtml(formatDisplayDate(movement.date))}</strong>
-        </div>
+        <div class="finance-detail-grid">
 
-        <div class="finance-detail-row">
-            <span>Descripción</span>
-            <strong>${escapeHtml(movement.description || "-")}</strong>
-        </div>
+            <div class="finance-detail-section">
+                <h4>Información principal</h4>
 
-        <div class="finance-detail-row">
-            <span>${movement.type === "INGRESO" ? "Método de pago" : "Categoría"}</span>
-            <strong>${escapeHtml(movement.categoryOrMethod || "-")}</strong>
-        </div>
+                <div class="finance-detail-item">
+                    <span>Fecha</span>
+                    <strong>${escapeHtml(formatDisplayDate(movement.date))}</strong>
+                </div>
 
-        <div class="finance-detail-row">
-            <span>Monto</span>
-            <strong>S/ ${movement.amount.toFixed(2)}</strong>
-        </div>
+                <div class="finance-detail-item">
+                    <span>Tipo</span>
+                    <strong>${escapeHtml(movement.type)}</strong>
+                </div>
 
-        <div class="finance-detail-row">
-            <span>Origen</span>
-            <strong>${escapeHtml(movement.origin || "-")}</strong>
-        </div>
+                <div class="finance-detail-item">
+                    <span>${movement.type === "INGRESO" ? "Método de pago" : "Categoría"}</span>
+                    <strong>${escapeHtml(movement.categoryOrMethod || "-")}</strong>
+                </div>
 
-        <div class="finance-detail-row">
-            <span>Referencia</span>
-            <strong>${escapeHtml(movement.reference || "-")}</strong>
-        </div>
+                ${
+                    movement.type === "GASTO"
+                        ? `
+                            <div class="finance-detail-item">
+                                <span>Responsable</span>
+                                <strong>${escapeHtml(movement.responsible || "-")}</strong>
+                            </div>
+                        `
+                        : ""
+                }
+            </div>
 
-        ${
-            movement.type === "GASTO"
-                ? `
-                    <div class="finance-detail-row">
-                        <span>Responsable</span>
-                        <strong>${escapeHtml(movement.responsible || "-")}</strong>
+            <div class="finance-detail-section">
+                <h4>Trazabilidad</h4>
+
+                <div class="finance-detail-item">
+                    <span>Origen</span>
+                    <strong>${escapeHtml(movement.origin || "-")}</strong>
+                </div>
+
+                <div class="finance-detail-item">
+                    <span>Referencia</span>
+                    <strong>${escapeHtml(movement.reference || "-")}</strong>
+                </div>
+
+                <div class="finance-detail-item">
+                    <span>Estado del registro</span>
+                    <strong>
+                        ${movement.active === false ? "Inactivo" : "Activo"}
+                    </strong>
+                </div>
+            </div>
+
+            <div class="finance-detail-section finance-detail-section-full">
+                <h4>Revisión financiera</h4>
+
+                <div class="finance-review-timeline">
+
+                    <div class="finance-review-step ${status === "PENDIENTE" ? "current" : "done"}">
+                        <span>1</span>
+                        <div>
+                            <strong>Pendiente</strong>
+                            <small>Movimiento registrado, aún sin revisar.</small>
+                        </div>
                     </div>
-                `
-                : ""
-        }
 
-        <div class="finance-detail-row">
-            <span>Estado de revisión</span>
-            <strong>${buildReviewBadge(status)}</strong>
-        </div>
+                    <div class="finance-review-step ${status !== "PENDIENTE" ? "done" : ""}">
+                        <span>2</span>
+                        <div>
+                            <strong>${escapeHtml(status)}</strong>
+                            <small>
+                                ${
+                                    status === "PENDIENTE"
+                                        ? "Esperando validación administrativa."
+                                        : "Movimiento validado o actualizado por administración."
+                                }
+                            </small>
+                        </div>
+                    </div>
 
-        <div class="finance-detail-row">
-            <span>Revisado por</span>
-            <strong>${escapeHtml(movement.reviewedBy || "-")}</strong>
-        </div>
+                </div>
 
-        <div class="finance-detail-row">
-            <span>Fecha de revisión</span>
-            <strong>${escapeHtml(formatDateTime(movement.reviewedAt) || "-")}</strong>
-        </div>
+                <div class="finance-detail-review-box">
+                    <div>
+                        <span>Revisado por</span>
+                        <strong>${escapeHtml(movement.reviewedBy || "Aún no revisado")}</strong>
+                    </div>
 
-        <div class="finance-detail-row">
-            <span>Observación</span>
-            <strong>${escapeHtml(movement.reviewObservation || "-")}</strong>
+                    <div>
+                        <span>Fecha de revisión</span>
+                        <strong>${escapeHtml(formatDateTime(movement.reviewedAt) || "Pendiente")}</strong>
+                    </div>
+                </div>
+
+                <div class="finance-detail-observation">
+                    <span>Observación</span>
+                    <p>${escapeHtml(movement.reviewObservation || "No se registró observación.")}</p>
+                </div>
+            </div>
+
         </div>
     `;
 }
