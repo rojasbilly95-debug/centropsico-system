@@ -1198,55 +1198,76 @@
                     </div>
                 </div>
 
-                <!-- RESULTADO DEL PERIODO FILTRADO -->
-                <div class="finance-period-result-panel">
+                <!-- RESUMEN DEL FILTRO APLICADO -->
+                <div class="finance-summary-strip">
 
-                    <div class="finance-period-result-item income">
-                        <span>Total ingresos filtrados</span>
-                        <strong id="financePeriodIncome">S/ 0.00</strong>
+                    <div class="finance-summary-card income-card">
+                        <div class="finance-summary-icon">
+                            S/
+                        </div>
+
+                        <div>
+                            <span class="summary-label">Ingresos filtrados</span>
+                            <strong id="financePeriodIncome">S/ 0.00</strong>
+                            <small>Total de entradas del filtro aplicado</small>
+                        </div>
                     </div>
 
-                    <div class="finance-period-result-item expense">
-                        <span>Total gastos filtrados</span>
-                        <strong id="financePeriodExpense">S/ 0.00</strong>
+                    <div class="finance-summary-card expense-card">
+                        <div class="finance-summary-icon">
+                            S/
+                        </div>
+
+                        <div>
+                            <span class="summary-label">Gastos filtrados</span>
+                            <strong id="financePeriodExpense">S/ 0.00</strong>
+                            <small>Total de salidas del filtro aplicado</small>
+                        </div>
                     </div>
 
-                    <div class="finance-period-result-item result">
-                        <span>Resultado del filtro</span>
-                        <strong id="financePeriodProfit">S/ 0.00</strong>
-                        <small id="financePeriodProfitStatus">Sin resultado</small>
+                    <div class="finance-summary-card result-card">
+                        <div class="finance-summary-icon">
+                            =
+                        </div>
+
+                        <div>
+                            <span class="summary-label">Resultado del filtro</span>
+                            <strong id="financePeriodProfit">S/ 0.00</strong>
+                            <small id="financePeriodProfitStatus">Sin resultado</small>
+                        </div>
                     </div>
 
                 </div>
 
-                <!-- LEYENDA Y RESUMEN COMPACTO -->
-                <div class="finance-compact-panel">
+                <!-- MOVIMIENTOS Y ESTADOS -->
+                <div class="finance-overview-bar">
 
-                    <div class="finance-compact-info">
-                        <strong>Movimientos financieros</strong>
-                        <span id="financeCompactSummary">
+                    <div class="finance-overview-text">
+                        <h3>Movimientos financieros</h3>
+
+                        <p id="financeCompactSummary">
                             Filtra por día, semana o mes para revisar los movimientos.
-                        </span>
+                        </p>
                     </div>
 
                     <div class="finance-status-legend">
-                        <span class="legend-item legend-pending">
+                        <span class="finance-status-pill pending">
                             Pendiente
                         </span>
 
-                        <span class="legend-item legend-reviewed">
+                        <span class="finance-status-pill reviewed">
                             Revisado
                         </span>
 
-                        <span class="legend-item legend-counted">
+                        <span class="finance-status-pill accounted">
                             Contabilizado
                         </span>
 
-                        <span class="legend-item legend-observed">
+                        <span class="finance-status-pill observed">
                             Observado
                         </span>
 
-                        <span class="legend-item legend-cancelled">
+                        <span class="finance-status-pill cancelled">
                             Anulado
                         </span>
                     </div>

@@ -4218,3 +4218,195 @@ body.modal-open {
         width: 100%;
     }
 }
+
+/* =========================================
+   FINANZAS - RESUMEN DEL FILTRO
+========================================= */
+
+.finance-summary-strip {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(220px, 1fr));
+    gap: 18px;
+    margin: 20px 0 18px;
+}
+
+.finance-summary-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 20px;
+    padding: 18px 20px;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+}
+
+.finance-summary-icon {
+    width: 46px;
+    height: 46px;
+    min-width: 46px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 16px;
+}
+
+.finance-summary-card .summary-label {
+    display: block;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 800;
+    margin-bottom: 5px;
+}
+
+.finance-summary-card strong {
+    display: block;
+    font-size: 24px;
+    font-weight: 900;
+    color: #0f172a;
+    margin-bottom: 4px;
+}
+
+.finance-summary-card small {
+    display: block;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.finance-summary-card.income-card {
+    border-left: 6px solid #10b981;
+}
+
+.finance-summary-card.income-card .finance-summary-icon {
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.finance-summary-card.income-card strong {
+    color: #047857;
+}
+
+.finance-summary-card.expense-card {
+    border-left: 6px solid #ef4444;
+}
+
+.finance-summary-card.expense-card .finance-summary-icon {
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.finance-summary-card.expense-card strong {
+    color: #b91c1c;
+}
+
+.finance-summary-card.result-card {
+    border-left: 6px solid #2563eb;
+}
+
+.finance-summary-card.result-card .finance-summary-icon {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+/* =========================================
+   FINANZAS - BARRA DE MOVIMIENTOS
+========================================= */
+
+.finance-overview-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 20px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.07);
+}
+
+.finance-overview-text h3 {
+    margin: 0 0 6px;
+    color: #0f172a;
+    font-size: 18px;
+    font-weight: 900;
+}
+
+.finance-overview-text p {
+    margin: 0;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* =========================================
+   FINANZAS - ESTADOS PREMIUM
+========================================= */
+
+.finance-status-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.finance-status-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 900;
+    border: 1px solid transparent;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.10);
+}
+
+.finance-status-pill.pending {
+    background: #ffffff;
+    color: #475569;
+    border-color: #cbd5e1;
+}
+
+.finance-status-pill.reviewed {
+    background: #dcfce7;
+    color: #166534;
+    border-color: #bbf7d0;
+}
+
+.finance-status-pill.accounted {
+    background: #dbeafe;
+    color: #1d4ed8;
+    border-color: #bfdbfe;
+}
+
+.finance-status-pill.observed {
+    background: #fef3c7;
+    color: #92400e;
+    border-color: #fde68a;
+}
+
+.finance-status-pill.cancelled {
+    background: #fee2e2;
+    color: #991b1b;
+    border-color: #fecaca;
+}
+
+@media (max-width: 1000px) {
+    .finance-summary-strip {
+        grid-template-columns: 1fr;
+    }
+
+    .finance-overview-bar {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .finance-status-legend {
+        justify-content: flex-start;
+    }
+}
