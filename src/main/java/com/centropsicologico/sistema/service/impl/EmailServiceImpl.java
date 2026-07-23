@@ -27,7 +27,7 @@ public class EmailServiceImpl implements EmailService {
         @Value("${mailpro.api.base-url:https://api.mailpro.com/v2}")
         private String mailproBaseUrl;
 
-        @Value("${mailpro.api.token-url:https://api.mailpro.com/v3/token}")
+        @Value("${mailpro.api.token-url:https://api.mailpro.com/v2/token}")
         private String mailproTokenUrl;
 
         @Value("${mailpro.api.username:}")
@@ -164,7 +164,8 @@ public class EmailServiceImpl implements EmailService {
                 try {
                         System.out.println("EMAIL API: Solicitando token a Mailpro...");
 
-                        String url = mailproTokenUrl;
+                        String url = "https://api.mailpro.com/v2/token";
+                        System.out.println("EMAIL API TOKEN URL: " + url);
 
                         HttpHeaders headers = new HttpHeaders();
                         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
