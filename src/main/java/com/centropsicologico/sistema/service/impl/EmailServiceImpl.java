@@ -21,7 +21,18 @@ public class EmailServiceImpl implements EmailService {
     private final JavaMailSender mailSender;
     private final UserRepository userRepository;
 
+    /*
+     * Usuario SMTP de Mailpro.
+     * Ejemplo: PE273068@smtp.mailpro.com
+     */
     @Value("${spring.mail.username:}")
+    private String mailUsername;
+
+    /*
+     * Correo remitente autorizado.
+     * Ejemplo: rojasbilly95@gmail.com
+     */
+    @Value("${app.mail.from:}")
     private String mailFrom;
 
     public EmailServiceImpl(
@@ -93,10 +104,17 @@ public class EmailServiceImpl implements EmailService {
     ) {
         System.out.println("====================================");
         System.out.println("INICIANDO ENVÍO DE CORREO A ADMIN");
+        System.out.println("MAIL_USERNAME CONFIGURADO: " + mailUsername);
         System.out.println("MAIL_FROM CONFIGURADO: " + mailFrom);
 
-        if (mailFrom == null || mailFrom.isBlank()) {
+        if (mailUsername == null || mailUsername.isBlank()) {
             System.err.println("EMAIL ERROR: spring.mail.username está vacío. Revisa MAIL_USERNAME en Render.");
+            System.out.println("====================================");
+            return;
+        }
+
+        if (mailFrom == null || mailFrom.isBlank()) {
+            System.err.println("EMAIL ERROR: app.mail.from está vacío. Revisa MAIL_FROM en Render.");
             System.out.println("====================================");
             return;
         }
@@ -163,6 +181,7 @@ public class EmailServiceImpl implements EmailService {
             System.err.println("EMAIL ERROR: No se pudo enviar correo a " + to);
             System.err.println("EMAIL ERROR MESSAGE: " + exception.getMessage());
             exception.printStackTrace();
+
         } catch (Exception exception) {
             System.err.println("EMAIL ERROR GENERAL: Falló el envío de correo a " + to);
             System.err.println("EMAIL ERROR MESSAGE: " + exception.getMessage());
