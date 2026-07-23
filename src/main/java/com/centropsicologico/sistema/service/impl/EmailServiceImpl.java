@@ -11,12 +11,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+
 
 @Service
 public class EmailServiceImpl implements EmailService {
@@ -27,11 +25,8 @@ public class EmailServiceImpl implements EmailService {
         @Value("${mailpro.api.base-url:https://api.mailpro.com/v2}")
         private String mailproBaseUrl;
 
-        @Value("${mailpro.api.token-url:https://api.mailpro.com/v2/token}")
-        private String mailproTokenUrl;
-
-        @Value("${mailpro.api.username:}")
-        private String mailproUsername;
+        @Value("${mailpro.api.id-client:}")
+        private String mailproIdClient;
 
         @Value("${mailpro.api.key:}")
         private String mailproApiKey;
@@ -101,14 +96,13 @@ public class EmailServiceImpl implements EmailService {
         private void sendToAdmins(String subject, String body) {
                 System.out.println("====================================");
                 System.out.println("INICIANDO ENVÍO DE CORREO POR MAILPRO API");
-                System.out.println("MAILPRO_USERNAME CONFIGURADO: " + mailproUsername);
+                System.out.println("MAILPRO_ID_CLIENT CONFIGURADO: " + mailproIdClient);
                 System.out.println("MAIL_FROM CONFIGURADO: " + mailFrom);
 
-                if (mailproUsername == null || mailproUsername.isBlank()) {
-                        System.err.println(
-                                        "EMAIL API ERROR: mailpro.api.username está vacío. Revisa MAILPRO_USERNAME en Render.");
-                        System.out.println("====================================");
-                        return;
+                if (mailproIdClient == null || mailproIdClient.isBlank()) {
+                System.err.println("EMAIL API ERROR: mailpro.api.id-client está vacío. Revisa MAILPRO_ID_CLIENT en Render.");
+                System.out.println("====================================");
+                return;
                 }
 
                 if (mailproApiKey == null || mailproApiKey.isBlank()) {
@@ -135,14 +129,6 @@ public class EmailServiceImpl implements EmailService {
                         return;
                 }
 
-                String token = getMailproAccessToken();
-
-                if (token == null || token.isBlank()) {
-                        System.err.println("EMAIL API ERROR: No se pudo obtener token de Mailpro.");
-                        System.out.println("====================================");
-                        return;
-                }
-
                 for (User admin : admins) {
                         if (admin == null || admin.getEmail() == null || admin.getEmail().isBlank()) {
                                 System.err.println("EMAIL API WARNING: Admin sin correo, se omite.");
@@ -150,69 +136,17 @@ public class EmailServiceImpl implements EmailService {
                         }
 
                         sendEmailByApi(
-                                        token,
-                                        admin.getEmail().trim(),
-                                        subject,
-                                        body);
+                                admin.getEmail().trim(),
+                                subject,
+                                body);
                 }
 
                 System.out.println("FIN DEL PROCESO DE ENVÍO POR MAILPRO API");
                 System.out.println("====================================");
         }
 
-        private String getMailproAccessToken() {
-                try {
-                        System.out.println("EMAIL API: Solicitando token a Mailpro...");
-
-                        String url = "https://api.mailpro.com/v2/token";
-                        System.out.println("EMAIL API TOKEN URL: " + url);
-
-                        HttpHeaders headers = new HttpHeaders();
-                        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-                        headers.setAccept(List.of(MediaType.APPLICATION_JSON, MediaType.TEXT_HTML));
-
-                        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-                        form.add("grant_type", "password");
-                        form.add("username", mailproUsername);
-                        form.add("password", mailproApiKey);
-
-                        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(form, headers);
-
-                        ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
-
-                        System.out.println("EMAIL API TOKEN STATUS: " + response.getStatusCode());
-                        System.out.println("EMAIL API TOKEN RESPONSE: recibida correctamente.");
-
-                        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
-                                System.err.println("EMAIL API ERROR: Respuesta inválida al obtener token.");
-                                return null;
-                        }
-
-                        ObjectMapper objectMapper = new ObjectMapper();
-
-                        Map<String, Object> body = objectMapper.readValue(response.getBody(), Map.class);
-
-                        Object accessToken = body.get("access_token");
-
-                        if (accessToken == null) {
-                                System.err.println("EMAIL API ERROR: Mailpro no devolvió access_token. Respuesta: "
-                                                + body);
-                                return null;
-                        }
-
-                        System.out.println("EMAIL API OK: Token obtenido correctamente.");
-                        return accessToken.toString();
-
-                } catch (Exception exception) {
-                        System.err.println("EMAIL API ERROR: No se pudo obtener token de Mailpro.");
-                        System.err.println("EMAIL API ERROR MESSAGE: " + exception.getMessage());
-                        exception.printStackTrace();
-                        return null;
-                }
-        }
 
 private void sendEmailByApi(
-        String token,
         String to,
         String subject,
         String body
@@ -229,7 +163,10 @@ private void sendEmailByApi(
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-        headers.setBearerAuth(token);
+
+        // Método 2 de Mailpro: IdClient + ApiKey
+        headers.add("IdClient", mailproIdClient);
+        headers.add("ApiKey", mailproApiKey);
 
         MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
         form.add("IDEmailExp", mailproSenderId);
