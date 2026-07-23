@@ -6,41 +6,39 @@ import com.centropsicologico.sistema.entity.User;
 import com.centropsicologico.sistema.repository.UserRepository;
 import com.centropsicologico.sistema.service.EmailService;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.MailException;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class EmailServiceImpl implements EmailService {
 
-    private final JavaMailSender mailSender;
     private final UserRepository userRepository;
+    private final RestTemplate restTemplate;
 
-    /*
-     * Usuario SMTP de Mailpro.
-     * Ejemplo: PE273068@smtp.mailpro.com
-     */
-    @Value("${spring.mail.username:}")
-    private String mailUsername;
+    @Value("${mailpro.api.base-url:https://api.mailpro.com/v2}")
+    private String mailproBaseUrl;
 
-    /*
-     * Correo remitente autorizado.
-     * Ejemplo: rojasbilly95@gmail.com
-     */
+    @Value("${mailpro.api.username:}")
+    private String mailproUsername;
+
+    @Value("${mailpro.api.key:}")
+    private String mailproApiKey;
+
     @Value("${app.mail.from:}")
     private String mailFrom;
 
-    public EmailServiceImpl(
-            JavaMailSender mailSender,
-            UserRepository userRepository
-    ) {
-        this.mailSender = mailSender;
+    public EmailServiceImpl(UserRepository userRepository) {
         this.userRepository = userRepository;
+        this.restTemplate = new RestTemplate();
     }
 
     @Override
@@ -50,7 +48,7 @@ public class EmailServiceImpl implements EmailService {
             return;
         }
 
-        System.out.println("EMAIL: Preparando correo por nueva cita desde panel. ID cita: " + appointment.getId());
+        System.out.println("EMAIL API: Preparando correo por nueva cita desde panel. ID cita: " + appointment.getId());
 
         String subject = "Nueva cita registrada - CentroPsico";
 
@@ -64,16 +62,13 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
-    public void notifyAdminsNewAppointmentFromLead(
-            Appointment appointment,
-            Lead lead
-    ) {
+    public void notifyAdminsNewAppointmentFromLead(Appointment appointment, Lead lead) {
         if (appointment == null) {
-            System.err.println("EMAIL: No se envió correo porque la cita desde pre-reserva es null.");
+            System.err.println("EMAIL API: No se envió correo porque la cita desde pre-reserva es null.");
             return;
         }
 
-        System.out.println("EMAIL: Preparando correo por cita creada desde pre-reserva. ID cita: " + appointment.getId());
+        System.out.println("EMAIL API: Preparando correo por cita creada desde pre-reserva. ID cita: " + appointment.getId());
 
         String subject = "Nueva cita desde pre-reserva - CentroPsico";
 
@@ -98,23 +93,26 @@ public class EmailServiceImpl implements EmailService {
         sendToAdmins(subject, body);
     }
 
-    private void sendToAdmins(
-            String subject,
-            String body
-    ) {
+    private void sendToAdmins(String subject, String body) {
         System.out.println("====================================");
-        System.out.println("INICIANDO ENVÍO DE CORREO A ADMIN");
-        System.out.println("MAIL_USERNAME CONFIGURADO: " + mailUsername);
+        System.out.println("INICIANDO ENVÍO DE CORREO POR MAILPRO API");
+        System.out.println("MAILPRO_USERNAME CONFIGURADO: " + mailproUsername);
         System.out.println("MAIL_FROM CONFIGURADO: " + mailFrom);
 
-        if (mailUsername == null || mailUsername.isBlank()) {
-            System.err.println("EMAIL ERROR: spring.mail.username está vacío. Revisa MAIL_USERNAME en Render.");
+        if (mailproUsername == null || mailproUsername.isBlank()) {
+            System.err.println("EMAIL API ERROR: mailpro.api.username está vacío. Revisa MAILPRO_USERNAME en Render.");
+            System.out.println("====================================");
+            return;
+        }
+
+        if (mailproApiKey == null || mailproApiKey.isBlank()) {
+            System.err.println("EMAIL API ERROR: mailpro.api.key está vacío. Revisa MAILPRO_API_KEY en Render.");
             System.out.println("====================================");
             return;
         }
 
         if (mailFrom == null || mailFrom.isBlank()) {
-            System.err.println("EMAIL ERROR: app.mail.from está vacío. Revisa MAIL_FROM en Render.");
+            System.err.println("EMAIL API ERROR: app.mail.from está vacío. Revisa MAIL_FROM en Render.");
             System.out.println("====================================");
             return;
         }
@@ -124,69 +122,129 @@ public class EmailServiceImpl implements EmailService {
         System.out.println("ADMINISTRADORES ENCONTRADOS: " + (admins != null ? admins.size() : 0));
 
         if (admins == null || admins.isEmpty()) {
-            System.err.println("EMAIL ERROR: No se encontraron administradores activos para enviar correo.");
+            System.err.println("EMAIL API ERROR: No se encontraron administradores activos para enviar correo.");
+            System.out.println("====================================");
+            return;
+        }
+
+        String token = getMailproAccessToken();
+
+        if (token == null || token.isBlank()) {
+            System.err.println("EMAIL API ERROR: No se pudo obtener token de Mailpro.");
             System.out.println("====================================");
             return;
         }
 
         for (User admin : admins) {
-            if (admin == null) {
+            if (admin == null || admin.getEmail() == null || admin.getEmail().isBlank()) {
+                System.err.println("EMAIL API WARNING: Admin sin correo, se omite.");
                 continue;
             }
 
-            System.out.println("ADMIN DETECTADO: "
-                    + safe(admin.getFirstName())
-                    + " "
-                    + safe(admin.getLastName())
-                    + " | correo: "
-                    + admin.getEmail()
-            );
-
-            if (admin.getEmail() == null || admin.getEmail().isBlank()) {
-                System.err.println("EMAIL WARNING: Admin sin correo, se omite.");
-                continue;
-            }
-
-            sendEmail(
+            sendEmailByApi(
+                    token,
                     admin.getEmail().trim(),
                     subject,
                     body
             );
         }
 
-        System.out.println("FIN DEL PROCESO DE ENVÍO DE CORREO");
+        System.out.println("FIN DEL PROCESO DE ENVÍO POR MAILPRO API");
         System.out.println("====================================");
     }
 
-    private void sendEmail(
+    private String getMailproAccessToken() {
+        try {
+            System.out.println("EMAIL API: Solicitando token a Mailpro...");
+
+            String url = mailproBaseUrl + "/token";
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+            MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+            form.add("grant_type", "password");
+            form.add("username", mailproUsername);
+            form.add("password", mailproApiKey);
+
+            HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(form, headers);
+
+            ResponseEntity<Map> response = restTemplate.postForEntity(url, request, Map.class);
+
+            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+                System.err.println("EMAIL API ERROR: Respuesta inválida al obtener token. Status: " + response.getStatusCode());
+                return null;
+            }
+
+            Object accessToken = response.getBody().get("access_token");
+
+            if (accessToken == null) {
+                System.err.println("EMAIL API ERROR: Mailpro no devolvió access_token. Respuesta: " + response.getBody());
+                return null;
+            }
+
+            System.out.println("EMAIL API OK: Token obtenido correctamente.");
+            return accessToken.toString();
+
+        } catch (Exception exception) {
+            System.err.println("EMAIL API ERROR: No se pudo obtener token de Mailpro.");
+            System.err.println("EMAIL API ERROR MESSAGE: " + exception.getMessage());
+            exception.printStackTrace();
+            return null;
+        }
+    }
+
+    private void sendEmailByApi(
+            String token,
             String to,
             String subject,
             String body
     ) {
         try {
-            System.out.println("EMAIL: Intentando enviar correo a: " + to);
+            System.out.println("EMAIL API: Intentando enviar correo a: " + to);
 
-            SimpleMailMessage message = new SimpleMailMessage();
+            String url = mailproBaseUrl + "/email/send";
 
-            message.setFrom(mailFrom);
-            message.setTo(to);
-            message.setSubject(subject);
-            message.setText(body);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(token);
 
-            mailSender.send(message);
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("to", to);
+            payload.put("subject", subject);
+            payload.put("text", body);
+            payload.put("html", buildHtmlBody(body));
 
-            System.out.println("EMAIL OK: Correo enviado correctamente a: " + to);
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
 
-        } catch (MailException exception) {
-            System.err.println("EMAIL ERROR: No se pudo enviar correo a " + to);
-            System.err.println("EMAIL ERROR MESSAGE: " + exception.getMessage());
-            exception.printStackTrace();
+            ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                System.out.println("EMAIL API OK: Correo enviado correctamente a: " + to);
+                System.out.println("EMAIL API RESPONSE: " + response.getBody());
+            } else {
+                System.err.println("EMAIL API ERROR: No se pudo enviar correo a " + to);
+                System.err.println("EMAIL API STATUS: " + response.getStatusCode());
+                System.err.println("EMAIL API RESPONSE: " + response.getBody());
+            }
 
         } catch (Exception exception) {
-            System.err.println("EMAIL ERROR GENERAL: Falló el envío de correo a " + to);
-            System.err.println("EMAIL ERROR MESSAGE: " + exception.getMessage());
+            System.err.println("EMAIL API ERROR: Falló el envío por API a " + to);
+            System.err.println("EMAIL API ERROR MESSAGE: " + exception.getMessage());
             exception.printStackTrace();
         }
+    }
+
+    private String buildHtmlBody(String body) {
+        String escaped = body == null ? "" : body
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\n", "<br>");
+
+        return "<html><body style='font-family: Arial, sans-serif; font-size: 14px; color: #1f2937;'>"
+                + escaped
+                + "</body></html>";
     }
 
     private String buildAppointmentEmailBody(
