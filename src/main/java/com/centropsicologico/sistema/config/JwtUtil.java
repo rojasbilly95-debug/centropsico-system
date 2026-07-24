@@ -19,19 +19,36 @@ public class JwtUtil {
 
     public JwtUtil(
             @Value("${jwt.secret}") String secret,
-            @Value("${jwt.expiration-ms:1800000}") long expirationTime
-    ) {
-        this.key = Keys.hmacShaKeyFor(
-                Decoders.BASE64.decode(secret)
-        );
+            @Value("${jwt.expiration-ms:1800000}") long expirationTime) {
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException(
+                    "JWT_SECRET no está configurado.");
+        }
+
+        byte[] secretBytes;
+
+        try {
+            secretBytes = Decoders.BASE64.decode(
+                    secret.trim());
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalStateException(
+                    "JWT_SECRET no tiene un formato Base64 válido.",
+                    exception);
+        }
+
+        if (secretBytes.length < 32) {
+            throw new IllegalStateException(
+                    "JWT_SECRET debe tener al menos 32 bytes.");
+        }
+
+        this.key = Keys.hmacShaKeyFor(secretBytes);
 
         this.expirationTime = expirationTime;
     }
 
     public String generateToken(
             String email,
-            String role
-    ) {
+            String role) {
         Date now = new Date();
 
         return Jwts.builder()
@@ -42,9 +59,7 @@ public class JwtUtil {
                 .issuedAt(now)
                 .expiration(
                         new Date(
-                                now.getTime() + expirationTime
-                        )
-                )
+                                now.getTime() + expirationTime))
                 .signWith(key)
                 .compact();
     }
@@ -62,8 +77,7 @@ public class JwtUtil {
             Claims claims = getClaims(token);
 
             return "centropsico".equals(
-                    claims.getIssuer()
-            ) && claims.getExpiration().after(new Date());
+                    claims.getIssuer()) && claims.getExpiration().after(new Date());
 
         } catch (Exception exception) {
             return false;
