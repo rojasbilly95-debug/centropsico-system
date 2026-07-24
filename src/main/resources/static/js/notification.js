@@ -3,35 +3,85 @@ let notificationData = [];
 let notificationsDropdownOpen = false;
 let markingNotificationsAsRead = false;
 let expandedNotificationIds = new Set();
+let notificationsLoadRequestId = 0;
+let markingNotificationIds = new Set();
 
 /* =========================
    CARGA DE NOTIFICACIONES
 ========================= */
 
 async function loadNotifications(showAlert = true) {
+    const requestId =
+        ++notificationsLoadRequestId;
+
     try {
-        if (!currentUser || !currentUser.role) return;
+        if (
+            !currentUser ||
+            !currentUser.role
+        ) {
+            return;
+        }
 
-        const roleUrl = `${baseUrl}/notifications/role/${currentUser.role}`;
-        const userUrl = `${baseUrl}/notifications/me`;
+        const roleUrl =
+            `${baseUrl}/notifications/role/${encodeURIComponent(currentUser.role)}`;
 
-        const [roleResponse, userResponse] = await Promise.all([
+        const userUrl =
+            `${baseUrl}/notifications/me`;
+
+        const [
+            roleResponse,
+            userResponse
+        ] = await Promise.all([
             authFetch(roleUrl),
             authFetch(userUrl)
         ]);
 
+        /*
+         * Si comenzó una carga más reciente,
+         * ignoramos esta respuesta antigua.
+         */
+        if (
+            requestId !==
+            notificationsLoadRequestId
+        ) {
+            console.log(
+                "Se ignoró una carga antigua de notificaciones."
+            );
+
+            return;
+        }
+
         let roleNotifications = [];
         let userNotifications = [];
 
-        if (roleResponse && roleResponse.ok) {
-            roleNotifications = await roleResponse.json();
+        if (
+            roleResponse &&
+            roleResponse.ok
+        ) {
+            roleNotifications =
+                await roleResponse.json();
         }
 
-        if (userResponse && userResponse.ok) {
-            userNotifications = await userResponse.json();
+        if (
+            userResponse &&
+            userResponse.ok
+        ) {
+            userNotifications =
+                await userResponse.json();
         }
 
-        notificationData = mergeNotifications(roleNotifications, userNotifications);
+        if (
+            requestId !==
+            notificationsLoadRequestId
+        ) {
+            return;
+        }
+
+        notificationData =
+            mergeNotifications(
+                roleNotifications,
+                userNotifications
+            );
 
         renderNotifications();
         updateNotificationCount();
@@ -41,9 +91,15 @@ async function loadNotifications(showAlert = true) {
         }
 
     } catch (error) {
-        console.error("Error cargando notificaciones:", error);
+        console.error(
+            "Error cargando notificaciones:",
+            error
+        );
 
-        const list = document.getElementById("notificationList");
+        const list =
+            document.getElementById(
+                "notificationList"
+            );
 
         if (list) {
             list.innerHTML = `
@@ -127,45 +183,99 @@ function renderNotifications() {
 }
 
 async function openNotificationDetail(id) {
-    const notificationId = Number(id);
+    const notificationId =
+        Number(id);
 
-    if (!notificationId) return;
+    if (!notificationId) {
+        return;
+    }
 
-    const notification = notificationData.find(item => Number(item.id) === notificationId);
+    let notification =
+        notificationData.find(
+            item =>
+                Number(item.id) ===
+                notificationId
+        );
 
-    if (!notification) return;
+    if (!notification) {
+        return;
+    }
 
-    // Cerrar/minimizar el panel de notificaciones antes de mostrar el mensaje
     closeNotificationDropdown();
 
-    if (!notification.read) {
-        await markNotificationAsRead(notificationId);
+    if (
+        notification.read !== true
+    ) {
+        const markedCorrectly =
+            await markNotificationAsRead(
+                notificationId
+            );
+
+        if (!markedCorrectly) {
+            Swal.fire(
+                "Error",
+                "No se pudo actualizar el estado de la notificación.",
+                "error"
+            );
+
+            return;
+        }
+
+        /*
+         * Recupera el objeto actualizado.
+         */
+        notification =
+            notificationData.find(
+                item =>
+                    Number(item.id) ===
+                    notificationId
+            ) || notification;
     }
 
     await Swal.fire({
-        title: escapeNotificationHtml(notification.title || "Notificación"),
+        title:
+            escapeNotificationHtml(
+                notification.title ||
+                "Notificación"
+            ),
+
         html: `
             <div class="notification-detail-modal">
 
                 <div class="notification-detail-meta">
                     <span>Mensaje recibido</span>
-                    <small>${formatNotificationDate(notification.createdAt)}</small>
+
+                    <small>
+                        ${formatNotificationDate(
+                            notification.createdAt
+                        )}
+                    </small>
                 </div>
 
                 <div class="notification-detail-message">
-                    ${escapeNotificationHtml(notification.message || "Sin detalle")}
+                    ${escapeNotificationHtml(
+                        notification.message ||
+                        "Sin detalle"
+                    )}
                 </div>
 
             </div>
         `,
-        confirmButtonText: "Cerrar mensaje",
-        confirmButtonColor: "#0f3d66",
+
+        confirmButtonText:
+            "Cerrar mensaje",
+
+        confirmButtonColor:
+            "#0f3d66",
+
         width: 560,
         backdrop: true,
         allowOutsideClick: true,
         heightAuto: false,
+
         customClass: {
-            popup: "notification-detail-popup"
+            popup:
+                "notification-detail-popup"
         }
     });
 
@@ -273,71 +383,207 @@ function closeNotificationDropdown() {
 ========================= */
 
 async function markNotificationAsRead(id) {
+    const notificationId =
+        Number(id);
+
+    if (!notificationId) {
+        return false;
+    }
+
+    if (
+        markingNotificationIds.has(
+            notificationId
+        )
+    ) {
+        return false;
+    }
+
+    const notification =
+        notificationData.find(
+            item =>
+                Number(item.id) ===
+                notificationId
+        );
+
+    if (!notification) {
+        return false;
+    }
+
+    if (
+        notification.read === true
+    ) {
+        renderNotifications();
+        updateNotificationCount();
+
+        return true;
+    }
+
+    markingNotificationIds.add(
+        notificationId
+    );
+
     try {
-        const notificationId = Number(id);
+        const response =
+            await authFetch(
+                `${baseUrl}/notifications/${notificationId}/read`,
+                {
+                    method: "PATCH"
+                }
+            );
 
-        const notification = notificationData.find(item => Number(item.id) === notificationId);
-
-        if (notification && notification.read) {
-            renderNotifications();
-            updateNotificationCount();
-            return;
+        if (!response) {
+            throw new Error(
+                "El servidor no devolvió respuesta."
+            );
         }
 
-        notificationData = notificationData.map(item => {
-            if (Number(item.id) === notificationId) {
+        let updatedNotification = null;
+
+        try {
+            const responseText =
+                await response.text();
+
+            if (responseText) {
+                updatedNotification =
+                    JSON.parse(responseText);
+            }
+        } catch (error) {
+            console.warn(
+                "El endpoint respondió sin JSON válido:",
+                error
+            );
+        }
+
+        if (!response.ok) {
+            throw new Error(
+                updatedNotification?.message ||
+                "No se pudo marcar la notificación como leída."
+            );
+        }
+
+        /*
+         * Invalida cualquier carga anterior
+         * que todavía esté pendiente.
+         */
+        notificationsLoadRequestId++;
+
+        notificationData =
+            notificationData.map(item => {
+                if (
+                    Number(item.id) !==
+                    notificationId
+                ) {
+                    return item;
+                }
+
                 return {
                     ...item,
+                    ...(updatedNotification || {}),
                     read: true
                 };
-            }
-
-            return item;
-        });
+            });
 
         renderNotifications();
         updateNotificationCount();
 
-        const response = await authFetch(`${baseUrl}/notifications/${notificationId}/read`, {
-            method: "PATCH"
-        });
+        console.log(
+            `Notificación ${notificationId} marcada como leída.`
+        );
 
-        if (!response || !response.ok) {
-            await loadNotifications(false);
-        }
+        return true;
 
     } catch (error) {
-        console.error("Error marcando notificación:", error);
+        console.error(
+            "Error marcando notificación:",
+            error
+        );
+
         await loadNotifications(false);
+
+        return false;
+
+    } finally {
+        markingNotificationIds.delete(
+            notificationId
+        );
     }
 }
 
 async function markAllNotificationsAsRead() {
     try {
-        if (!currentUser || !currentUser.role) return;
+        if (
+            !currentUser ||
+            !currentUser.role
+        ) {
+            return;
+        }
 
-        notificationData = notificationData.map(notification => ({
-            ...notification,
-            read: true
-        }));
+        const responses =
+            await Promise.all([
+                authFetch(
+                    `${baseUrl}/notifications/role/${encodeURIComponent(currentUser.role)}/read-all`,
+                    {
+                        method: "PATCH"
+                    }
+                ),
+
+                authFetch(
+                    `${baseUrl}/notifications/me/read-all`,
+                    {
+                        method: "PATCH"
+                    }
+                )
+            ]);
+
+        const failedResponse =
+            responses.find(
+                response =>
+                    !response ||
+                    !response.ok
+            );
+
+        if (failedResponse) {
+            throw new Error(
+                "No se pudieron marcar todas las notificaciones."
+            );
+        }
+
+        notificationsLoadRequestId++;
+
+        notificationData =
+            notificationData.map(
+                notification => ({
+                    ...notification,
+                    read: true
+                })
+            );
 
         renderNotifications();
         updateNotificationCount();
 
-        await Promise.all([
-            authFetch(`${baseUrl}/notifications/role/${currentUser.role}/read-all`, {
-                method: "PATCH"
-            }),
-            authFetch(`${baseUrl}/notifications/me/read-all`, {
-                method: "PATCH"
-            })
-        ]);
-
-        await loadNotifications(false);
+        Swal.fire({
+            toast: true,
+            position: "top-end",
+            icon: "success",
+            title:
+                "Notificaciones marcadas como leídas",
+            timer: 1800,
+            showConfirmButton: false
+        });
 
     } catch (error) {
-        console.error("Error marcando todas las notificaciones:", error);
+        console.error(
+            "Error marcando todas las notificaciones:",
+            error
+        );
+
         await loadNotifications(false);
+
+        Swal.fire(
+            "Error",
+            "No se pudieron marcar todas las notificaciones como leídas.",
+            "error"
+        );
     }
 }
 
