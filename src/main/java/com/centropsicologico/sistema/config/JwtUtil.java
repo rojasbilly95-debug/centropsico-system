@@ -2,33 +2,50 @@ package com.centropsicologico.sistema.config;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 public class JwtUtil {
 
-    private static final String SECRET = "CENTRO_PSICOLOGICO_SECRET_KEY_SUPER_SEGURA_2026_123456789";
-    private static final long EXPIRATION_TIME = 1000 * 60 * 60 * 8;
+    private final SecretKey key;
+    private final long expirationTime;
 
-    private final long serverStartTime = System.currentTimeMillis();
+    public JwtUtil(
+            @Value("${jwt.secret}") String secret,
+            @Value("${jwt.expiration-ms:1800000}") long expirationTime
+    ) {
+        this.key = Keys.hmacShaKeyFor(
+                Decoders.BASE64.decode(secret)
+        );
 
-    private SecretKey getKey() {
-        return Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
+        this.expirationTime = expirationTime;
     }
 
-    public String generateToken(String email, String role) {
+    public String generateToken(
+            String email,
+            String role
+    ) {
+        Date now = new Date();
+
         return Jwts.builder()
+                .id(UUID.randomUUID().toString())
+                .issuer("centropsico")
                 .subject(email)
                 .claim("role", role)
-                .claim("serverStartTime", serverStartTime)
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                .signWith(getKey())
+                .issuedAt(now)
+                .expiration(
+                        new Date(
+                                now.getTime() + expirationTime
+                        )
+                )
+                .signWith(key)
                 .compact();
     }
 
@@ -36,27 +53,27 @@ public class JwtUtil {
         return getClaims(token).getSubject();
     }
 
-    public String getRoleFromToken(String token) {
-        return getClaims(token).get("role", String.class);
+    public String getTokenId(String token) {
+        return getClaims(token).getId();
     }
 
     public boolean isTokenValid(String token) {
         try {
             Claims claims = getClaims(token);
 
-            boolean notExpired = claims.getExpiration().after(new Date());
-            Long tokenServerStartTime = claims.get("serverStartTime", Long.class);
+            return "centropsico".equals(
+                    claims.getIssuer()
+            ) && claims.getExpiration().after(new Date());
 
-            return notExpired && tokenServerStartTime != null && tokenServerStartTime == serverStartTime;
-
-        } catch (Exception e) {
+        } catch (Exception exception) {
             return false;
         }
     }
 
     private Claims getClaims(String token) {
         return Jwts.parser()
-                .verifyWith(getKey())
+                .verifyWith(key)
+                .requireIssuer("centropsico")
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
