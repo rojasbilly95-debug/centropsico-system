@@ -3469,3 +3469,59 @@ function getPaymentStatusClass(status) {
 
     return "inactive";
 }
+
+/*
+ * =========================================================
+ * INICIALIZAR MÓDULO DE DISPONIBILIDAD DE CITAS
+ * =========================================================
+ */
+
+function startAppointmentAvailabilityModule() {
+    const serviceSelect =
+        document.getElementById("appointmentServiceId");
+
+    if (!serviceSelect) {
+        console.warn(
+            "No se encontró el campo appointmentServiceId."
+        );
+        return;
+    }
+
+    /*
+     * Esta función conecta los eventos:
+     * servicio → psicólogo → fecha → horario.
+     */
+    initAppointmentAvailabilityEvents();
+
+    console.log(
+        "Módulo de disponibilidad de citas inicializado correctamente."
+    );
+}
+
+/*
+ * Ejecuta la inicialización cuando el HTML ya esté disponible.
+ */
+if (document.readyState === "loading") {
+    document.addEventListener(
+        "DOMContentLoaded",
+        startAppointmentAvailabilityModule,
+        {
+            once: true
+        }
+    );
+} else {
+    startAppointmentAvailabilityModule();
+}
+
+/*
+ * Segunda comprobación cuando toda la página termine de cargar.
+ * No duplicará eventos porque tu función usa
+ * dataset.availabilityInitialized.
+ */
+window.addEventListener(
+    "load",
+    startAppointmentAvailabilityModule,
+    {
+        once: true
+    }
+);
