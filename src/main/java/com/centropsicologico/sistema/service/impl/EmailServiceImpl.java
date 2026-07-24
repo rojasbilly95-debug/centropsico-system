@@ -6,58 +6,60 @@ import com.centropsicologico.sistema.entity.User;
 import com.centropsicologico.sistema.repository.UserRepository;
 import com.centropsicologico.sistema.service.EmailService;
 
-import jakarta.mail.internet.MimeMessage;
-
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class EmailServiceImpl implements EmailService {
 
     private final UserRepository userRepository;
-    private final JavaMailSender javaMailSender;
+    private final RestTemplate restTemplate;
+
+    @Value("${brevo.api.base-url:https://api.brevo.com/v3}")
+    private String brevoBaseUrl;
+
+    @Value("${brevo.api.key:}")
+    private String brevoApiKey;
 
     @Value("${app.mail.from:}")
     private String mailFrom;
 
-    public EmailServiceImpl(
-            UserRepository userRepository,
-            JavaMailSender javaMailSender
-    ) {
-        this.userRepository = userRepository;
-        this.javaMailSender = javaMailSender;
-    }
+    @Value("${app.mail.from-name:CentroPsico}")
+    private String mailFromName;
 
-    /*
-     * =========================================================
-     * NOTIFICAR NUEVA CITA DESDE EL PANEL
-     * =========================================================
-     */
+    public EmailServiceImpl(UserRepository userRepository) {
+        this.userRepository = userRepository;
+        this.restTemplate = new RestTemplate();
+    }
 
     @Override
     public void notifyAdminsNewAppointment(Appointment appointment) {
 
         if (appointment == null) {
             System.err.println(
-                    "EMAIL SMTP ERROR: La cita recibida es null."
+                    "EMAIL BREVO ERROR: La cita recibida es null."
             );
             return;
         }
 
         System.out.println(
-                "EMAIL SMTP: Preparando correo de la cita #"
+                "EMAIL BREVO: Preparando correo de la cita #"
                         + appointment.getId()
         );
 
-        String subject =
-                "Nueva cita registrada - CentroPsico";
+        String subject = "Nueva cita registrada - CentroPsico";
 
         String body = buildAppointmentEmailBody(
                 appointment,
@@ -68,12 +70,6 @@ public class EmailServiceImpl implements EmailService {
         sendToAdmins(subject, body);
     }
 
-    /*
-     * =========================================================
-     * NOTIFICAR CITA DESDE PRE-RESERVA
-     * =========================================================
-     */
-
     @Override
     public void notifyAdminsNewAppointmentFromLead(
             Appointment appointment,
@@ -82,13 +78,13 @@ public class EmailServiceImpl implements EmailService {
 
         if (appointment == null) {
             System.err.println(
-                    "EMAIL SMTP ERROR: La cita de la pre-reserva es null."
+                    "EMAIL BREVO ERROR: La cita de la pre-reserva es null."
             );
             return;
         }
 
         System.out.println(
-                "EMAIL SMTP: Preparando correo de pre-reserva. Cita #"
+                "EMAIL BREVO: Preparando correo de pre-reserva. Cita #"
                         + appointment.getId()
         );
 
@@ -103,19 +99,15 @@ public class EmailServiceImpl implements EmailService {
                             + "Interesado: "
                             + safe(lead.getFullName())
                             + "\n"
-
                             + "Correo: "
                             + safe(lead.getEmail())
                             + "\n"
-
                             + "Teléfono: "
                             + safe(lead.getPhone())
                             + "\n"
-
                             + "Modalidad: "
                             + safe(lead.getModality())
                             + "\n"
-
                             + "Mensaje: "
                             + safe(lead.getMessage())
                             + "\n";
@@ -130,25 +122,24 @@ public class EmailServiceImpl implements EmailService {
         sendToAdmins(subject, body);
     }
 
-    /*
-     * =========================================================
-     * BUSCAR ADMINISTRADORES ACTIVOS
-     * =========================================================
-     */
-
-    private void sendToAdmins(
-            String subject,
-            String body
-    ) {
+    private void sendToAdmins(String subject, String body) {
 
         System.out.println("====================================");
         System.out.println(
-                "EMAIL SMTP: INICIANDO ENVÍO CON GMAIL"
+                "EMAIL BREVO: INICIANDO ENVÍO POR API HTTPS"
         );
+
+        if (brevoApiKey == null || brevoApiKey.isBlank()) {
+            System.err.println(
+                    "EMAIL BREVO ERROR: BREVO_API_KEY está vacío."
+            );
+            System.out.println("====================================");
+            return;
+        }
 
         if (mailFrom == null || mailFrom.isBlank()) {
             System.err.println(
-                    "EMAIL SMTP ERROR: MAIL_FROM está vacío."
+                    "EMAIL BREVO ERROR: MAIL_FROM está vacío."
             );
             System.out.println("====================================");
             return;
@@ -158,13 +149,13 @@ public class EmailServiceImpl implements EmailService {
                 userRepository.findByRoleAndActiveTrue("ADMIN");
 
         System.out.println(
-                "EMAIL SMTP: Administradores encontrados: "
+                "EMAIL BREVO: Administradores encontrados: "
                         + (admins != null ? admins.size() : 0)
         );
 
         if (admins == null || admins.isEmpty()) {
             System.err.println(
-                    "EMAIL SMTP ERROR: No existen administradores activos."
+                    "EMAIL BREVO ERROR: No existen administradores activos."
             );
             System.out.println("====================================");
             return;
@@ -177,100 +168,127 @@ public class EmailServiceImpl implements EmailService {
                     || admin.getEmail().isBlank()) {
 
                 System.err.println(
-                        "EMAIL SMTP WARNING: Administrador sin correo."
+                        "EMAIL BREVO WARNING: Administrador sin correo."
                 );
                 continue;
             }
 
-            sendEmailByGmail(
+            sendEmailByBrevo(
                     admin.getEmail().trim(),
+                    admin.getFirstName(),
                     subject,
                     body
             );
         }
 
         System.out.println(
-                "EMAIL SMTP: FINALIZÓ EL PROCESO DE ENVÍO"
+                "EMAIL BREVO: FINALIZÓ EL PROCESO DE ENVÍO"
         );
         System.out.println("====================================");
     }
 
-    /*
-     * =========================================================
-     * ENVÍO MEDIANTE GMAIL SMTP
-     * =========================================================
-     */
-
-    private void sendEmailByGmail(
+    private void sendEmailByBrevo(
             String to,
+            String recipientName,
             String subject,
             String body
     ) {
 
         try {
+            System.out.println(
+                    "EMAIL BREVO: Enviando correo a: " + to
+            );
 
-            if (to == null || to.isBlank()) {
-                System.err.println(
-                        "EMAIL SMTP ERROR: Destinatario vacío."
-                );
-                return;
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+            headers.set("api-key", brevoApiKey.trim());
+
+            Map<String, Object> sender = new LinkedHashMap<>();
+            sender.put("name", mailFromName.trim());
+            sender.put("email", mailFrom.trim());
+
+            Map<String, Object> recipient = new LinkedHashMap<>();
+            recipient.put("email", to.trim());
+
+            if (recipientName != null
+                    && !recipientName.isBlank()) {
+                recipient.put("name", recipientName.trim());
             }
 
-            System.out.println(
-                    "EMAIL SMTP: Enviando correo a: " + to
-            );
+            Map<String, Object> payload = new LinkedHashMap<>();
+            payload.put("sender", sender);
+            payload.put("to", List.of(recipient));
+            payload.put("subject", subject);
+            payload.put("htmlContent", buildHtmlBody(body));
+            payload.put("textContent", body);
 
-            MimeMessage message =
-                    javaMailSender.createMimeMessage();
+            HttpEntity<Map<String, Object>> request =
+                    new HttpEntity<>(payload, headers);
 
-            MimeMessageHelper helper =
-                    new MimeMessageHelper(
-                            message,
-                            false,
-                            StandardCharsets.UTF_8.name()
+            ResponseEntity<String> response =
+                    restTemplate.postForEntity(
+                            brevoBaseUrl + "/smtp/email",
+                            request,
+                            String.class
                     );
 
-            helper.setFrom(
-                    mailFrom.trim(),
-                    "CentroPsico"
-            );
-
-            helper.setTo(to.trim());
-            helper.setSubject(subject);
-
-            helper.setText(
-                    buildHtmlBody(body),
-                    true
-            );
-
-            javaMailSender.send(message);
+            String responseBody = response.getBody();
 
             System.out.println(
-                    "EMAIL SMTP OK: Correo enviado correctamente a: "
-                            + to
+                    "EMAIL BREVO HTTP STATUS: "
+                            + response.getStatusCode()
+            );
+
+            if (response.getStatusCode().is2xxSuccessful()
+                    && responseBody != null
+                    && responseBody.contains("messageId")) {
+
+                System.out.println(
+                        "EMAIL BREVO OK: Correo registrado correctamente."
+                );
+
+                System.out.println(
+                        "EMAIL BREVO DESTINATARIO: " + to
+                );
+
+                System.out.println(
+                        "EMAIL BREVO RESPONSE: " + responseBody
+                );
+
+            } else {
+                System.err.println(
+                        "EMAIL BREVO ERROR: Brevo respondió, "
+                                + "pero no devolvió messageId."
+                );
+
+                System.err.println(
+                        "EMAIL BREVO RESPONSE: " + responseBody
+                );
+            }
+
+        } catch (HttpStatusCodeException exception) {
+
+            System.err.println(
+                    "EMAIL BREVO ERROR HTTP: "
+                            + exception.getStatusCode()
+            );
+
+            System.err.println(
+                    "EMAIL BREVO RESPONSE BODY: "
+                            + exception.getResponseBodyAsString()
             );
 
         } catch (Exception exception) {
 
             System.err.println(
-                    "EMAIL SMTP ERROR: No se pudo enviar el correo a: "
-                            + to
-            );
-
-            System.err.println(
-                    "EMAIL SMTP ERROR MESSAGE: "
+                    "EMAIL BREVO ERROR GENERAL: "
                             + exception.getMessage()
             );
 
             exception.printStackTrace();
         }
     }
-
-    /*
-     * =========================================================
-     * CONVERTIR CONTENIDO A HTML
-     * =========================================================
-     */
 
     private String buildHtmlBody(String body) {
 
@@ -327,12 +345,6 @@ public class EmailServiceImpl implements EmailService {
                 </html>
                 """;
     }
-
-    /*
-     * =========================================================
-     * CONSTRUIR INFORMACIÓN DE LA CITA
-     * =========================================================
-     */
 
     private String buildAppointmentEmailBody(
             Appointment appointment,
@@ -429,76 +441,59 @@ public class EmailServiceImpl implements EmailService {
 
         return intro
                 + "\n\n"
-
                 + "DATOS DE LA CITA\n"
                 + "ID de cita: "
                 + appointment.getId()
                 + "\n"
-
                 + "Paciente: "
                 + patientName.trim()
                 + "\n"
-
                 + "Psicólogo: "
                 + psychologistName.trim()
                 + "\n"
-
                 + "Servicio: "
                 + serviceName
                 + "\n"
-
                 + "Fecha: "
                 + date
                 + "\n"
-
                 + "Hora: "
                 + startTime
                 + " - "
                 + endTime
                 + "\n"
-
                 + "Estado: "
                 + appointment.getStatus()
                 + "\n"
-
                 + "Motivo: "
                 + safe(appointment.getReason())
                 + "\n"
-
                 + "Observación: "
                 + safe(appointment.getObservation())
                 + "\n\n"
-
                 + "DATOS DE PAGO\n"
                 + "Total: S/ "
                 + total
                 + "\n"
-
                 + "Pagado: S/ "
                 + paid
                 + "\n"
-
                 + "Saldo pendiente: S/ "
                 + pending
                 + "\n"
-
                 + "Estado de pago: "
                 + safe(appointment.getPaymentStatus())
                 + "\n"
-
                 + "Método de pago: "
                 + safe(appointment.getPaymentMethod())
                 + "\n"
-
                 + "Código de operación: "
                 + safe(appointment.getOperationCode())
                 + "\n"
-
                 + (extra != null ? extra : "");
     }
 
     private String safe(String value) {
-
         return value == null || value.isBlank()
                 ? "-"
                 : value.trim();
