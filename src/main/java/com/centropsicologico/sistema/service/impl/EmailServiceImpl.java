@@ -14,7 +14,10 @@ import org.springframework.web.client.RestTemplate;
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.net.URI;
 
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Service
 public class EmailServiceImpl implements EmailService {
@@ -30,9 +33,6 @@ public class EmailServiceImpl implements EmailService {
 
         @Value("${mailpro.api.key:}")
         private String mailproApiKey;
-
-        @Value("${mailpro.api.sender-id:}")
-        private String mailproSenderId;
 
         @Value("${app.mail.from:}")
         private String mailFrom;
@@ -100,9 +100,10 @@ public class EmailServiceImpl implements EmailService {
                 System.out.println("MAIL_FROM CONFIGURADO: " + mailFrom);
 
                 if (mailproIdClient == null || mailproIdClient.isBlank()) {
-                System.err.println("EMAIL API ERROR: mailpro.api.id-client está vacío. Revisa MAILPRO_ID_CLIENT en Render.");
-                System.out.println("====================================");
-                return;
+                        System.err.println(
+                                        "EMAIL API ERROR: mailpro.api.id-client está vacío. Revisa MAILPRO_ID_CLIENT en Render.");
+                        System.out.println("====================================");
+                        return;
                 }
 
                 if (mailproApiKey == null || mailproApiKey.isBlank()) {
@@ -136,15 +137,14 @@ public class EmailServiceImpl implements EmailService {
                         }
 
                         sendEmailByApi(
-                                admin.getEmail().trim(),
-                                subject,
-                                body);
+                                        admin.getEmail().trim(),
+                                        subject,
+                                        body);
                 }
 
                 System.out.println("FIN DEL PROCESO DE ENVÍO POR MAILPRO API");
                 System.out.println("====================================");
         }
-
 
 private void sendEmailByApi(
         String to,
@@ -154,48 +154,114 @@ private void sendEmailByApi(
     try {
         System.out.println("EMAIL API: Intentando enviar correo a: " + to);
 
-        if (mailproSenderId == null || mailproSenderId.isBlank()) {
-            System.err.println("EMAIL API ERROR: mailpro.api.sender-id está vacío. Revisa MAILPRO_ID_EMAIL_EXP en Render.");
+        if (to == null || to.isBlank()) {
+            System.err.println("EMAIL API ERROR: Destinatario vacío.");
             return;
         }
 
-        String url = mailproBaseUrl + "/send/sendmail.json";
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-
-        // Método 2 de Mailpro: IdClient + ApiKey
-        headers.add("IdClient", mailproIdClient);
-        headers.add("ApiKey", mailproApiKey);
-
-        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-        form.add("IDEmailExp", mailproSenderId);
-        form.add("EmailData", to);
-        form.add("BodyHTML", buildHtmlBody(body));
-        form.add("BodyText", body);
-        form.add("Subject", subject);
-        form.add("ActivateStatistics", "true");
-
-        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(form, headers);
-
-        ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
-
-        System.out.println("EMAIL API SEND STATUS: " + response.getStatusCode());
-        System.out.println("EMAIL API SEND RESPONSE: " + response.getBody());
-
-        if (response.getStatusCode().is2xxSuccessful()) {
-            System.out.println("EMAIL API OK: Correo enviado correctamente a: " + to);
-        } else {
-            System.err.println("EMAIL API ERROR: No se pudo enviar correo a " + to);
+        if (mailproIdClient == null || mailproIdClient.isBlank()) {
+            System.err.println("EMAIL API ERROR: MAILPRO_ID_CLIENT vacío.");
+            return;
         }
 
+        if (mailproApiKey == null || mailproApiKey.isBlank()) {
+            System.err.println("EMAIL API ERROR: MAILPRO_API_KEY vacío.");
+            return;
+        }
+
+        if (mailFrom == null || mailFrom.isBlank()) {
+            System.err.println("EMAIL API ERROR: MAIL_FROM vacío.");
+            return;
+        }
+
+        URI uri = UriComponentsBuilder
+                .fromUriString(mailproBaseUrl)
+                .path("/send/sendmail.json")
+                .queryParam("IdClient", mailproIdClient.trim())
+                .queryParam("ApiKey", mailproApiKey.trim())
+                .build()
+                .encode()
+                .toUri();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(
+                MediaType.APPLICATION_FORM_URLENCODED
+        );
+
+        MultiValueMap<String, String> form =
+                new LinkedMultiValueMap<>();
+
+        form.add("EmailTo", to.trim());
+        form.add("Subject", subject);
+        form.add("Body", buildHtmlBody(body));
+        form.add("EmailFrom", mailFrom.trim());
+
+        HttpEntity<MultiValueMap<String, String>> request =
+                new HttpEntity<>(form, headers);
+
+        ResponseEntity<String> response =
+                restTemplate.postForEntity(
+                        uri,
+                        request,
+                        String.class
+                );
+
+        String responseBody = response.getBody();
+
+        System.out.println(
+                "EMAIL API HTTP STATUS: "
+                        + response.getStatusCode()
+        );
+
+        System.out.println(
+                "EMAIL API RESPUESTA: "
+                        + responseBody
+        );
+
+        boolean envioSinId = responseBody != null
+                && (
+                    responseBody.contains("\"IdSingleSend\":0")
+                    || responseBody.contains("\"IDSend\":0")
+                );
+
+        if (response.getStatusCode().is2xxSuccessful()
+                && !envioSinId) {
+
+            System.out.println(
+                    "EMAIL API OK: Mailpro registró el envío a: "
+                            + to
+            );
+
+        } else {
+
+            System.err.println(
+                    "EMAIL API ERROR: Mailpro respondió, "
+                            + "pero no creó el envío."
+            );
+        }
+
+    } catch (HttpStatusCodeException exception) {
+
+        System.err.println(
+                "EMAIL API ERROR HTTP: "
+                        + exception.getStatusCode()
+        );
+
+        System.err.println(
+                "RESPUESTA MAILPRO: "
+                        + exception.getResponseBodyAsString()
+        );
+
     } catch (Exception exception) {
-        System.err.println("EMAIL API ERROR: Falló el envío por API a " + to);
-        System.err.println("EMAIL API ERROR MESSAGE: " + exception.getMessage());
+
+        System.err.println(
+                "EMAIL API ERROR: "
+                        + exception.getMessage()
+        );
+
         exception.printStackTrace();
     }
 }
-
         private String buildHtmlBody(String body) {
                 String escaped = body == null ? ""
                                 : body
