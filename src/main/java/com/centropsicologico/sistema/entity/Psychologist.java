@@ -35,4 +35,14 @@ public class Psychologist {
 
     @Transient
     private Long availabilityCount;
+
+    /*
+    * Fotografía obtenida de la cuenta de usuario
+    * que tenga el mismo correo del psicólogo.
+    */
+    @Transient
+    private String profileImageBase64;
+
+    @Transient
+    private String profileImageUrl;
 }

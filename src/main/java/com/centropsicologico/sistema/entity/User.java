@@ -1,5 +1,6 @@
 package com.centropsicologico.sistema.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -26,6 +27,7 @@ public class User {
     @Column(name = "correo", nullable = false, unique = true, length = 120)
     private String email;
 
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column(name = "contrasena", nullable = false, length = 255)
     private String password;
 
