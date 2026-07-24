@@ -299,82 +299,362 @@
 
             <!-- PACIENTES -->
             <section id="patients" class="section admin-recepcion-only">
+
+                <!-- ENCABEZADO PRINCIPAL -->
                 <div class="module-header">
                     <div>
-                        <h2 class="section-title">Módulo de Pacientes</h2>
-                        <p class="section-subtitle">Registra, consulta y administra la información de los pacientes del
-                            centro.</p>
+                        <h2 class="section-title">
+                            Módulo de Pacientes
+                        </h2>
+
+                        <p class="section-subtitle">
+                            Registra, consulta y administra la información
+                            de los pacientes del centro.
+                        </p>
                     </div>
                 </div>
 
-                <div class="module-grid">
-                    <div class="card form-card">
-                        <div class="card-header">
-                            <h3>Registrar paciente</h3>
-                            <span>Datos personales y contacto</span>
+                <!-- FORMULARIO PRINCIPAL -->
+                <div class="patient-workspace">
+
+                    <div class="card patient-form-card">
+
+                        <!-- ENCABEZADO DEL FORMULARIO -->
+                        <div class="patient-form-header">
+
+                            <div>
+                                <span class="patient-form-eyebrow">
+                                    Gestión de pacientes
+                                </span>
+
+                                <h3>
+                                    Registrar paciente
+                                </h3>
+
+                                <p>
+                                    Completa los datos personales, de contacto
+                                    y emergencia del paciente.
+                                </p>
+                            </div>
+
+                            <button
+                                type="button"
+                                class="btn-secondary patient-list-button"
+                                onclick="togglePatientList()"
+                            >
+                                <i data-lucide="list"></i>
+                                Ver pacientes
+                            </button>
+
                         </div>
 
-                        <div class="form-grid">
-                            <input type="text" id="patientFirstName" placeholder="Nombres">
-                            <input type="text" id="patientLastName" placeholder="Apellidos">
-                            <input type="text" id="patientDni" placeholder="DNI">
-                            <input type="date" id="patientBirthDate">
+                        <!-- DATOS PERSONALES -->
+                        <div class="patient-form-section">
 
-                            <select id="patientGender">
-                                <option value="">Sexo</option>
-                                <option value="MASCULINO">Masculino</option>
-                                <option value="FEMENINO">Femenino</option>
-                            </select>
+                            <div class="patient-section-heading">
 
-                            <input type="text" id="patientPhone" placeholder="Teléfono">
-                            <input type="email" id="patientEmail" placeholder="Correo">
-                            <input type="text" id="patientAddress" placeholder="Dirección">
-                            <input type="text" id="patientEmergencyContact" placeholder="Contacto de emergencia">
-                            <input type="text" id="patientEmergencyPhone" placeholder="Teléfono de emergencia">
+                                <div class="patient-section-icon">
+                                    <i data-lucide="user-round"></i>
+                                </div>
+
+                                <div>
+                                    <h4>
+                                        Datos personales
+                                    </h4>
+
+                                    <span>
+                                        Información principal del paciente
+                                    </span>
+                                </div>
+
+                            </div>
+
+                            <div class="patient-fields-grid">
+
+                                <div class="patient-field">
+                                    <label for="patientFirstName">
+                                        Nombres
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="patientFirstName"
+                                        placeholder="Ingrese los nombres"
+                                        autocomplete="off"
+                                    >
+                                </div>
+
+                                <div class="patient-field">
+                                    <label for="patientLastName">
+                                        Apellidos
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="patientLastName"
+                                        placeholder="Ingrese los apellidos"
+                                        autocomplete="off"
+                                    >
+                                </div>
+
+                                <div class="patient-field">
+                                    <label for="patientDni">
+                                        DNI
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="patientDni"
+                                        placeholder="Número de documento"
+                                        maxlength="8"
+                                        inputmode="numeric"
+                                        autocomplete="off"
+                                    >
+                                </div>
+
+                                <div class="patient-field">
+                                    <label for="patientBirthDate">
+                                        Fecha de nacimiento
+                                    </label>
+
+                                    <input
+                                        type="date"
+                                        id="patientBirthDate"
+                                    >
+                                </div>
+
+                                <div class="patient-field">
+                                    <label for="patientGender">
+                                        Sexo
+                                    </label>
+
+                                    <select id="patientGender">
+                                        <option value="">
+                                            Seleccione una opción
+                                        </option>
+
+                                        <option value="MASCULINO">
+                                            Masculino
+                                        </option>
+
+                                        <option value="FEMENINO">
+                                            Femenino
+                                        </option>
+                                    </select>
+                                </div>
+
+                            </div>
+
                         </div>
 
-                        <div class="form-actions">
-                            <button class="btn-primary" id="patientSaveButton" onclick="savePatient()">Guardar
-                                paciente</button>
-                            <button class="btn-secondary" id="patientCancelEditButton" onclick="cancelPatientEdit()"
-                                style="display:none;">
+                        <!-- DATOS DE CONTACTO -->
+                        <div class="patient-form-section">
+
+                            <div class="patient-section-heading">
+
+                                <div class="patient-section-icon">
+                                    <i data-lucide="contact"></i>
+                                </div>
+
+                                <div>
+                                    <h4>
+                                        Datos de contacto
+                                    </h4>
+
+                                    <span>
+                                        Información para comunicación y ubicación
+                                    </span>
+                                </div>
+
+                            </div>
+
+                            <div class="patient-fields-grid">
+
+                                <div class="patient-field">
+                                    <label for="patientPhone">
+                                        Teléfono
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="patientPhone"
+                                        placeholder="Número de teléfono"
+                                        inputmode="tel"
+                                        autocomplete="off"
+                                    >
+                                </div>
+
+                                <div class="patient-field">
+                                    <label for="patientEmail">
+                                        Correo electrónico
+                                    </label>
+
+                                    <input
+                                        type="email"
+                                        id="patientEmail"
+                                        placeholder="correo@ejemplo.com"
+                                        autocomplete="off"
+                                    >
+                                </div>
+
+                                <div class="patient-field patient-field-full">
+                                    <label for="patientAddress">
+                                        Dirección
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="patientAddress"
+                                        placeholder="Dirección del paciente"
+                                        autocomplete="off"
+                                    >
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <!-- CONTACTO DE EMERGENCIA -->
+                        <div class="patient-form-section">
+
+                            <div class="patient-section-heading">
+
+                                <div class="patient-section-icon">
+                                    <i data-lucide="shield-plus"></i>
+                                </div>
+
+                                <div>
+                                    <h4>
+                                        Contacto de emergencia
+                                    </h4>
+
+                                    <span>
+                                        Persona a contactar en caso necesario
+                                    </span>
+                                </div>
+
+                            </div>
+
+                            <div class="patient-fields-grid">
+
+                                <div class="patient-field">
+                                    <label for="patientEmergencyContact">
+                                        Nombre del contacto
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="patientEmergencyContact"
+                                        placeholder="Nombre completo"
+                                        autocomplete="off"
+                                    >
+                                </div>
+
+                                <div class="patient-field">
+                                    <label for="patientEmergencyPhone">
+                                        Teléfono de emergencia
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="patientEmergencyPhone"
+                                        placeholder="Número de teléfono"
+                                        inputmode="tel"
+                                        autocomplete="off"
+                                    >
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <!--
+                            SE CONSERVA PARA QUE patients.js
+                            PUEDA SEGUIR UTILIZANDO patientResult.
+                            EL CSS LO MANTENDRÁ OCULTO.
+                        -->
+                        <div
+                            id="patientResult"
+                            class="patient-hidden-result"
+                            aria-live="polite"
+                        ></div>
+
+                        <!-- BOTONES -->
+                        <div class="patient-form-actions">
+
+                            <button
+                                type="button"
+                                class="btn-primary"
+                                id="patientSaveButton"
+                                onclick="savePatient()"
+                            >
+                                <i data-lucide="save"></i>
+                                Guardar paciente
+                            </button>
+
+                            <button
+                                type="button"
+                                class="btn-secondary"
+                                id="patientCancelEditButton"
+                                onclick="cancelPatientEdit()"
+                                style="display:none;"
+                            >
                                 Cancelar edición
                             </button>
-                            <button class="btn-secondary" onclick="togglePatientList()">Listar pacientes</button>
-                        </div>
-                    </div>
 
-                    <div class="card message-card">
-                        <div class="card-header">
-                            <h3>Estado</h3>
-                            <span>Mensajes del sistema</span>
                         </div>
 
-                        <div id="patientResult" class="result-box">
-                            Esperando acción...
-                        </div>
                     </div>
+
                 </div>
 
-                <div id="patientListModal" class="floating-modal hidden">
+                <!-- MODAL PARA LISTAR PACIENTES -->
+                <div
+                    id="patientListModal"
+                    class="floating-modal hidden"
+                >
+
                     <div class="floating-modal-content patient-modal-content">
 
                         <div class="floating-modal-header">
+
                             <div>
-                                <h3>Pacientes registrados</h3>
-                                <span>Consulta rápida de pacientes activos e inactivos</span>
+                                <h3>
+                                    Pacientes registrados
+                                </h3>
+
+                                <span>
+                                    Consulta rápida de pacientes activos e inactivos
+                                </span>
                             </div>
 
-                            <button class="modal-close-btn" onclick="closePatientList()">×</button>
+                            <button
+                                type="button"
+                                class="modal-close-btn"
+                                onclick="closePatientList()"
+                            >
+                                ×
+                            </button>
+
                         </div>
 
+                        <!-- BUSCADOR -->
                         <div class="floating-modal-tools">
-                            <input class="table-search" type="text" placeholder="Buscar paciente..."
-                                oninput="filterPatientTable(this.value)">
+
+                            <input
+                                class="table-search"
+                                type="text"
+                                placeholder="Buscar paciente..."
+                                oninput="filterPatientTable(this.value)"
+                            >
+
                         </div>
 
+                        <!-- TABLA -->
                         <div class="table-wrapper floating-table-wrapper">
+
                             <table>
+
                                 <thead>
                                     <tr>
                                         <th>ID</th>
@@ -387,17 +667,42 @@
                                         <th>Acción</th>
                                     </tr>
                                 </thead>
+
                                 <tbody id="patientTableBody"></tbody>
+
                             </table>
-                            <div class="pagination-bar">
-                                <button class="btn-secondary" onclick="changePatientPage(-1)">Anterior</button>
-                                <span id="patientPageInfo">Página 1</span>
-                                <button class="btn-secondary" onclick="changePatientPage(1)">Siguiente</button>
-                            </div>
+
+                        </div>
+
+                        <!-- PAGINACIÓN -->
+                        <div class="pagination-bar">
+
+                            <button
+                                type="button"
+                                class="btn-secondary"
+                                onclick="changePatientPage(-1)"
+                            >
+                                Anterior
+                            </button>
+
+                            <span id="patientPageInfo">
+                                Página 1 de 1
+                            </span>
+
+                            <button
+                                type="button"
+                                class="btn-secondary"
+                                onclick="changePatientPage(1)"
+                            >
+                                Siguiente
+                            </button>
+
                         </div>
 
                     </div>
+
                 </div>
+
             </section>
 
             <!-- USUARIOS -->

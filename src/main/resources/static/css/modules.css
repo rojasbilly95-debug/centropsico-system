@@ -3916,3 +3916,804 @@ body.modal-open {
         max-height: 65vh !important;
     }
 }
+
+/* =========================================================
+   MÓDULO DE PACIENTES - DISEÑO PRINCIPAL
+========================================================= */
+
+#patients {
+    --patient-primary: #164f7b;
+    --patient-primary-soft: #eaf3fa;
+    --patient-border: #dce7f0;
+    --patient-text: #243b4d;
+    --patient-muted: #718495;
+    --patient-background: #f7fafc;
+}
+
+.patient-workspace {
+    width: 100%;
+    margin-top: 4px;
+}
+
+.patient-form-card {
+    position: relative;
+    width: 100%;
+
+    padding: 0;
+    overflow: hidden;
+
+    border: 1px solid
+        rgba(207, 222, 234, 0.95);
+
+    border-radius: 22px;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 20px 48px
+        rgba(28, 64, 94, 0.11),
+        0 4px 14px
+        rgba(28, 64, 94, 0.06);
+
+    animation:
+        patientCardAppear
+        0.32s ease;
+}
+
+/* Línea decorativa superior */
+.patient-form-card::before {
+    content: "";
+
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+
+    height: 4px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #164f7b,
+            #4387b8,
+            #7eb4d8
+        );
+}
+
+
+/* =========================================================
+   ENCABEZADO DEL FORMULARIO
+========================================================= */
+
+.patient-form-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 25px;
+
+    padding: 28px 30px 25px;
+
+    border-bottom: 1px solid
+        var(--patient-border);
+
+    background:
+        radial-gradient(
+            circle at top right,
+            rgba(112, 174, 214, 0.18),
+            transparent 34%
+        ),
+        linear-gradient(
+            135deg,
+            #ffffff 0%,
+            #f4f9fc 100%
+        );
+}
+
+.patient-form-eyebrow {
+    display: inline-flex;
+    align-items: center;
+
+    color: #527894;
+
+    font-size: 11px;
+    font-weight: 800;
+
+    letter-spacing: 1.15px;
+    text-transform: uppercase;
+}
+
+.patient-form-header h3 {
+    margin: 6px 0 6px;
+
+    color: #123f63;
+
+    font-size: 23px;
+    font-weight: 750;
+}
+
+.patient-form-header p {
+    max-width: 650px;
+    margin: 0;
+
+    color: var(--patient-muted);
+
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.patient-list-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    min-height: 43px;
+    padding: 0 18px;
+
+    white-space: nowrap;
+
+    box-shadow:
+        0 5px 14px
+        rgba(25, 71, 107, 0.08);
+
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        border-color 0.18s ease;
+}
+
+.patient-list-button:hover {
+    transform: translateY(-1px);
+
+    border-color: #9cbcd3;
+
+    box-shadow:
+        0 8px 18px
+        rgba(25, 71, 107, 0.13);
+}
+
+.patient-list-button svg {
+    width: 17px;
+    height: 17px;
+}
+
+
+/* =========================================================
+   SECCIONES DEL FORMULARIO
+========================================================= */
+
+.patient-form-section {
+    position: relative;
+
+    padding: 26px 30px 28px;
+
+    border-bottom: 1px solid
+        #e9eff4;
+
+    background: #ffffff;
+
+    transition:
+        background-color 0.2s ease;
+}
+
+.patient-form-section:hover {
+    background:
+        linear-gradient(
+            90deg,
+            #ffffff 0%,
+            #fbfdff 100%
+        );
+}
+
+.patient-section-heading {
+    display: flex;
+    align-items: center;
+
+    gap: 13px;
+
+    margin-bottom: 20px;
+}
+
+.patient-section-icon {
+    width: 42px;
+    height: 42px;
+
+    flex: 0 0 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid
+        rgba(111, 165, 202, 0.24);
+
+    border-radius: 13px;
+
+    color: var(--patient-primary);
+
+    background:
+        linear-gradient(
+            145deg,
+            #f3f9fd,
+            #e4f0f8
+        );
+
+    box-shadow:
+        0 5px 13px
+        rgba(34, 90, 130, 0.11);
+}
+
+.patient-section-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.patient-section-heading h4 {
+    margin: 0 0 3px;
+
+    color: #193f5c;
+
+    font-size: 16px;
+    font-weight: 750;
+}
+
+.patient-section-heading span {
+    color: #8493a0;
+
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   CAMPOS
+========================================================= */
+
+.patient-fields-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(0, 1fr)
+        );
+
+    gap: 18px 20px;
+}
+
+.patient-field {
+    display: flex;
+    flex-direction: column;
+
+    gap: 8px;
+}
+
+.patient-field-full {
+    grid-column: 1 / -1;
+}
+
+.patient-field label {
+    color: #405b70;
+
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.patient-field input,
+.patient-field select {
+    width: 100%;
+    min-height: 46px;
+
+    padding: 0 14px;
+
+    border: 1px solid
+        #d5e1ea;
+
+    border-radius: 11px;
+
+    outline: none;
+
+    color: var(--patient-text);
+
+    font-family: inherit;
+    font-size: 14px;
+
+    background: #ffffff;
+
+    box-shadow:
+        inset 0 1px 2px
+        rgba(28, 65, 95, 0.025),
+        0 2px 7px
+        rgba(28, 65, 95, 0.025);
+
+    transition:
+        border-color 0.18s ease,
+        box-shadow 0.18s ease,
+        transform 0.18s ease,
+        background-color 0.18s ease;
+}
+
+.patient-field input::placeholder {
+    color: #a0adb8;
+}
+
+.patient-field input:hover,
+.patient-field select:hover {
+    border-color: #adc5d7;
+
+    box-shadow:
+        0 3px 10px
+        rgba(33, 79, 113, 0.06);
+}
+
+.patient-field input:focus,
+.patient-field select:focus {
+    border-color: #4e8dbb;
+
+    background: #fcfeff;
+
+    box-shadow:
+        0 0 0 4px
+        rgba(64, 137, 188, 0.13),
+        0 6px 16px
+        rgba(31, 83, 122, 0.08);
+
+    transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   ACCIONES
+========================================================= */
+
+.patient-form-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+
+    gap: 12px;
+
+    padding: 21px 30px;
+
+    border-top: 1px solid
+        #dfe8ef;
+
+    background:
+        linear-gradient(
+            180deg,
+            #fbfcfd,
+            #f3f7fa
+        );
+
+    box-shadow:
+        inset 0 5px 12px
+        rgba(35, 75, 103, 0.025);
+}
+
+.patient-form-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    min-height: 43px;
+
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        opacity 0.18s ease;
+}
+
+.patient-form-actions button:hover:not(:disabled) {
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 7px 16px
+        rgba(26, 70, 103, 0.14);
+}
+
+.patient-form-actions button:disabled {
+    cursor: not-allowed;
+    opacity: 0.68;
+}
+
+.patient-form-actions svg {
+    width: 17px;
+    height: 17px;
+}
+
+
+/* =========================================================
+   RESULTADO OCULTO
+========================================================= */
+
+.patient-hidden-result {
+    display: none !important;
+}
+
+
+/* =========================================================
+   SPINNER DEL BOTÓN
+========================================================= */
+
+.patient-button-spinner {
+    width: 17px;
+    height: 17px;
+
+    border: 2px solid
+        rgba(255, 255, 255, 0.38);
+
+    border-top-color: #ffffff;
+
+    border-radius: 50%;
+
+    animation:
+        patientSpinner
+        0.75s linear infinite;
+}
+
+
+/* =========================================================
+   MODAL DE PACIENTES
+========================================================= */
+
+#patientListModal {
+    backdrop-filter: blur(4px);
+
+    background:
+        rgba(13, 33, 49, 0.48);
+}
+
+#patientListModal
+.patient-modal-content {
+    width: min(1180px, 94vw);
+    max-height: 88vh;
+
+    overflow: hidden;
+
+    border: 1px solid
+        rgba(215, 227, 237, 0.95);
+
+    border-radius: 21px;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 28px 80px
+        rgba(10, 35, 55, 0.28),
+        0 8px 25px
+        rgba(10, 35, 55, 0.13);
+
+    animation:
+        patientModalAppear
+        0.25s ease;
+}
+
+#patientListModal
+.floating-modal-header {
+    padding: 22px 25px;
+
+    border-bottom: 1px solid
+        #e1e9f0;
+
+    background:
+        linear-gradient(
+            135deg,
+            #ffffff,
+            #f2f8fc
+        );
+}
+
+#patientListModal
+.floating-modal-tools {
+    padding: 17px 24px;
+
+    background: #f8fafc;
+}
+
+#patientListModal
+.table-search {
+    width: min(440px, 100%);
+    min-height: 43px;
+
+    border-radius: 11px;
+
+    box-shadow:
+        0 4px 12px
+        rgba(26, 72, 107, 0.06);
+}
+
+#patientListModal
+.floating-table-wrapper {
+    max-height: 55vh;
+    overflow: auto;
+}
+
+#patientListModal table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+#patientListModal thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+
+    padding: 14px 13px;
+
+    color: #405970;
+
+    font-size: 12px;
+    font-weight: 750;
+
+    background: #f3f7fa;
+
+    box-shadow:
+        0 1px 0 #dfe8ef;
+}
+
+#patientListModal tbody td {
+    padding: 13px;
+
+    border-bottom: 1px solid
+        #edf1f5;
+
+    vertical-align: middle;
+
+    transition:
+        background-color 0.16s ease;
+}
+
+#patientListModal tbody tr:hover td {
+    background: #f8fbfd;
+}
+
+.patient-table-name {
+    color: #1a425f;
+    font-weight: 750;
+}
+
+.patient-dni-value {
+    font-family:
+        ui-monospace,
+        SFMono-Regular,
+        Menlo,
+        monospace;
+
+    color: #425b6f;
+}
+
+.patient-email-value {
+    color: #4e6c82;
+}
+
+.patient-table-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+
+    gap: 7px;
+}
+
+.patient-table-actions button {
+    min-height: 35px;
+    padding: 0 12px;
+
+    font-size: 12px;
+}
+
+.patient-history-button {
+    border-color: #b7ccdc;
+}
+
+
+/* =========================================================
+   TABLA VACÍA
+========================================================= */
+
+.patient-table-empty {
+    min-height: 210px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    color: #718392;
+
+    text-align: center;
+}
+
+.patient-table-empty-icon {
+    width: 52px;
+    height: 52px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-bottom: 4px;
+
+    border-radius: 16px;
+
+    color: #477b9f;
+
+    background: #eaf3f9;
+
+    box-shadow:
+        0 7px 18px
+        rgba(36, 87, 124, 0.12);
+}
+
+.patient-table-empty-icon svg {
+    width: 24px;
+    height: 24px;
+}
+
+.patient-table-empty strong {
+    color: #34556d;
+    font-size: 15px;
+}
+
+.patient-table-empty span {
+    max-width: 370px;
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   PAGINACIÓN DEL MODAL
+========================================================= */
+
+#patientListModal
+.pagination-bar {
+    padding: 16px 24px;
+
+    border-top: 1px solid
+        #e1e8ee;
+
+    background: #f8fafc;
+
+    box-shadow:
+        0 -4px 12px
+        rgba(29, 70, 99, 0.025);
+}
+
+
+/* =========================================================
+   AVISOS SWEETALERT
+========================================================= */
+
+.patient-toast {
+    border: 1px solid
+        rgba(211, 224, 234, 0.92) !important;
+
+    border-radius: 14px !important;
+
+    box-shadow:
+        0 15px 35px
+        rgba(16, 45, 67, 0.18) !important;
+}
+
+
+/* =========================================================
+   ANIMACIONES
+========================================================= */
+
+@keyframes patientCardAppear {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes patientModalAppear {
+    from {
+        opacity: 0;
+        transform:
+            translateY(10px)
+            scale(0.985);
+    }
+
+    to {
+        opacity: 1;
+        transform:
+            translateY(0)
+            scale(1);
+    }
+}
+
+@keyframes patientSpinner {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 800px) {
+    .patient-form-header {
+        align-items: flex-start;
+        flex-direction: column;
+
+        padding:
+            25px 21px
+            22px;
+    }
+
+    .patient-list-button {
+        width: 100%;
+    }
+
+    .patient-fields-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .patient-field-full {
+        grid-column: auto;
+    }
+
+    .patient-form-section {
+        padding: 23px 21px;
+    }
+
+    .patient-form-actions {
+        flex-direction: column;
+
+        padding: 19px 21px;
+    }
+
+    .patient-form-actions button {
+        width: 100%;
+    }
+
+    #patientListModal
+    .patient-modal-content {
+        width: 96vw;
+        max-height: 92vh;
+    }
+}
+
+@media (max-width: 520px) {
+    .patient-form-card {
+        border-radius: 16px;
+    }
+
+    .patient-form-header h3 {
+        font-size: 20px;
+    }
+
+    .patient-section-heading {
+        align-items: flex-start;
+    }
+
+    .patient-section-icon {
+        width: 38px;
+        height: 38px;
+
+        flex-basis: 38px;
+    }
+
+    #patientListModal
+    .floating-modal-header {
+        padding: 18px;
+    }
+
+    #patientListModal
+    .floating-modal-tools {
+        padding: 14px 18px;
+    }
+}
