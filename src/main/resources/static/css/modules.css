@@ -3775,3 +3775,144 @@ body.modal-open {
         justify-content: flex-start;
     }
 }
+
+/* =========================================================
+   FOTOS DE PERFIL EN TABLAS
+========================================================= */
+
+.profile-photo-cell {
+    width: 68px;
+    min-width: 68px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* Botón invisible que contiene únicamente la foto */
+.table-profile-photo-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+    margin: 0;
+
+    border: none;
+    outline: none;
+    background: transparent;
+    box-shadow: none;
+
+    cursor: pointer;
+    border-radius: 50%;
+}
+
+/* Foto o círculo con iniciales */
+.table-profile-avatar {
+    width: 46px;
+    height: 46px;
+
+    border-radius: 50%;
+    border: 2px solid #d7e3ee;
+
+    object-fit: cover;
+    object-position: center;
+
+    background: #edf4fa;
+    color: #164a73;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        border-color 0.18s ease,
+        filter 0.18s ease;
+}
+
+/* Reacción suave al pasar el mouse */
+.table-profile-photo-button:hover
+.table-profile-avatar {
+    transform: translateY(-1px) scale(1.05);
+    border-color: #8db6d8;
+
+    box-shadow:
+        0 5px 14px
+        rgba(15, 61, 102, 0.18);
+
+    filter: brightness(1.03);
+}
+
+/* Pequeña reacción al hacer clic */
+.table-profile-photo-button:active
+.table-profile-avatar {
+    transform: scale(0.97);
+}
+
+/* Borde visible al navegar con teclado */
+.table-profile-photo-button:focus-visible {
+    outline: 3px solid
+        rgba(36, 120, 190, 0.28);
+
+    outline-offset: 3px;
+}
+
+/* Iniciales: no parecen clicables */
+.table-profile-avatar.initials {
+    margin: 0 auto;
+    cursor: default;
+    user-select: none;
+}
+
+/* =========================================================
+   FOTO AMPLIADA EN SWEETALERT
+========================================================= */
+
+.profile-photo-expanded {
+    width: auto !important;
+    height: auto !important;
+
+    max-width: min(90vw, 720px) !important;
+    max-height: 72vh !important;
+
+    object-fit: contain !important;
+    object-position: center !important;
+
+    margin: 15px auto 25px !important;
+
+    border-radius: 14px;
+
+    box-shadow:
+        0 12px 35px
+        rgba(0, 0, 0, 0.2);
+}
+
+/* Ajuste del modal que contiene la imagen */
+.swal2-popup:has(.profile-photo-expanded) {
+    width: auto !important;
+    max-width: 820px !important;
+    padding: 24px !important;
+}
+
+/* Ajuste para celular */
+@media (max-width: 600px) {
+    .table-profile-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 12px;
+    }
+
+    .profile-photo-cell {
+        width: 58px;
+        min-width: 58px;
+    }
+
+    .profile-photo-expanded {
+        max-width: 86vw !important;
+        max-height: 65vh !important;
+    }
+}

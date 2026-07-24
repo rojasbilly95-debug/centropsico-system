@@ -94,109 +94,211 @@ async function loadPsychologists() {
 }
 
 function renderPsychologistTable(data) {
-    const tbody = document.getElementById("psychologistTableBody");
-    tbody.innerHTML = "";
+    const tbody =
+        document.getElementById(
+            "psychologistTableBody"
+        );
 
-    const totalPages = Math.ceil(data.length / psychologistsPerPage) || 1;
-
-    if (currentPsychologistPage > totalPages) {
-        currentPsychologistPage = totalPages;
+    if (!tbody) {
+        return;
     }
 
-    const start = (currentPsychologistPage - 1) * psychologistsPerPage;
-    const end = start + psychologistsPerPage;
-    const pageData = data.slice(start, end);
+    tbody.innerHTML = "";
+
+    const totalPages =
+        Math.ceil(
+            data.length /
+            psychologistsPerPage
+        ) || 1;
+
+    if (
+        currentPsychologistPage >
+        totalPages
+    ) {
+        currentPsychologistPage =
+            totalPages;
+    }
+
+    const start =
+        (currentPsychologistPage - 1) *
+        psychologistsPerPage;
+
+    const end =
+        start + psychologistsPerPage;
+
+    const pageData =
+        data.slice(start, end);
 
     if (pageData.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="8" style="text-align:center;">
+                <td
+                    colspan="10"
+                    style="text-align:center;"
+                >
                     No se encontraron psicólogos
                 </td>
             </tr>
         `;
+
+        const pageInfo =
+            document.getElementById(
+                "psychologistPageInfo"
+            );
+
+        if (pageInfo) {
+            pageInfo.textContent =
+                "Página 1 de 1";
+        }
+
         return;
     }
 
     pageData.forEach(psychologist => {
-
-        const availabilityCount = psychologist.availabilityCount ?? 0;
+        const availabilityCount =
+            psychologist.availabilityCount ?? 0;
 
         const availabilityBadge =
             availabilityCount > 0
                 ? `
-                <span class="status-pill active">
-                    Disponible (${availabilityCount})
-                </span>
-            `
+                    <span class="status-pill active">
+                        Disponible (${availabilityCount})
+                    </span>
+                `
                 : `
-                <span class="status-pill inactive">
-                    Sin horarios
-                </span>
-            `;
+                    <span class="status-pill inactive">
+                        Sin horarios
+                    </span>
+                `;
 
         tbody.innerHTML += `
-        <tr>
-            <td>${psychologist.id ?? ""}</td>
+            <tr>
+                <td>
+                    ${psychologist.id ?? ""}
+                </td>
 
-            <td>${psychologist.firstName ?? ""}</td>
+                <td class="profile-photo-cell">
+                    ${buildPsychologistTableAvatar(
+                        psychologist
+                    )}
+                </td>
 
-            <td>${psychologist.lastName ?? ""}</td>
+                <td>
+                    ${escapePsychologistTableHtml(
+                        psychologist.firstName ?? ""
+                    )}
+                </td>
 
-            <td>${psychologist.specialty ?? ""}</td>
+                <td>
+                    ${escapePsychologistTableHtml(
+                        psychologist.lastName ?? ""
+                    )}
+                </td>
 
-            <td>${psychologist.phone ?? ""}</td>
+                <td>
+                    ${escapePsychologistTableHtml(
+                        psychologist.specialty ?? ""
+                    )}
+                </td>
 
-            <td>${psychologist.email ?? ""}</td>
+                <td>
+                    ${escapePsychologistTableHtml(
+                        psychologist.phone ?? ""
+                    )}
+                </td>
 
-            <td>
-                ${availabilityBadge}
-            </td>
+                <td>
+                    ${escapePsychologistTableHtml(
+                        psychologist.email ?? ""
+                    )}
+                </td>
 
-            <td>
-                <span class="status-pill ${psychologist.active ? "active" : "inactive"}">
-                    ${psychologist.active ? "Activo" : "Inactivo"}
-                </span>
-            </td>
+                <td>
+                    ${availabilityBadge}
+                </td>
 
-            <td>
+                <td>
+                    <span class="status-pill ${
+                        psychologist.active
+                            ? "active"
+                            : "inactive"
+                    }">
+                        ${
+                            psychologist.active
+                                ? "Activo"
+                                : "Inactivo"
+                        }
+                    </span>
+                </td>
 
-                <button class="btn-secondary"
-                        onclick="startEditPsychologist(${psychologist.id})">
-                    Editar
-                </button>
+                <td>
+                    <button
+                        type="button"
+                        class="btn-secondary"
+                        onclick="startEditPsychologist(
+                            ${psychologist.id}
+                        )"
+                    >
+                        Editar
+                    </button>
 
-                <button class="btn-primary"
-                        onclick="goToAvailabilityForPsychologist(${psychologist.id})">
-                    Horarios
-                </button>
+                    <button
+                        type="button"
+                        class="btn-primary"
+                        onclick="goToAvailabilityForPsychologist(
+                            ${psychologist.id}
+                        )"
+                    >
+                        Horarios
+                    </button>
 
-                <button class="${psychologist.active ? "btn-danger-soft" : "btn-secondary"}"
-                        onclick="togglePsychologistStatus(${psychologist.id}, ${psychologist.active})">
-                    ${psychologist.active ? "Desactivar" : "Reactivar"}
-                </button>
+                    <button
+                        type="button"
+                        class="${
+                            psychologist.active
+                                ? "btn-danger-soft"
+                                : "btn-secondary"
+                        }"
+                        onclick="togglePsychologistStatus(
+                            ${psychologist.id},
+                            ${Boolean(psychologist.active)}
+                        )"
+                    >
+                        ${
+                            psychologist.active
+                                ? "Desactivar"
+                                : "Reactivar"
+                        }
+                    </button>
 
                     ${
                         psychologist.active
                             ? `
-                                <button 
+                                <button
                                     type="button"
                                     class="table-action-btn info"
-                                    onclick="openPsychologistNotificationModal(${psychologist.id})">
+                                    onclick="openPsychologistNotificationModal(
+                                        ${psychologist.id}
+                                    )"
+                                >
                                     Notificar
                                 </button>
                             `
                             : ""
                     }
-
-            </td>
-        </tr>
-    `;
+                </td>
+            </tr>
+        `;
     });
 
-    const pageInfo = document.getElementById("psychologistPageInfo");
+    const pageInfo =
+        document.getElementById(
+            "psychologistPageInfo"
+        );
+
     if (pageInfo) {
-        pageInfo.textContent = `Página ${currentPsychologistPage} de ${totalPages}`;
+        pageInfo.textContent =
+            `Página ${currentPsychologistPage} de ${totalPages}`;
     }
 }
 
@@ -560,6 +662,182 @@ function getPsychologistNotificationDisplayName(psychologist) {
 }
 
 function escapePsychologistNotificationHtml(value) {
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+function buildPsychologistTableAvatar(
+    psychologist
+) {
+    const imageSource =
+        getPsychologistTableImageSource(
+            psychologist
+        );
+
+    const initials =
+        getPsychologistTableInitials(
+            psychologist
+        );
+
+    if (!imageSource) {
+        return `
+            <div
+                class="table-profile-avatar initials"
+                title="Psicólogo sin foto"
+            >
+                ${escapePsychologistTableHtml(
+                    initials
+                )}
+            </div>
+        `;
+    }
+
+    return `
+        <button
+            type="button"
+            class="table-profile-photo-button"
+            onclick="openPsychologistProfilePhoto(
+                ${Number(psychologist.id)}
+            )"
+            title="Ver fotografía"
+        >
+            <img
+                src="${escapePsychologistTableHtml(
+                    imageSource
+                )}"
+                alt="Foto de ${escapePsychologistTableHtml(
+                    getPsychologistTableFullName(
+                        psychologist
+                    )
+                )}"
+                class="table-profile-avatar"
+            >
+        </button>
+    `;
+}
+
+function getPsychologistTableImageSource(
+    psychologist
+) {
+    const base64Image =
+        String(
+            psychologist?.profileImageBase64 ||
+            ""
+        ).trim();
+
+    if (
+        /^data:image\/(jpeg|jpg|png|webp);base64,/i
+            .test(base64Image)
+    ) {
+        return base64Image;
+    }
+
+    const imageUrl =
+        String(
+            psychologist?.profileImageUrl ||
+            ""
+        ).trim();
+
+    if (
+        imageUrl.startsWith("/") ||
+        imageUrl.startsWith("https://") ||
+        imageUrl.startsWith("http://")
+    ) {
+        return imageUrl;
+    }
+
+    return "";
+}
+
+function getPsychologistTableInitials(
+    psychologist
+) {
+    const firstInitial =
+        String(
+            psychologist?.firstName || ""
+        )
+            .trim()
+            .charAt(0);
+
+    const lastInitial =
+        String(
+            psychologist?.lastName || ""
+        )
+            .trim()
+            .charAt(0);
+
+    return (
+        `${firstInitial}${lastInitial}`
+            .toUpperCase() || "PS"
+    );
+}
+
+function getPsychologistTableFullName(
+    psychologist
+) {
+    const fullName = `
+        ${psychologist?.firstName || ""}
+        ${psychologist?.lastName || ""}
+    `
+        .replace(/\s+/g, " ")
+        .trim();
+
+    return fullName || "Psicólogo";
+}
+
+function openPsychologistProfilePhoto(
+    psychologistId
+) {
+    const psychologist =
+        psychologistsData.find(
+            item =>
+                Number(item.id) ===
+                Number(psychologistId)
+        );
+
+    if (!psychologist) {
+        Swal.fire(
+            "Error",
+            "No se encontró el psicólogo.",
+            "error"
+        );
+
+        return;
+    }
+
+    const imageSource =
+        getPsychologistTableImageSource(
+            psychologist
+        );
+
+        if (!imageSource) {
+            return;
+        }
+
+    Swal.fire({
+        title:
+            getPsychologistTableFullName(
+                psychologist
+            ),
+        imageUrl: imageSource,
+        imageAlt:
+            `Foto de ${getPsychologistTableFullName(
+                psychologist
+            )}`,
+        showCloseButton: true,
+        showConfirmButton: false,
+        width: 600,
+        customClass: {
+            image: "profile-photo-expanded"
+        }
+    });
+}
+
+function escapePsychologistTableHtml(value) {
     return String(value ?? "")
         .replaceAll("&", "&amp;")
         .replaceAll("<", "&lt;")

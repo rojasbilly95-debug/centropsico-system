@@ -117,33 +117,51 @@ async function loadUsers() {
 }
 
 function renderUserTable(data) {
-    const tbody = document.getElementById("userTableBody");
+    const tbody =
+        document.getElementById("userTableBody");
 
-    if (!tbody) return;
+    if (!tbody) {
+        return;
+    }
 
     tbody.innerHTML = "";
 
-    const totalPages = Math.ceil(data.length / usersPerPage) || 1;
+    const totalPages =
+        Math.ceil(data.length / usersPerPage) || 1;
 
-    if (currentUserPage > totalPages) currentUserPage = totalPages;
+    if (currentUserPage > totalPages) {
+        currentUserPage = totalPages;
+    }
 
-    const start = (currentUserPage - 1) * usersPerPage;
-    const end = start + usersPerPage;
-    const pageData = data.slice(start, end);
+    const start =
+        (currentUserPage - 1) * usersPerPage;
+
+    const end =
+        start + usersPerPage;
+
+    const pageData =
+        data.slice(start, end);
 
     if (pageData.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="7" style="text-align:center;">
+                <td
+                    colspan="8"
+                    style="text-align:center;"
+                >
                     No se encontraron usuarios
                 </td>
             </tr>
         `;
 
-        const pageInfo = document.getElementById("userPageInfo");
+        const pageInfo =
+            document.getElementById(
+                "userPageInfo"
+            );
 
         if (pageInfo) {
-            pageInfo.textContent = `Página 1 de 1`;
+            pageInfo.textContent =
+                "Página 1 de 1";
         }
 
         return;
@@ -152,42 +170,92 @@ function renderUserTable(data) {
     pageData.forEach(user => {
         tbody.innerHTML += `
             <tr>
-                <td>${user.id ?? ""}</td>
-                <td>${escapeUserTableHtml(user.firstName ?? "")}</td>
-                <td>${escapeUserTableHtml(user.lastName ?? "")}</td>
-                <td>${escapeUserTableHtml(user.email ?? "")}</td>
+                <td>
+                    ${user.id ?? ""}
+                </td>
+
+                <td class="profile-photo-cell">
+                    ${buildUserTableAvatar(user)}
+                </td>
+
+                <td>
+                    ${escapeUserTableHtml(
+                        user.firstName ?? ""
+                    )}
+                </td>
+
+                <td>
+                    ${escapeUserTableHtml(
+                        user.lastName ?? ""
+                    )}
+                </td>
+
+                <td>
+                    ${escapeUserTableHtml(
+                        user.email ?? ""
+                    )}
+                </td>
+
                 <td>
                     <span class="badge badge-role">
-                        ${escapeUserTableHtml(user.role ?? "")}
+                        ${escapeUserTableHtml(
+                            user.role ?? ""
+                        )}
                     </span>
                 </td>
+
                 <td>
-                    <span class="status-pill ${user.active ? "active" : "inactive"}">
-                        ${user.active ? "Activo" : "Inactivo"}
+                    <span class="status-pill ${
+                        user.active
+                            ? "active"
+                            : "inactive"
+                    }">
+                        ${
+                            user.active
+                                ? "Activo"
+                                : "Inactivo"
+                        }
                     </span>
                 </td>
+
                 <td>
-                    <button 
+                    <button
                         type="button"
                         class="btn-secondary"
-                        onclick="startEditUser(${user.id})">
+                        onclick="startEditUser(${user.id})"
+                    >
                         Editar
                     </button>
 
-                    <button 
+                    <button
                         type="button"
-                        class="${user.active ? "btn-danger-soft" : "btn-secondary"}"
-                        onclick="toggleUserStatus(${user.id}, ${user.active})">
-                        ${user.active ? "Desactivar" : "Activar"}
+                        class="${
+                            user.active
+                                ? "btn-danger-soft"
+                                : "btn-secondary"
+                        }"
+                        onclick="toggleUserStatus(
+                            ${user.id},
+                            ${Boolean(user.active)}
+                        )"
+                    >
+                        ${
+                            user.active
+                                ? "Desactivar"
+                                : "Activar"
+                        }
                     </button>
 
                     ${
                         user.active
                             ? `
-                                <button 
+                                <button
                                     type="button"
                                     class="table-action-btn info"
-                                    onclick="openUserNotificationModal(${user.id})">
+                                    onclick="openUserNotificationModal(
+                                        ${user.id}
+                                    )"
+                                >
                                     Notificar
                                 </button>
                             `
@@ -198,10 +266,14 @@ function renderUserTable(data) {
         `;
     });
 
-    const pageInfo = document.getElementById("userPageInfo");
+    const pageInfo =
+        document.getElementById(
+            "userPageInfo"
+        );
 
     if (pageInfo) {
-        pageInfo.textContent = `Página ${currentUserPage} de ${totalPages}`;
+        pageInfo.textContent =
+            `Página ${currentUserPage} de ${totalPages}`;
     }
 }
 
@@ -212,6 +284,141 @@ function escapeUserTableHtml(value) {
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
+}
+
+function buildUserTableAvatar(user) {
+    const imageSource =
+        getUserTableImageSource(user);
+
+    const initials =
+        getUserTableInitials(user);
+
+    if (!imageSource) {
+        return `
+            <div
+                class="table-profile-avatar initials"
+                title="Usuario sin foto"
+            >
+                ${escapeUserTableHtml(initials)}
+            </div>
+        `;
+    }
+
+    return `
+        <button
+            type="button"
+            class="table-profile-photo-button"
+            onclick="openUserProfilePhoto(${Number(user.id)})"
+            title="Ver fotografía"
+        >
+            <img
+                src="${escapeUserTableHtml(imageSource)}"
+                alt="Foto de ${escapeUserTableHtml(
+                    getUserTableFullName(user)
+                )}"
+                class="table-profile-avatar"
+            >
+        </button>
+    `;
+}
+
+function getUserTableImageSource(user) {
+    const base64Image =
+        String(
+            user?.profileImageBase64 || ""
+        ).trim();
+
+    if (
+        /^data:image\/(jpeg|jpg|png|webp);base64,/i
+            .test(base64Image)
+    ) {
+        return base64Image;
+    }
+
+    const imageUrl =
+        String(
+            user?.profileImageUrl || ""
+        ).trim();
+
+    if (
+        imageUrl.startsWith("/") ||
+        imageUrl.startsWith("https://") ||
+        imageUrl.startsWith("http://")
+    ) {
+        return imageUrl;
+    }
+
+    return "";
+}
+
+function getUserTableInitials(user) {
+    const firstInitial =
+        String(
+            user?.firstName || ""
+        )
+            .trim()
+            .charAt(0);
+
+    const lastInitial =
+        String(
+            user?.lastName || ""
+        )
+            .trim()
+            .charAt(0);
+
+    return (
+        `${firstInitial}${lastInitial}`
+            .toUpperCase() || "US"
+    );
+}
+
+function getUserTableFullName(user) {
+    const fullName = `
+        ${user?.firstName || ""}
+        ${user?.lastName || ""}
+    `
+        .replace(/\s+/g, " ")
+        .trim();
+
+    return fullName || "Usuario";
+}
+
+function openUserProfilePhoto(userId) {
+    const user =
+        usersData.find(
+            item =>
+                Number(item.id) ===
+                Number(userId)
+        );
+
+    if (!user) {
+        Swal.fire(
+            "Error",
+            "No se encontró el usuario.",
+            "error"
+        );
+
+        return;
+    }
+
+    const imageSource =
+        getUserTableImageSource(user);
+
+        if (!imageSource) {
+            return;
+        }
+
+    Swal.fire({
+        title: getUserTableFullName(user),
+        imageUrl: imageSource,
+        imageAlt: `Foto de ${getUserTableFullName(user)}`,
+        showCloseButton: true,
+        showConfirmButton: false,
+        width: 600,
+        customClass: {
+            image: "profile-photo-expanded"
+        }
+    });
 }
 
 function getFilteredUsers() {
