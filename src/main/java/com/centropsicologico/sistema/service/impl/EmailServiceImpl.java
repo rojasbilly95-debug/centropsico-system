@@ -300,30 +300,35 @@ public class EmailServiceImpl implements EmailService {
             MultiValueMap<String, String> form =
                     new LinkedMultiValueMap<>();
 
-            form.add(
-                    "IDEmailExp",
-                    mailproSenderId.trim()
-            );
+           form.add(
+        "IDEmailExp",
+        mailproSenderId.trim()
+);
 
-            form.add(
-                    "EmailTo",
-                    to.trim()
-            );
+form.add(
+        "EmailData",
+        to.trim()
+);
 
-            form.add(
-                    "Subject",
-                    subject
-            );
+form.add(
+        "Subject",
+        subject
+);
 
-            form.add(
-                    "Body",
-                    buildHtmlBody(body)
-            );
+form.add(
+        "BodyHTML",
+        buildHtmlBody(body)
+);
 
-            form.add(
-                    "EmailFrom",
-                    mailFrom.trim()
-            );
+form.add(
+        "BodyText",
+        body
+);
+
+form.add(
+        "ActivateStatistics",
+        "true"
+);
 
             HttpEntity<MultiValueMap<String, String>> request =
                     new HttpEntity<>(
