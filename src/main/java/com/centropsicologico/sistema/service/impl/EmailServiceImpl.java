@@ -6,54 +6,38 @@ import com.centropsicologico.sistema.entity.User;
 import com.centropsicologico.sistema.repository.UserRepository;
 import com.centropsicologico.sistema.service.EmailService;
 
+import jakarta.mail.internet.MimeMessage;
+
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.HttpStatusCodeException;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.math.BigDecimal;
-import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service
 public class EmailServiceImpl implements EmailService {
 
     private final UserRepository userRepository;
-    private final RestTemplate restTemplate;
-
-    @Value("${mailpro.api.base-url:https://api.mailpro.com/v2}")
-    private String mailproBaseUrl;
-
-    @Value("${mailpro.api.id-client:}")
-    private String mailproIdClient;
-
-    @Value("${mailpro.api.key:}")
-    private String mailproApiKey;
-
-    @Value("${mailpro.api.sender-id:}")
-    private String mailproSenderId;
+    private final JavaMailSender javaMailSender;
 
     @Value("${app.mail.from:}")
     private String mailFrom;
 
-    public EmailServiceImpl(UserRepository userRepository) {
+    public EmailServiceImpl(
+            UserRepository userRepository,
+            JavaMailSender javaMailSender
+    ) {
         this.userRepository = userRepository;
-        this.restTemplate = new RestTemplate();
+        this.javaMailSender = javaMailSender;
     }
 
     /*
      * =========================================================
-     * NOTIFICAR NUEVA CITA CREADA DESDE EL PANEL
+     * NOTIFICAR NUEVA CITA DESDE EL PANEL
      * =========================================================
      */
 
@@ -62,17 +46,18 @@ public class EmailServiceImpl implements EmailService {
 
         if (appointment == null) {
             System.err.println(
-                    "EMAIL API ERROR: No se envió el correo porque la cita es null."
+                    "EMAIL SMTP ERROR: La cita recibida es null."
             );
             return;
         }
 
         System.out.println(
-                "EMAIL API: Preparando correo por nueva cita desde panel. ID cita: "
+                "EMAIL SMTP: Preparando correo de la cita #"
                         + appointment.getId()
         );
 
-        String subject = "Nueva cita registrada - CentroPsico";
+        String subject =
+                "Nueva cita registrada - CentroPsico";
 
         String body = buildAppointmentEmailBody(
                 appointment,
@@ -85,7 +70,7 @@ public class EmailServiceImpl implements EmailService {
 
     /*
      * =========================================================
-     * NOTIFICAR CITA CREADA DESDE PRE-RESERVA
+     * NOTIFICAR CITA DESDE PRE-RESERVA
      * =========================================================
      */
 
@@ -97,28 +82,43 @@ public class EmailServiceImpl implements EmailService {
 
         if (appointment == null) {
             System.err.println(
-                    "EMAIL API ERROR: La cita creada desde la pre-reserva es null."
+                    "EMAIL SMTP ERROR: La cita de la pre-reserva es null."
             );
             return;
         }
 
         System.out.println(
-                "EMAIL API: Preparando correo por cita creada desde pre-reserva. ID cita: "
+                "EMAIL SMTP: Preparando correo de pre-reserva. Cita #"
                         + appointment.getId()
         );
 
-        String subject = "Nueva cita desde pre-reserva - CentroPsico";
+        String subject =
+                "Nueva cita desde pre-reserva - CentroPsico";
 
         String extra = "";
 
         if (lead != null) {
             extra =
                     "\nDATOS DE LA PRE-RESERVA\n"
-                            + "Interesado: " + safe(lead.getFullName()) + "\n"
-                            + "Correo: " + safe(lead.getEmail()) + "\n"
-                            + "Teléfono: " + safe(lead.getPhone()) + "\n"
-                            + "Modalidad: " + safe(lead.getModality()) + "\n"
-                            + "Mensaje: " + safe(lead.getMessage()) + "\n";
+                            + "Interesado: "
+                            + safe(lead.getFullName())
+                            + "\n"
+
+                            + "Correo: "
+                            + safe(lead.getEmail())
+                            + "\n"
+
+                            + "Teléfono: "
+                            + safe(lead.getPhone())
+                            + "\n"
+
+                            + "Modalidad: "
+                            + safe(lead.getModality())
+                            + "\n"
+
+                            + "Mensaje: "
+                            + safe(lead.getMessage())
+                            + "\n";
         }
 
         String body = buildAppointmentEmailBody(
@@ -132,42 +132,23 @@ public class EmailServiceImpl implements EmailService {
 
     /*
      * =========================================================
-     * BUSCAR ADMINISTRADORES Y ENVIAR EL CORREO
+     * BUSCAR ADMINISTRADORES ACTIVOS
      * =========================================================
      */
 
-    private void sendToAdmins(String subject, String body) {
+    private void sendToAdmins(
+            String subject,
+            String body
+    ) {
 
         System.out.println("====================================");
-        System.out.println("EMAIL API: INICIANDO ENVÍO POR MAILPRO");
-
-        if (mailproIdClient == null || mailproIdClient.isBlank()) {
-            System.err.println(
-                    "EMAIL API ERROR: MAILPRO_ID_CLIENT está vacío."
-            );
-            System.out.println("====================================");
-            return;
-        }
-
-        if (mailproApiKey == null || mailproApiKey.isBlank()) {
-            System.err.println(
-                    "EMAIL API ERROR: MAILPRO_API_KEY está vacío."
-            );
-            System.out.println("====================================");
-            return;
-        }
-
-        if (mailproSenderId == null || mailproSenderId.isBlank()) {
-            System.err.println(
-                    "EMAIL API ERROR: MAILPRO_ID_EMAIL_EXP está vacío."
-            );
-            System.out.println("====================================");
-            return;
-        }
+        System.out.println(
+                "EMAIL SMTP: INICIANDO ENVÍO CON GMAIL"
+        );
 
         if (mailFrom == null || mailFrom.isBlank()) {
             System.err.println(
-                    "EMAIL API ERROR: MAIL_FROM está vacío."
+                    "EMAIL SMTP ERROR: MAIL_FROM está vacío."
             );
             System.out.println("====================================");
             return;
@@ -177,13 +158,13 @@ public class EmailServiceImpl implements EmailService {
                 userRepository.findByRoleAndActiveTrue("ADMIN");
 
         System.out.println(
-                "EMAIL API: Administradores encontrados: "
+                "EMAIL SMTP: Administradores encontrados: "
                         + (admins != null ? admins.size() : 0)
         );
 
         if (admins == null || admins.isEmpty()) {
             System.err.println(
-                    "EMAIL API ERROR: No existen administradores activos."
+                    "EMAIL SMTP ERROR: No existen administradores activos."
             );
             System.out.println("====================================");
             return;
@@ -196,240 +177,92 @@ public class EmailServiceImpl implements EmailService {
                     || admin.getEmail().isBlank()) {
 
                 System.err.println(
-                        "EMAIL API WARNING: Se omitió un administrador sin correo."
+                        "EMAIL SMTP WARNING: Administrador sin correo."
                 );
                 continue;
             }
 
-            sendEmailByApi(
+            sendEmailByGmail(
                     admin.getEmail().trim(),
                     subject,
                     body
             );
         }
 
-        System.out.println("EMAIL API: FINALIZÓ EL PROCESO DE ENVÍO");
+        System.out.println(
+                "EMAIL SMTP: FINALIZÓ EL PROCESO DE ENVÍO"
+        );
         System.out.println("====================================");
     }
 
     /*
      * =========================================================
-     * ENVÍO DEL CORREO MEDIANTE MAILPRO
+     * ENVÍO MEDIANTE GMAIL SMTP
      * =========================================================
      */
 
-private void sendEmailByApi(
-        String to,
-        String subject,
-        String body
-) {
-    try {
+    private void sendEmailByGmail(
+            String to,
+            String subject,
+            String body
+    ) {
 
-        System.out.println(
-                "EMAIL API: Intentando enviar correo a: " + to
-        );
+        try {
 
-        if (to == null || to.isBlank()) {
-            System.err.println(
-                    "EMAIL API ERROR: El destinatario está vacío."
-            );
-            return;
-        }
-
-        if (mailproIdClient == null || mailproIdClient.isBlank()) {
-            System.err.println(
-                    "EMAIL API ERROR: MAILPRO_ID_CLIENT está vacío."
-            );
-            return;
-        }
-
-        if (mailproApiKey == null || mailproApiKey.isBlank()) {
-            System.err.println(
-                    "EMAIL API ERROR: MAILPRO_API_KEY está vacío."
-            );
-            return;
-        }
-
-        if (mailproSenderId == null || mailproSenderId.isBlank()) {
-            System.err.println(
-                    "EMAIL API ERROR: MAILPRO_ID_EMAIL_EXP está vacío."
-            );
-            return;
-        }
-
-        System.out.println(
-                "EMAIL API: Sender ID cargado: ["
-                        + mailproSenderId.trim()
-                        + "]"
-        );
-
-        /*
-         * IMPORTANTE:
-         * Para IDEmailExp + EmailData se utiliza sendone.json.
-         */
-        URI uri = UriComponentsBuilder
-                .fromUriString(mailproBaseUrl)
-                .path("/send/sendone.json")
-                .queryParam(
-                        "IDClient",
-                        mailproIdClient.trim()
-                )
-                .queryParam(
-                        "ApiKey",
-                        mailproApiKey.trim()
-                )
-                .build()
-                .encode()
-                .toUri();
-
-        HttpHeaders headers = new HttpHeaders();
-
-        headers.setContentType(
-                MediaType.APPLICATION_FORM_URLENCODED
-        );
-
-        headers.setAccept(
-                List.of(MediaType.APPLICATION_JSON)
-        );
-
-        MultiValueMap<String, String> form =
-                new LinkedMultiValueMap<>();
-
-        /*
-         * Mantén IDEmailExp exactamente con estas mayúsculas.
-         */
-        form.add(
-                "IDEmailExp",
-                mailproSenderId.trim()
-        );
-
-        form.add(
-                "EmailData",
-                to.trim()
-        );
-
-        form.add(
-                "Subject",
-                subject
-        );
-
-        form.add(
-                "BodyHTML",
-                buildHtmlBody(body)
-        );
-
-        form.add(
-                "ActivateStatistics",
-                "true"
-        );
-
-        HttpEntity<MultiValueMap<String, String>> request =
-                new HttpEntity<>(
-                        form,
-                        headers
+            if (to == null || to.isBlank()) {
+                System.err.println(
+                        "EMAIL SMTP ERROR: Destinatario vacío."
                 );
-
-        ResponseEntity<String> response =
-                restTemplate.postForEntity(
-                        uri,
-                        request,
-                        String.class
-                );
-
-        String responseBody = response.getBody();
-
-        System.out.println(
-                "EMAIL API HTTP STATUS: "
-                        + response.getStatusCode()
-        );
-
-        System.out.println(
-                "EMAIL API RESPONSE BODY: "
-                        + responseBody
-        );
-
-        Long idSingleSend =
-                extractIdSingleSend(responseBody);
-
-        if (response.getStatusCode().is2xxSuccessful()
-                && idSingleSend != null
-                && idSingleSend > 0) {
+                return;
+            }
 
             System.out.println(
-                    "EMAIL API OK: Mailpro registró correctamente el envío."
+                    "EMAIL SMTP: Enviando correo a: " + to
             );
 
-            System.out.println(
-                    "EMAIL API ID DEL ENVÍO: "
-                            + idSingleSend
+            MimeMessage message =
+                    javaMailSender.createMimeMessage();
+
+            MimeMessageHelper helper =
+                    new MimeMessageHelper(
+                            message,
+                            false,
+                            StandardCharsets.UTF_8.name()
+                    );
+
+            helper.setFrom(
+                    mailFrom.trim(),
+                    "CentroPsico"
             );
 
+            helper.setTo(to.trim());
+            helper.setSubject(subject);
+
+            helper.setText(
+                    buildHtmlBody(body),
+                    true
+            );
+
+            javaMailSender.send(message);
+
             System.out.println(
-                    "EMAIL API DESTINATARIO: "
+                    "EMAIL SMTP OK: Correo enviado correctamente a: "
                             + to
             );
 
-        } else {
+        } catch (Exception exception) {
 
             System.err.println(
-                    "EMAIL API ERROR: Mailpro respondió, "
-                            + "pero no generó un identificador válido."
+                    "EMAIL SMTP ERROR: No se pudo enviar el correo a: "
+                            + to
             );
-        }
 
-    } catch (HttpStatusCodeException exception) {
+            System.err.println(
+                    "EMAIL SMTP ERROR MESSAGE: "
+                            + exception.getMessage()
+            );
 
-        System.err.println(
-                "EMAIL API ERROR HTTP: "
-                        + exception.getStatusCode()
-        );
-
-        System.err.println(
-                "EMAIL API RESPONSE BODY: "
-                        + exception.getResponseBodyAsString()
-        );
-
-        System.err.println(
-                "EMAIL API RESPONSE HEADERS: "
-                        + exception.getResponseHeaders()
-        );
-
-    } catch (Exception exception) {
-
-        System.err.println(
-                "EMAIL API ERROR GENERAL: "
-                        + exception.getMessage()
-        );
-
-        exception.printStackTrace();
-    }
-}
-    /*
-     * =========================================================
-     * OBTENER ID DEL ENVÍO DE LA RESPUESTA JSON
-     * =========================================================
-     */
-
-    private Long extractIdSingleSend(String responseBody) {
-
-        if (responseBody == null || responseBody.isBlank()) {
-            return null;
-        }
-
-        Pattern pattern = Pattern.compile(
-                "\"IdSingleSend\"\\s*:\\s*(\\d+)"
-        );
-
-        Matcher matcher = pattern.matcher(responseBody);
-
-        if (!matcher.find()) {
-            return null;
-        }
-
-        try {
-            return Long.parseLong(matcher.group(1));
-        } catch (NumberFormatException exception) {
-            return null;
+            exception.printStackTrace();
         }
     }
 
@@ -451,13 +284,45 @@ private void sendEmailByApi(
 
         return """
                 <html>
-                    <body style="font-family: Arial, sans-serif;
-                                 font-size: 14px;
-                                 color: #1f2937;
-                                 line-height: 1.6;">
+                    <body style="
+                        font-family: Arial, sans-serif;
+                        background-color: #f4f7fb;
+                        padding: 24px;
+                        color: #1f2937;
+                    ">
+                        <div style="
+                            max-width: 650px;
+                            margin: auto;
+                            background-color: #ffffff;
+                            padding: 28px;
+                            border-radius: 12px;
+                            border: 1px solid #e5e7eb;
+                        ">
+                            <h2 style="
+                                color: #17466f;
+                                margin-top: 0;
+                            ">
+                                CentroPsico
+                            </h2>
+
+                            <div style="
+                                font-size: 14px;
+                                line-height: 1.7;
+                            ">
                 """
                 + escaped
                 + """
+                            </div>
+
+                            <p style="
+                                margin-top: 24px;
+                                color: #6b7280;
+                                font-size: 12px;
+                            ">
+                                Mensaje generado automáticamente
+                                por el sistema CentroPsico.
+                            </p>
+                        </div>
                     </body>
                 </html>
                 """;
@@ -465,7 +330,7 @@ private void sendEmailByApi(
 
     /*
      * =========================================================
-     * CONSTRUIR CONTENIDO DEL CORREO
+     * CONSTRUIR INFORMACIÓN DE LA CITA
      * =========================================================
      */
 
@@ -475,11 +340,20 @@ private void sendEmailByApi(
             String extra
     ) {
 
-        String patientName = appointment.getPatient() != null
-                ? safe(appointment.getPatient().getFirstName())
-                        + " "
-                        + safe(appointment.getPatient().getLastName())
-                : "Paciente no definido";
+        String patientName =
+                appointment.getPatient() != null
+                        ? safe(
+                                appointment
+                                        .getPatient()
+                                        .getFirstName()
+                        )
+                                + " "
+                                + safe(
+                                        appointment
+                                                .getPatient()
+                                                .getLastName()
+                                )
+                        : "Paciente no definido";
 
         String psychologistName =
                 appointment.getPsychologist() != null
@@ -505,15 +379,16 @@ private void sendEmailByApi(
                         )
                         : "Servicio no definido";
 
-        String date = appointment.getDate() != null
-                ? appointment
-                        .getDate()
-                        .format(
-                                DateTimeFormatter.ofPattern(
-                                        "dd/MM/yyyy"
+        String date =
+                appointment.getDate() != null
+                        ? appointment
+                                .getDate()
+                                .format(
+                                        DateTimeFormatter.ofPattern(
+                                                "dd/MM/yyyy"
+                                        )
                                 )
-                        )
-                : "-";
+                        : "-";
 
         String startTime =
                 appointment.getStartTime() != null
@@ -552,9 +427,7 @@ private void sendEmailByApi(
                         ? appointment.getPendingAmount()
                         : BigDecimal.ZERO;
 
-        return "CentroPsico - Notificación de cita\n"
-                + "=================================\n\n"
-                + intro
+        return intro
                 + "\n\n"
 
                 + "DATOS DE LA CITA\n"
@@ -597,7 +470,6 @@ private void sendEmailByApi(
                 + "\n\n"
 
                 + "DATOS DE PAGO\n"
-
                 + "Total: S/ "
                 + total
                 + "\n"
@@ -622,10 +494,7 @@ private void sendEmailByApi(
                 + safe(appointment.getOperationCode())
                 + "\n"
 
-                + (extra != null ? extra : "")
-
-                + "\nEste correo fue generado automáticamente "
-                + "por el sistema CentroPsico.";
+                + (extra != null ? extra : "");
     }
 
     private String safe(String value) {
