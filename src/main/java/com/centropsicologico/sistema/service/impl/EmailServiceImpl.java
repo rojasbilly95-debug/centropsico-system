@@ -5,356 +5,640 @@ import com.centropsicologico.sistema.entity.Lead;
 import com.centropsicologico.sistema.entity.User;
 import com.centropsicologico.sistema.repository.UserRepository;
 import com.centropsicologico.sistema.service.EmailService;
+
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
+
 import java.math.BigDecimal;
+import java.net.URI;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.net.URI;
-
-import org.springframework.web.client.HttpStatusCodeException;
-import org.springframework.web.util.UriComponentsBuilder;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class EmailServiceImpl implements EmailService {
 
-        private final UserRepository userRepository;
-        private final RestTemplate restTemplate;
+    private final UserRepository userRepository;
+    private final RestTemplate restTemplate;
 
-        @Value("${mailpro.api.base-url:https://api.mailpro.com/v2}")
-        private String mailproBaseUrl;
+    @Value("${mailpro.api.base-url:https://api.mailpro.com/v2}")
+    private String mailproBaseUrl;
 
-        @Value("${mailpro.api.id-client:}")
-        private String mailproIdClient;
+    @Value("${mailpro.api.id-client:}")
+    private String mailproIdClient;
 
-        @Value("${mailpro.api.key:}")
-        private String mailproApiKey;
+    @Value("${mailpro.api.key:}")
+    private String mailproApiKey;
 
-        @Value("${app.mail.from:}")
-        private String mailFrom;
+    @Value("${mailpro.api.sender-id:}")
+    private String mailproSenderId;
 
-        public EmailServiceImpl(UserRepository userRepository) {
-                this.userRepository = userRepository;
-                this.restTemplate = new RestTemplate();
-        }
+    @Value("${app.mail.from:}")
+    private String mailFrom;
 
-        @Override
-        public void notifyAdminsNewAppointment(Appointment appointment) {
-                if (appointment == null) {
-                        System.err.println("EMAIL: No se envió correo porque la cita es null.");
-                        return;
-                }
+    public EmailServiceImpl(UserRepository userRepository) {
+        this.userRepository = userRepository;
+        this.restTemplate = new RestTemplate();
+    }
 
-                System.out.println("EMAIL API: Preparando correo por nueva cita desde panel. ID cita: "
-                                + appointment.getId());
+    /*
+     * =========================================================
+     * NOTIFICAR NUEVA CITA CREADA DESDE EL PANEL
+     * =========================================================
+     */
 
-                String subject = "Nueva cita registrada - CentroPsico";
+    @Override
+    public void notifyAdminsNewAppointment(Appointment appointment) {
 
-                String body = buildAppointmentEmailBody(
-                                appointment,
-                                "Se ha registrado una nueva cita desde el panel administrativo.",
-                                null);
-
-                sendToAdmins(subject, body);
-        }
-
-        @Override
-        public void notifyAdminsNewAppointmentFromLead(Appointment appointment, Lead lead) {
-                if (appointment == null) {
-                        System.err.println("EMAIL API: No se envió correo porque la cita desde pre-reserva es null.");
-                        return;
-                }
-
-                System.out.println("EMAIL API: Preparando correo por cita creada desde pre-reserva. ID cita: "
-                                + appointment.getId());
-
-                String subject = "Nueva cita desde pre-reserva - CentroPsico";
-
-                String extra = "";
-
-                if (lead != null) {
-                        extra = "\nDATOS DE LA PRE-RESERVA\n"
-                                        + "Interesado: " + safe(lead.getFullName()) + "\n"
-                                        + "Correo: " + safe(lead.getEmail()) + "\n"
-                                        + "Teléfono: " + safe(lead.getPhone()) + "\n"
-                                        + "Modalidad: " + safe(lead.getModality()) + "\n"
-                                        + "Mensaje: " + safe(lead.getMessage()) + "\n";
-                }
-
-                String body = buildAppointmentEmailBody(
-                                appointment,
-                                "Una pre-reserva del portal público fue convertida en cita.",
-                                extra);
-
-                sendToAdmins(subject, body);
-        }
-
-        private void sendToAdmins(String subject, String body) {
-                System.out.println("====================================");
-                System.out.println("INICIANDO ENVÍO DE CORREO POR MAILPRO API");
-                System.out.println("MAILPRO_ID_CLIENT CONFIGURADO: " + mailproIdClient);
-                System.out.println("MAIL_FROM CONFIGURADO: " + mailFrom);
-
-                if (mailproIdClient == null || mailproIdClient.isBlank()) {
-                        System.err.println(
-                                        "EMAIL API ERROR: mailpro.api.id-client está vacío. Revisa MAILPRO_ID_CLIENT en Render.");
-                        System.out.println("====================================");
-                        return;
-                }
-
-                if (mailproApiKey == null || mailproApiKey.isBlank()) {
-                        System.err.println(
-                                        "EMAIL API ERROR: mailpro.api.key está vacío. Revisa MAILPRO_API_KEY en Render.");
-                        System.out.println("====================================");
-                        return;
-                }
-
-                if (mailFrom == null || mailFrom.isBlank()) {
-                        System.err.println("EMAIL API ERROR: app.mail.from está vacío. Revisa MAIL_FROM en Render.");
-                        System.out.println("====================================");
-                        return;
-                }
-
-                List<User> admins = userRepository.findByRoleAndActiveTrue("ADMIN");
-
-                System.out.println("ADMINISTRADORES ENCONTRADOS: " + (admins != null ? admins.size() : 0));
-
-                if (admins == null || admins.isEmpty()) {
-                        System.err.println(
-                                        "EMAIL API ERROR: No se encontraron administradores activos para enviar correo.");
-                        System.out.println("====================================");
-                        return;
-                }
-
-                for (User admin : admins) {
-                        if (admin == null || admin.getEmail() == null || admin.getEmail().isBlank()) {
-                                System.err.println("EMAIL API WARNING: Admin sin correo, se omite.");
-                                continue;
-                        }
-
-                        sendEmailByApi(
-                                        admin.getEmail().trim(),
-                                        subject,
-                                        body);
-                }
-
-                System.out.println("FIN DEL PROCESO DE ENVÍO POR MAILPRO API");
-                System.out.println("====================================");
-        }
-
-private void sendEmailByApi(
-        String to,
-        String subject,
-        String body
-) {
-    try {
-        System.out.println("EMAIL API: Intentando enviar correo a: " + to);
-
-        if (to == null || to.isBlank()) {
-            System.err.println("EMAIL API ERROR: Destinatario vacío.");
+        if (appointment == null) {
+            System.err.println(
+                    "EMAIL API ERROR: No se envió el correo porque la cita es null."
+            );
             return;
         }
 
+        System.out.println(
+                "EMAIL API: Preparando correo por nueva cita desde panel. ID cita: "
+                        + appointment.getId()
+        );
+
+        String subject = "Nueva cita registrada - CentroPsico";
+
+        String body = buildAppointmentEmailBody(
+                appointment,
+                "Se ha registrado una nueva cita desde el panel administrativo.",
+                null
+        );
+
+        sendToAdmins(subject, body);
+    }
+
+    /*
+     * =========================================================
+     * NOTIFICAR CITA CREADA DESDE PRE-RESERVA
+     * =========================================================
+     */
+
+    @Override
+    public void notifyAdminsNewAppointmentFromLead(
+            Appointment appointment,
+            Lead lead
+    ) {
+
+        if (appointment == null) {
+            System.err.println(
+                    "EMAIL API ERROR: La cita creada desde la pre-reserva es null."
+            );
+            return;
+        }
+
+        System.out.println(
+                "EMAIL API: Preparando correo por cita creada desde pre-reserva. ID cita: "
+                        + appointment.getId()
+        );
+
+        String subject = "Nueva cita desde pre-reserva - CentroPsico";
+
+        String extra = "";
+
+        if (lead != null) {
+            extra =
+                    "\nDATOS DE LA PRE-RESERVA\n"
+                            + "Interesado: " + safe(lead.getFullName()) + "\n"
+                            + "Correo: " + safe(lead.getEmail()) + "\n"
+                            + "Teléfono: " + safe(lead.getPhone()) + "\n"
+                            + "Modalidad: " + safe(lead.getModality()) + "\n"
+                            + "Mensaje: " + safe(lead.getMessage()) + "\n";
+        }
+
+        String body = buildAppointmentEmailBody(
+                appointment,
+                "Una pre-reserva del portal público fue convertida en cita.",
+                extra
+        );
+
+        sendToAdmins(subject, body);
+    }
+
+    /*
+     * =========================================================
+     * BUSCAR ADMINISTRADORES Y ENVIAR EL CORREO
+     * =========================================================
+     */
+
+    private void sendToAdmins(String subject, String body) {
+
+        System.out.println("====================================");
+        System.out.println("EMAIL API: INICIANDO ENVÍO POR MAILPRO");
+
         if (mailproIdClient == null || mailproIdClient.isBlank()) {
-            System.err.println("EMAIL API ERROR: MAILPRO_ID_CLIENT vacío.");
+            System.err.println(
+                    "EMAIL API ERROR: MAILPRO_ID_CLIENT está vacío."
+            );
+            System.out.println("====================================");
             return;
         }
 
         if (mailproApiKey == null || mailproApiKey.isBlank()) {
-            System.err.println("EMAIL API ERROR: MAILPRO_API_KEY vacío.");
+            System.err.println(
+                    "EMAIL API ERROR: MAILPRO_API_KEY está vacío."
+            );
+            System.out.println("====================================");
+            return;
+        }
+
+        if (mailproSenderId == null || mailproSenderId.isBlank()) {
+            System.err.println(
+                    "EMAIL API ERROR: MAILPRO_ID_EMAIL_EXP está vacío."
+            );
+            System.out.println("====================================");
             return;
         }
 
         if (mailFrom == null || mailFrom.isBlank()) {
-            System.err.println("EMAIL API ERROR: MAIL_FROM vacío.");
+            System.err.println(
+                    "EMAIL API ERROR: MAIL_FROM está vacío."
+            );
+            System.out.println("====================================");
             return;
         }
 
-        URI uri = UriComponentsBuilder
-                .fromUriString(mailproBaseUrl)
-                .path("/send/sendmail.json")
-                .queryParam("IdClient", mailproIdClient.trim())
-                .queryParam("ApiKey", mailproApiKey.trim())
-                .build()
-                .encode()
-                .toUri();
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(
-                MediaType.APPLICATION_FORM_URLENCODED
-        );
-
-        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-
-        MultiValueMap<String, String> form =
-                new LinkedMultiValueMap<>();
-
-        form.add("EmailTo", to.trim());
-        form.add("Subject", subject);
-        form.add("Body", buildHtmlBody(body));
-        form.add("EmailFrom", mailFrom.trim());
-
-        HttpEntity<MultiValueMap<String, String>> request =
-                new HttpEntity<>(form, headers);
-
-        ResponseEntity<String> response =
-                restTemplate.postForEntity(
-                        uri,
-                        request,
-                        String.class
-                );
-
-        String responseBody = response.getBody();
+        List<User> admins =
+                userRepository.findByRoleAndActiveTrue("ADMIN");
 
         System.out.println(
-                "EMAIL API HTTP STATUS: "
-                        + response.getStatusCode()
+                "EMAIL API: Administradores encontrados: "
+                        + (admins != null ? admins.size() : 0)
         );
 
-        System.out.println(
-                "EMAIL API RESPUESTA: "
-                        + responseBody
-        );
+        if (admins == null || admins.isEmpty()) {
+            System.err.println(
+                    "EMAIL API ERROR: No existen administradores activos."
+            );
+            System.out.println("====================================");
+            return;
+        }
 
-        boolean envioSinId = responseBody != null
-                && (
-                    responseBody.contains("\"IdSingleSend\":0")
-                    || responseBody.contains("\"IDSend\":0")
+        for (User admin : admins) {
+
+            if (admin == null
+                    || admin.getEmail() == null
+                    || admin.getEmail().isBlank()) {
+
+                System.err.println(
+                        "EMAIL API WARNING: Se omitió un administrador sin correo."
                 );
+                continue;
+            }
 
-        if (response.getStatusCode().is2xxSuccessful()
-                && !envioSinId) {
+            sendEmailByApi(
+                    admin.getEmail().trim(),
+                    subject,
+                    body
+            );
+        }
+
+        System.out.println("EMAIL API: FINALIZÓ EL PROCESO DE ENVÍO");
+        System.out.println("====================================");
+    }
+
+    /*
+     * =========================================================
+     * ENVÍO DEL CORREO MEDIANTE MAILPRO
+     * =========================================================
+     */
+
+    private void sendEmailByApi(
+            String to,
+            String subject,
+            String body
+    ) {
+
+        try {
 
             System.out.println(
-                    "EMAIL API OK: Mailpro registró el envío a: "
-                            + to
+                    "EMAIL API: Intentando enviar correo a: " + to
             );
 
-        } else {
+            if (to == null || to.isBlank()) {
+                System.err.println(
+                        "EMAIL API ERROR: El destinatario está vacío."
+                );
+                return;
+            }
+
+            if (mailproIdClient == null || mailproIdClient.isBlank()) {
+                System.err.println(
+                        "EMAIL API ERROR: MAILPRO_ID_CLIENT está vacío."
+                );
+                return;
+            }
+
+            if (mailproApiKey == null || mailproApiKey.isBlank()) {
+                System.err.println(
+                        "EMAIL API ERROR: MAILPRO_API_KEY está vacío."
+                );
+                return;
+            }
+
+            if (mailproSenderId == null || mailproSenderId.isBlank()) {
+                System.err.println(
+                        "EMAIL API ERROR: MAILPRO_ID_EMAIL_EXP está vacío."
+                );
+                return;
+            }
+
+            if (mailFrom == null || mailFrom.isBlank()) {
+                System.err.println(
+                        "EMAIL API ERROR: MAIL_FROM está vacío."
+                );
+                return;
+            }
+
+            /*
+             * Se construye la URL agregando las credenciales
+             * como parámetros requeridos por Mailpro.
+             */
+            URI uri = UriComponentsBuilder
+                    .fromUriString(mailproBaseUrl)
+                    .path("/send/sendmail.json")
+                    .queryParam(
+                            "IdClient",
+                            mailproIdClient.trim()
+                    )
+                    .queryParam(
+                            "ApiKey",
+                            mailproApiKey.trim()
+                    )
+                    .build()
+                    .encode()
+                    .toUri();
+
+            HttpHeaders headers = new HttpHeaders();
+
+            headers.setContentType(
+                    MediaType.APPLICATION_FORM_URLENCODED
+            );
+
+            headers.setAccept(
+                    List.of(MediaType.APPLICATION_JSON)
+            );
+
+            /*
+             * Datos requeridos por el endpoint de Mailpro.
+             */
+            MultiValueMap<String, String> form =
+                    new LinkedMultiValueMap<>();
+
+            form.add(
+                    "IDEmailExp",
+                    mailproSenderId.trim()
+            );
+
+            form.add(
+                    "EmailTo",
+                    to.trim()
+            );
+
+            form.add(
+                    "Subject",
+                    subject
+            );
+
+            form.add(
+                    "Body",
+                    buildHtmlBody(body)
+            );
+
+            form.add(
+                    "EmailFrom",
+                    mailFrom.trim()
+            );
+
+            HttpEntity<MultiValueMap<String, String>> request =
+                    new HttpEntity<>(
+                            form,
+                            headers
+                    );
+
+            ResponseEntity<String> response =
+                    restTemplate.postForEntity(
+                            uri,
+                            request,
+                            String.class
+                    );
+
+            String responseBody = response.getBody();
+
+            System.out.println(
+                    "EMAIL API HTTP STATUS: "
+                            + response.getStatusCode()
+            );
+
+            Long idSingleSend =
+                    extractIdSingleSend(responseBody);
+
+            /*
+             * Mailpro debe devolver un identificador de envío
+             * mayor que cero.
+             */
+            if (response.getStatusCode().is2xxSuccessful()
+                    && idSingleSend != null
+                    && idSingleSend > 0) {
+
+                System.out.println(
+                        "EMAIL API OK: Mailpro registró correctamente el envío."
+                );
+
+                System.out.println(
+                        "EMAIL API ID DEL ENVÍO: "
+                                + idSingleSend
+                );
+
+                System.out.println(
+                        "EMAIL API DESTINATARIO: "
+                                + to
+                );
+
+            } else {
+
+                System.err.println(
+                        "EMAIL API ERROR: Mailpro respondió, "
+                                + "pero no generó un identificador válido."
+                );
+
+                System.err.println(
+                        "EMAIL API RESPONSE BODY: "
+                                + responseBody
+                );
+            }
+
+        } catch (HttpStatusCodeException exception) {
 
             System.err.println(
-                    "EMAIL API ERROR: Mailpro respondió, "
-                            + "pero no creó el envío."
+                    "EMAIL API ERROR HTTP: "
+                            + exception.getStatusCode()
             );
+
+            System.err.println(
+                    "EMAIL API RESPONSE BODY: "
+                            + exception.getResponseBodyAsString()
+            );
+
+            System.err.println(
+                    "EMAIL API RESPONSE HEADERS: "
+                            + exception.getResponseHeaders()
+            );
+
+        } catch (Exception exception) {
+
+            System.err.println(
+                    "EMAIL API ERROR GENERAL: "
+                            + exception.getMessage()
+            );
+
+            exception.printStackTrace();
+        }
+    }
+
+    /*
+     * =========================================================
+     * OBTENER ID DEL ENVÍO DE LA RESPUESTA JSON
+     * =========================================================
+     */
+
+    private Long extractIdSingleSend(String responseBody) {
+
+        if (responseBody == null || responseBody.isBlank()) {
+            return null;
         }
 
-} catch (HttpStatusCodeException exception) {
-
-    System.err.println(
-            "EMAIL API ERROR HTTP: "
-                    + exception.getStatusCode()
-    );
-
-    System.err.println(
-            "EMAIL API RESPONSE BODY: "
-                    + exception.getResponseBodyAsString()
-    );
-
-    System.err.println(
-            "EMAIL API RESPONSE HEADERS: "
-                    + exception.getResponseHeaders()
-    );
-
-    } catch (Exception exception) {
-
-        System.err.println(
-                "EMAIL API ERROR: "
-                        + exception.getMessage()
+        Pattern pattern = Pattern.compile(
+                "\"IdSingleSend\"\\s*:\\s*(\\d+)"
         );
 
-        exception.printStackTrace();
+        Matcher matcher = pattern.matcher(responseBody);
+
+        if (!matcher.find()) {
+            return null;
+        }
+
+        try {
+            return Long.parseLong(matcher.group(1));
+        } catch (NumberFormatException exception) {
+            return null;
+        }
     }
-}
-        private String buildHtmlBody(String body) {
-                String escaped = body == null ? ""
-                                : body
-                                                .replace("&", "&amp;")
-                                                .replace("<", "&lt;")
-                                                .replace(">", "&gt;")
-                                                .replace("\n", "<br>");
 
-                return "<html><body style='font-family: Arial, sans-serif; font-size: 14px; color: #1f2937;'>"
-                                + escaped
-                                + "</body></html>";
-        }
+    /*
+     * =========================================================
+     * CONVERTIR CONTENIDO A HTML
+     * =========================================================
+     */
 
-        private String buildAppointmentEmailBody(
-                        Appointment appointment,
-                        String intro,
-                        String extra) {
-                String patientName = appointment.getPatient() != null
-                                ? safe(appointment.getPatient().getFirstName())
-                                                + " "
-                                                + safe(appointment.getPatient().getLastName())
-                                : "Paciente no definido";
+    private String buildHtmlBody(String body) {
 
-                String psychologistName = appointment.getPsychologist() != null
-                                ? safe(appointment.getPsychologist().getFirstName())
-                                                + " "
-                                                + safe(appointment.getPsychologist().getLastName())
-                                : "Psicólogo no definido";
+        String escaped = body == null
+                ? ""
+                : body
+                        .replace("&", "&amp;")
+                        .replace("<", "&lt;")
+                        .replace(">", "&gt;")
+                        .replace("\n", "<br>");
 
-                String serviceName = appointment.getService() != null
-                                ? safe(appointment.getService().getName())
-                                : "Servicio no definido";
+        return """
+                <html>
+                    <body style="font-family: Arial, sans-serif;
+                                 font-size: 14px;
+                                 color: #1f2937;
+                                 line-height: 1.6;">
+                """
+                + escaped
+                + """
+                    </body>
+                </html>
+                """;
+    }
 
-                String date = appointment.getDate() != null
-                                ? appointment.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-                                : "-";
+    /*
+     * =========================================================
+     * CONSTRUIR CONTENIDO DEL CORREO
+     * =========================================================
+     */
 
-                String startTime = appointment.getStartTime() != null
-                                ? appointment.getStartTime().format(DateTimeFormatter.ofPattern("HH:mm"))
-                                : "-";
+    private String buildAppointmentEmailBody(
+            Appointment appointment,
+            String intro,
+            String extra
+    ) {
 
-                String endTime = appointment.getEndTime() != null
-                                ? appointment.getEndTime().format(DateTimeFormatter.ofPattern("HH:mm"))
-                                : "-";
+        String patientName = appointment.getPatient() != null
+                ? safe(appointment.getPatient().getFirstName())
+                        + " "
+                        + safe(appointment.getPatient().getLastName())
+                : "Paciente no definido";
 
-                BigDecimal total = appointment.getTotalAmount() != null
-                                ? appointment.getTotalAmount()
-                                : BigDecimal.ZERO;
+        String psychologistName =
+                appointment.getPsychologist() != null
+                        ? safe(
+                                appointment
+                                        .getPsychologist()
+                                        .getFirstName()
+                        )
+                                + " "
+                                + safe(
+                                        appointment
+                                                .getPsychologist()
+                                                .getLastName()
+                                )
+                        : "Psicólogo no definido";
 
-                BigDecimal paid = appointment.getPaidAmount() != null
-                                ? appointment.getPaidAmount()
-                                : BigDecimal.ZERO;
+        String serviceName =
+                appointment.getService() != null
+                        ? safe(
+                                appointment
+                                        .getService()
+                                        .getName()
+                        )
+                        : "Servicio no definido";
 
-                BigDecimal pending = appointment.getPendingAmount() != null
-                                ? appointment.getPendingAmount()
-                                : BigDecimal.ZERO;
+        String date = appointment.getDate() != null
+                ? appointment
+                        .getDate()
+                        .format(
+                                DateTimeFormatter.ofPattern(
+                                        "dd/MM/yyyy"
+                                )
+                        )
+                : "-";
 
-                return ""
-                                + "CentroPsico - Notificación de cita\n"
-                                + "=================================\n\n"
-                                + intro
-                                + "\n\n"
-                                + "DATOS DE LA CITA\n"
-                                + "ID de cita: " + appointment.getId() + "\n"
-                                + "Paciente: " + patientName.trim() + "\n"
-                                + "Psicólogo: " + psychologistName.trim() + "\n"
-                                + "Servicio: " + serviceName + "\n"
-                                + "Fecha: " + date + "\n"
-                                + "Hora: " + startTime + " - " + endTime + "\n"
-                                + "Estado: " + appointment.getStatus() + "\n"
-                                + "Motivo: " + safe(appointment.getReason()) + "\n"
-                                + "Observación: " + safe(appointment.getObservation()) + "\n\n"
-                                + "DATOS DE PAGO\n"
-                                + "Total: S/ " + total + "\n"
-                                + "Pagado: S/ " + paid + "\n"
-                                + "Saldo pendiente: S/ " + pending + "\n"
-                                + "Estado de pago: " + safe(appointment.getPaymentStatus()) + "\n"
-                                + "Método de pago: " + safe(appointment.getPaymentMethod()) + "\n"
-                                + "Código de operación: " + safe(appointment.getOperationCode()) + "\n"
-                                + (extra != null ? extra : "")
-                                + "\nEste correo fue generado automáticamente por el sistema CentroPsico.";
-        }
+        String startTime =
+                appointment.getStartTime() != null
+                        ? appointment
+                                .getStartTime()
+                                .format(
+                                        DateTimeFormatter.ofPattern(
+                                                "HH:mm"
+                                        )
+                                )
+                        : "-";
 
-        private String safe(String value) {
-                return value == null || value.isBlank()
-                                ? "-"
-                                : value.trim();
-        }
+        String endTime =
+                appointment.getEndTime() != null
+                        ? appointment
+                                .getEndTime()
+                                .format(
+                                        DateTimeFormatter.ofPattern(
+                                                "HH:mm"
+                                        )
+                                )
+                        : "-";
+
+        BigDecimal total =
+                appointment.getTotalAmount() != null
+                        ? appointment.getTotalAmount()
+                        : BigDecimal.ZERO;
+
+        BigDecimal paid =
+                appointment.getPaidAmount() != null
+                        ? appointment.getPaidAmount()
+                        : BigDecimal.ZERO;
+
+        BigDecimal pending =
+                appointment.getPendingAmount() != null
+                        ? appointment.getPendingAmount()
+                        : BigDecimal.ZERO;
+
+        return "CentroPsico - Notificación de cita\n"
+                + "=================================\n\n"
+                + intro
+                + "\n\n"
+
+                + "DATOS DE LA CITA\n"
+                + "ID de cita: "
+                + appointment.getId()
+                + "\n"
+
+                + "Paciente: "
+                + patientName.trim()
+                + "\n"
+
+                + "Psicólogo: "
+                + psychologistName.trim()
+                + "\n"
+
+                + "Servicio: "
+                + serviceName
+                + "\n"
+
+                + "Fecha: "
+                + date
+                + "\n"
+
+                + "Hora: "
+                + startTime
+                + " - "
+                + endTime
+                + "\n"
+
+                + "Estado: "
+                + appointment.getStatus()
+                + "\n"
+
+                + "Motivo: "
+                + safe(appointment.getReason())
+                + "\n"
+
+                + "Observación: "
+                + safe(appointment.getObservation())
+                + "\n\n"
+
+                + "DATOS DE PAGO\n"
+
+                + "Total: S/ "
+                + total
+                + "\n"
+
+                + "Pagado: S/ "
+                + paid
+                + "\n"
+
+                + "Saldo pendiente: S/ "
+                + pending
+                + "\n"
+
+                + "Estado de pago: "
+                + safe(appointment.getPaymentStatus())
+                + "\n"
+
+                + "Método de pago: "
+                + safe(appointment.getPaymentMethod())
+                + "\n"
+
+                + "Código de operación: "
+                + safe(appointment.getOperationCode())
+                + "\n"
+
+                + (extra != null ? extra : "")
+
+                + "\nEste correo fue generado automáticamente "
+                + "por el sistema CentroPsico.";
+    }
+
+    private String safe(String value) {
+
+        return value == null || value.isBlank()
+                ? "-"
+                : value.trim();
+    }
 }
