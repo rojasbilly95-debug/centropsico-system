@@ -188,6 +188,8 @@ private void sendEmailByApi(
                 MediaType.APPLICATION_FORM_URLENCODED
         );
 
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+
         MultiValueMap<String, String> form =
                 new LinkedMultiValueMap<>();
 
@@ -240,17 +242,22 @@ private void sendEmailByApi(
             );
         }
 
-    } catch (HttpStatusCodeException exception) {
+} catch (HttpStatusCodeException exception) {
 
-        System.err.println(
-                "EMAIL API ERROR HTTP: "
-                        + exception.getStatusCode()
-        );
+    System.err.println(
+            "EMAIL API ERROR HTTP: "
+                    + exception.getStatusCode()
+    );
 
-        System.err.println(
-                "RESPUESTA MAILPRO: "
-                        + exception.getResponseBodyAsString()
-        );
+    System.err.println(
+            "EMAIL API RESPONSE BODY: "
+                    + exception.getResponseBodyAsString()
+    );
+
+    System.err.println(
+            "EMAIL API RESPONSE HEADERS: "
+                    + exception.getResponseHeaders()
+    );
 
     } catch (Exception exception) {
 
