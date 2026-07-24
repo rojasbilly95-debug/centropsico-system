@@ -20,28 +20,45 @@ function getPatientFormData() {
         firstName: getPatientInputValue("patientFirstName"),
         lastName: getPatientInputValue("patientLastName"),
         dni: getPatientInputValue("patientDni"),
+
         birthDate:
             document.getElementById("patientBirthDate")?.value ||
             null,
+
         gender:
             document.getElementById("patientGender")?.value ||
             "",
-        phone: getPatientInputValue("patientPhone"),
-        email: getPatientInputValue("patientEmail"),
-        address: getPatientInputValue("patientAddress"),
+
+        phone:
+            getPatientInputValue("patientPhone"),
+
+        email:
+            getPatientInputValue("patientEmail"),
+
+        address:
+            getPatientInputValue("patientAddress"),
+
+        // Campos opcionales
         emergencyContact:
-            getPatientInputValue("patientEmergencyContact"),
+            getPatientInputValue("patientEmergencyContact") ||
+            null,
+
         emergencyPhone:
-            getPatientInputValue("patientEmergencyPhone"),
+            getPatientInputValue("patientEmergencyPhone") ||
+            null,
+
         active: true
     };
 }
 
 function getPatientInputValue(elementId) {
-    return document
-        .getElementById(elementId)
-        ?.value
-        ?.trim() || "";
+    const element = document.getElementById(elementId);
+
+    if (!element) {
+        return "";
+    }
+
+    return element.value.trim();
 }
 
 
@@ -86,6 +103,17 @@ function validatePatientForm(data) {
         new Date(`${data.birthDate}T00:00:00`) > new Date()
     ) {
         return "La fecha de nacimiento no puede ser futura.";
+    }
+
+    /*
+     * El contacto de emergencia es opcional.
+     * Solo validamos el teléfono cuando el usuario escribe uno.
+     */
+    if (
+        data.emergencyPhone &&
+        !/^\d{7,15}$/.test(data.emergencyPhone)
+    ) {
+        return "El teléfono de emergencia debe contener entre 7 y 15 números.";
     }
 
     return null;
