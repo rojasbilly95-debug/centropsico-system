@@ -3,136 +3,316 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - CentroPsico</title>
-     <link rel="icon" type="image/png" href="/img/logo-dark.png">
-    <link rel="stylesheet" href="/css/styles.css">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="Acceso seguro al sistema de gestión CentroPsico"
+    >
+
+    <meta
+        name="referrer"
+        content="strict-origin-when-cross-origin"
+    >
+
+    <title>Iniciar sesión - CentroPsico</title>
+
+    <link
+        rel="icon"
+        type="image/png"
+        href="/img/logo-dark.png"
+    >
+
+    <link
+        rel="stylesheet"
+        href="/css/styles.css"
+    >
 </head>
 
 <body class="login-body">
 
-    <div class="login-page">
+    <main class="login-page">
 
-        <div class="login-shell">
+        <section class="login-shell">
+
+            <!-- =========================================
+                 PANEL VISUAL
+            ========================================== -->
 
             <div class="login-visual">
 
                 <div class="medical-bubble bubble-one bubble-brain">
-                    <svg viewBox="0 0 24 24">
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
                         <path
-                            d="M8.5 7.2C6.6 7.4 5.2 9 5.2 11c0 .5.1 1 .3 1.5-1.1.6-1.8 1.7-1.8 3 0 1.9 1.5 3.5 3.5 3.5h2.2V6.8c-.3.1-.6.2-.9.4Z" />
+                            d="M8.5 7.2C6.6 7.4 5.2 9 5.2 11c0 .5.1 1 .3 1.5-1.1.6-1.8 1.7-1.8 3 0 1.9 1.5 3.5 3.5 3.5h2.2V6.8c-.3.1-.6.2-.9.4Z"
+                        />
+
                         <path
-                            d="M15.5 7.2c1.9.2 3.3 1.8 3.3 3.8 0 .5-.1 1-.3 1.5 1.1.6 1.8 1.7 1.8 3 0 1.9-1.5 3.5-3.5 3.5h-2.2V6.8c.3.1.6.2.9.4Z" />
+                            d="M15.5 7.2c1.9.2 3.3 1.8 3.3 3.8 0 .5-.1 1-.3 1.5 1.1.6 1.8 1.7 1.8 3 0 1.9-1.5 3.5-3.5 3.5h-2.2V6.8c.3.1.6.2.9.4Z"
+                        />
+
                         <path
-                            d="M9.4 9.6c-1.1.3-1.9 1.2-2 2.3M14.6 9.6c1.1.3 1.9 1.2 2 2.3M9.4 14.5c-.8.2-1.4.8-1.6 1.6M14.6 14.5c.8.2 1.4.8 1.6 1.6" />
+                            d="M9.4 9.6c-1.1.3-1.9 1.2-2 2.3M14.6 9.6c1.1.3 1.9 1.2 2 2.3M9.4 14.5c-.8.2-1.4.8-1.6 1.6M14.6 14.5c.8.2 1.4.8 1.6 1.6"
+                        />
                     </svg>
                 </div>
 
                 <div class="medical-bubble bubble-two bubble-message">
-                    <svg viewBox="0 0 24 24">
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
                         <path
-                            d="M5 5.5A2.5 2.5 0 0 1 7.5 3h9A2.5 2.5 0 0 1 19 5.5v6.7a2.5 2.5 0 0 1-2.5 2.5H10l-5 4v-13.2Z" />
+                            d="M5 5.5A2.5 2.5 0 0 1 7.5 3h9A2.5 2.5 0 0 1 19 5.5v6.7a2.5 2.5 0 0 1-2.5 2.5H10l-5 4v-13.2Z"
+                        />
+
                         <path d="M8 8h8M8 11h5.5" />
                     </svg>
                 </div>
 
                 <div class="medical-bubble bubble-three bubble-heart">
-                    <svg viewBox="0 0 24 24">
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
                         <path
-                            d="M12 20s-7.2-4.6-9.3-9C1.3 8.1 2.9 5 6 5c1.8 0 3.2 1 4 2.3C10.8 6 12.2 5 14 5c3.1 0 4.7 3.1 3.3 6-2.1 4.4-9.3 9-9.3 9Z" />
+                            d="M12 20s-7.2-4.6-9.3-9C1.3 8.1 2.9 5 6 5c1.8 0 3.2 1 4 2.3C10.8 6 12.2 5 14 5c3.1 0 4.7 3.1 3.3 6-2.1 4.4-9.3 9-9.3 9Z"
+                        />
                     </svg>
                 </div>
 
                 <div class="pulse-line"></div>
 
                 <div class="visual-content">
-                    <span class="visual-badge">CentroPsico</span>
-                    <h2>Gestión clínica inteligente para centros psicológicos</h2>
+
+                    <span class="visual-badge">
+                        CentroPsico
+                    </span>
+
+                    <h2>
+                        Gestión clínica inteligente para centros psicológicos
+                    </h2>
+
                     <p>
-                        Administra pacientes, citas, pagos, historias clínicas y notificaciones
-                        en tiempo real desde una plataforma moderna y segura.
+                        Administra pacientes, citas, pagos,
+                        historias clínicas y notificaciones
+                        en tiempo real desde una plataforma
+                        moderna y segura.
                     </p>
 
                     <div class="visual-stats">
+
                         <div>
                             <strong>24/7</strong>
                             <span>Acceso seguro</span>
                         </div>
+
                         <div>
                             <strong>JWT</strong>
                             <span>Protección</span>
                         </div>
+
                         <div>
                             <strong>Live</strong>
                             <span>WebSocket</span>
                         </div>
+
                     </div>
+
                 </div>
+
             </div>
 
+            <!-- =========================================
+                 PANEL DE AUTENTICACIÓN
+            ========================================== -->
+
             <div class="login-panel">
+
                 <div class="login-card">
 
-                    <img src="/img/logo-dark.png" alt="CentroPsico" class="login-logo">
+                    <img
+                        src="/img/logo-dark.png"
+                        alt="Logo de CentroPsico"
+                        class="login-logo"
+                    >
 
                     <h1>Bienvenido</h1>
+
                     <p class="login-subtitle">
                         Inicia sesión para acceder al sistema
                     </p>
 
-                    <div class="login-form">
-                        <label class="input-group">
+                    <!--
+                        El formulario permite iniciar sesión
+                        presionando Enter sin modificar login.js.
+                    -->
+                    <form
+                        id="loginForm"
+                        class="login-form"
+                        onsubmit="event.preventDefault(); login();"
+                        novalidate
+                    >
+
+                        <!-- CORREO -->
+
+                        <label
+                            class="input-group"
+                            for="loginEmail"
+                        >
                             <span>Correo electrónico</span>
+
                             <div class="input-box">
-                                <span class="input-icon">✉</span>
-                                <input type="email" id="loginEmail" placeholder="admin@centro.com">
+
+                                <span
+                                    class="input-icon"
+                                    aria-hidden="true"
+                                >
+                                    ✉
+                                </span>
+
+                                <input
+                                    type="email"
+                                    id="loginEmail"
+                                    name="email"
+                                    placeholder="nombre@correo.com"
+                                    autocomplete="email"
+                                    autocapitalize="none"
+                                    spellcheck="false"
+                                    maxlength="120"
+                                    required
+                                >
+
                             </div>
                         </label>
 
-                        <label class="input-group">
+                        <!-- CONTRASEÑA -->
+
+                        <label
+                            class="input-group"
+                            for="loginPassword"
+                        >
                             <span>Contraseña</span>
+
                             <div class="input-box">
 
-                                <span class="input-icon">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round">
+                                <span
+                                    class="input-icon"
+                                    aria-hidden="true"
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="18"
+                                        height="18"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    >
+                                        <rect
+                                            x="3"
+                                            y="11"
+                                            width="18"
+                                            height="11"
+                                            rx="2"
+                                        ></rect>
 
-                                        <rect x="3" y="11" width="18" height="11" rx="2"></rect>
-
-                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-
+                                        <path
+                                            d="M7 11V7a5 5 0 0 1 10 0v4"
+                                        ></path>
                                     </svg>
                                 </span>
 
-                                <input type="password" id="loginPassword" placeholder="Ingresa tu contraseña">
+                                <input
+                                    type="password"
+                                    id="loginPassword"
+                                    name="password"
+                                    placeholder="Ingresa tu contraseña"
+                                    autocomplete="current-password"
+                                    maxlength="72"
+                                    required
+                                >
 
                             </div>
                         </label>
 
-                        <button class="btn-primary login-button" onclick="login()">
+                        <!-- RECUPERACIÓN DE CONTRASEÑA -->
+
+                        <div class="login-recovery-row">
+
+                            <a
+                                href="/forgot-password.html"
+                                class="forgot-password-link"
+                            >
+                                ¿Olvidaste tu contraseña?
+                            </a>
+
+                        </div>
+
+                        <!-- MENSAJES -->
+
+                        <div
+                            id="loginMessage"
+                            class="login-message"
+                            role="status"
+                            aria-live="polite"
+                        ></div>
+
+                        <!-- BOTÓN -->
+
+                        <button
+                            type="submit"
+                            id="loginButton"
+                            class="btn-primary login-button"
+                        >
                             Ingresar al sistema
                         </button>
-                    </div>
 
-                <div id="loginMessage" class="login-message"></div>
+                    </form>
 
-                <a href="/portal.html" class="portal-corner-link" title="Volver al portal público">
-                    <svg class="portal-home-icon" xmlns="http://www.w3.org/2000/svg" width="17" height="17"
-                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 10.5L12 3l9 7.5"></path>
-                        <path d="M5 9.5V21h14V9.5"></path>
-                        <path d="M9 21v-6h6v6"></path>
-                    </svg>
-                </a>
+                    <!-- VOLVER AL PORTAL -->
+
+                    <a
+                        href="/portal.html"
+                        class="portal-corner-link"
+                        title="Volver al portal público"
+                        aria-label="Volver al portal público"
+                    >
+                        <svg
+                            class="portal-home-icon"
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="17"
+                            height="17"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2.2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            aria-hidden="true"
+                        >
+                            <path d="M3 10.5L12 3l9 7.5"></path>
+                            <path d="M5 9.5V21h14V9.5"></path>
+                            <path d="M9 21v-6h6v6"></path>
+                        </svg>
+                    </a>
 
                 </div>
+
             </div>
 
-        </div>
+        </section>
 
-    </div>
+    </main>
 
     <script src="/js/login.js"></script>
 

@@ -11,32 +11,38 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import com.centropsicologico.sistema.dto.ForgotPasswordRequestDto;
+import com.centropsicologico.sistema.dto.ResetPasswordRequestDto;
+import com.centropsicologico.sistema.service.PasswordResetService;
 
+import jakarta.validation.Valid;
 import java.security.Principal;
 import java.util.Map;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "*")
 public class AuthController {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final AuditLogService auditLogService;
+    private final PasswordResetService passwordResetService;
 
-    public AuthController(
-            UserRepository userRepository,
-            PasswordEncoder passwordEncoder,
-            JwtUtil jwtUtil,
-            AuditLogService auditLogService) {
-
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtUtil = jwtUtil;
-        this.auditLogService = auditLogService;
-    }
+public AuthController(
+        UserRepository userRepository,
+        PasswordEncoder passwordEncoder,
+        JwtUtil jwtUtil,
+        AuditLogService auditLogService,
+        PasswordResetService passwordResetService
+) {
+    this.userRepository = userRepository;
+    this.passwordEncoder = passwordEncoder;
+    this.jwtUtil = jwtUtil;
+    this.auditLogService = auditLogService;
+    this.passwordResetService = passwordResetService;
+}
 
     @PostMapping("/login")
     public Map<String, Object> login(
@@ -189,6 +195,7 @@ public class AuthController {
                 "profileImageUrl", user.getProfileImageUrl() == null ? "" : user.getProfileImageUrl()
         );
     }
+
     @PostMapping("/logout")
     public Map<String, Object> logout(
             Principal principal,
@@ -208,6 +215,78 @@ public class AuthController {
                 false);
 
         return Map.of("success", true);
+    }
+
+    /*
+ * =========================================================
+ * SOLICITAR RECUPERACIÓN DE CONTRASEÑA
+ * =========================================================
+ */
+
+@PostMapping("/forgot-password")
+public Map<String, Object> forgotPassword(
+        @Valid
+        @RequestBody
+        ForgotPasswordRequestDto request,
+        HttpServletRequest httpRequest
+) {
+    String message =
+            passwordResetService
+                    .requestPasswordReset(
+                            request.getEmail(),
+                            getClientInfo(httpRequest)
+                    );
+
+    return Map.of(
+            "success", true,
+            "message", message
+    );
+}
+
+/*
+ * =========================================================
+ * VALIDAR ENLACE DE RECUPERACIÓN
+ * =========================================================
+ */
+
+@GetMapping("/reset-password/validate")
+public Map<String, Object> validateResetPasswordToken(
+        @RequestParam String token
+) {
+    boolean valid =
+            passwordResetService
+                    .isTokenValid(token);
+
+    return Map.of(
+            "valid", valid
+    );
+}
+
+    /*
+    * =========================================================
+    * ESTABLECER NUEVA CONTRASEÑA
+    * =========================================================
+    */
+
+    @PostMapping("/reset-password")
+    public Map<String, Object> resetPassword(
+            @Valid
+            @RequestBody
+            ResetPasswordRequestDto request,
+            HttpServletRequest httpRequest
+    ) {
+        passwordResetService.resetPassword(
+                request.getToken(),
+                request.getNewPassword(),
+                request.getConfirmPassword(),
+                getClientInfo(httpRequest)
+        );
+
+        return Map.of(
+                "success", true,
+                "message",
+                "Tu contraseña fue actualizada correctamente."
+        );
     }
 
     private String normalize(String value) {

@@ -8,37 +8,63 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Value;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import org.springframework.http.HttpMethod;
 
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.authentication.dao
+        .DaoAuthenticationProvider;
+
 import org.springframework.security.config.Customizer;
 
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.method.configuration
+        .EnableMethodSecurity;
 
-import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.config.annotation.web.builders
+        .HttpSecurity;
+
+import org.springframework.security.config.annotation.web.configuration
+        .EnableWebSecurity;
+
+import org.springframework.security.config.http
+        .SessionCreationPolicy;
 
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.core.authority
+        .SimpleGrantedAuthority;
 
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.userdetails
+        .UserDetailsService;
 
-import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.core.userdetails
+        .UsernameNotFoundException;
 
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.security.crypto.bcrypt
+        .BCryptPasswordEncoder;
+
+import org.springframework.security.crypto.password
+        .PasswordEncoder;
+
+import org.springframework.security.web
+        .SecurityFilterChain;
+
+import org.springframework.security.web.authentication
+        .UsernamePasswordAuthenticationFilter;
+
+import org.springframework.web.cors
+        .CorsConfiguration;
+
+import org.springframework.web.cors
+        .CorsConfigurationSource;
+
+import org.springframework.web.cors
+        .UrlBasedCorsConfigurationSource;
 
 import java.nio.charset.StandardCharsets;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -49,20 +75,27 @@ import java.util.Locale;
 public class SecurityConfig {
 
     private final UserRepository userRepository;
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    private final JwtAuthenticationFilter
+            jwtAuthenticationFilter;
+
     private final AuditLogService auditLogService;
 
     /*
-     * Puede contener uno o varios dominios separados por coma.
+     * Puede contener uno o varios dominios
+     * separados por coma.
      *
-     * Ejemplo en Render:
-     * APP_ALLOWED_ORIGINS=https://centropsico-system.onrender.com
+     * Ejemplo:
+     *
+     * APP_ALLOWED_ORIGINS=
+     * http://localhost:8080,
+     * https://centropsico-system.onrender.com
      */
-    @Value("""
-            ${app.security.allowed-origins:
-            http://localhost:8080,
-            https://centropsico-system.onrender.com}
-            """)
+    @Value(
+            "${app.security.allowed-origins:"
+                    + "http://localhost:8080,"
+                    + "https://centropsico-system.onrender.com}"
+    )
     private String allowedOrigins;
 
     public SecurityConfig(
@@ -70,10 +103,14 @@ public class SecurityConfig {
             JwtAuthenticationFilter jwtAuthenticationFilter,
             AuditLogService auditLogService
     ) {
-        this.userRepository = userRepository;
+        this.userRepository =
+                userRepository;
+
         this.jwtAuthenticationFilter =
                 jwtAuthenticationFilter;
-        this.auditLogService = auditLogService;
+
+        this.auditLogService =
+                auditLogService;
     }
 
     /*
@@ -90,23 +127,29 @@ public class SecurityConfig {
         http
 
                 /*
-                 * Actualmente utilizas JWT en el encabezado:
-                 * Authorization: Bearer ...
+                 * Actualmente el JWT se envía mediante:
                  *
-                 * Mientras el JWT no se encuentre en una cookie,
-                 * se mantiene CSRF deshabilitado.
+                 * Authorization: Bearer <token>
+                 *
+                 * Mientras el token no se almacene en una
+                 * cookie de autenticación, CSRF permanece
+                 * deshabilitado.
                  */
-                .csrf(csrf -> csrf.disable())
+                .csrf(csrf ->
+                        csrf.disable()
+                )
 
                 /*
-                 * CORS restringido a los dominios configurados.
+                 * Configuración CORS centralizada.
                  */
-                .cors(cors -> cors.configurationSource(
-                        corsConfigurationSource()
-                ))
+                .cors(cors ->
+                        cors.configurationSource(
+                                corsConfigurationSource()
+                        )
+                )
 
                 /*
-                 * No se crea una sesión HTTP en el servidor.
+                 * El backend no mantiene sesiones HTTP.
                  */
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(
@@ -115,14 +158,28 @@ public class SecurityConfig {
                 )
 
                 /*
-                 * Desactiva mecanismos que no utilizamos
+                 * Se desactivan mecanismos no utilizados
                  * porque la autenticación se realiza con JWT.
                  */
-                .formLogin(form -> form.disable())
-                .httpBasic(basic -> basic.disable())
-                .logout(logout -> logout.disable())
-                .rememberMe(remember -> remember.disable())
-                .requestCache(cache -> cache.disable())
+                .formLogin(form ->
+                        form.disable()
+                )
+
+                .httpBasic(basic ->
+                        basic.disable()
+                )
+
+                .logout(logout ->
+                        logout.disable()
+                )
+
+                .rememberMe(rememberMe ->
+                        rememberMe.disable()
+                )
+
+                .requestCache(cache ->
+                        cache.disable()
+                )
 
                 .authenticationProvider(
                         authenticationProvider()
@@ -136,7 +193,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
 
                         /*
-                         * Solicitudes previas CORS.
+                         * Solicitudes previas de CORS.
                          */
                         .requestMatchers(
                                 HttpMethod.OPTIONS,
@@ -145,15 +202,23 @@ public class SecurityConfig {
                         .permitAll()
 
                         /*
-                         * Archivos y páginas públicas.
+                         * =========================================
+                         * PÁGINAS Y RECURSOS PÚBLICOS
+                         * =========================================
+                         *
+                         * Las páginas de recuperación deben
+                         * abrirse sin un token JWT.
                          */
                         .requestMatchers(
                                 "/",
                                 "/index.html",
                                 "/login.html",
                                 "/portal.html",
+                                "/forgot-password.html",
+                                "/reset-password.html",
                                 "/error",
                                 "/favicon.ico",
+                                "/robots.txt",
                                 "/css/**",
                                 "/js/**",
                                 "/components/**",
@@ -162,11 +227,9 @@ public class SecurityConfig {
                         .permitAll()
 
                         /*
-                         * Temporalmente las imágenes continúan
-                         * siendo públicas para no romper <img src>.
-                         *
-                         * Posteriormente conviene usar un endpoint
-                         * protegido o almacenamiento privado.
+                         * Las imágenes existentes continúan
+                         * siendo públicas para no romper las
+                         * etiquetas <img src="...">.
                          */
                         .requestMatchers(
                                 HttpMethod.GET,
@@ -181,30 +244,95 @@ public class SecurityConfig {
                         .permitAll()
 
                         /*
-                         * Autenticación y portal público.
-                         *
-                         * Se conserva /** porque todavía necesitamos
-                         * revisar AuthController y PublicController.
+                         * =========================================
+                         * AUTENTICACIÓN PÚBLICA
+                         * =========================================
+                         */
+
+                        /*
+                         * Inicio de sesión.
                          */
                         .requestMatchers(
-                                "/api/auth/**",
+                                HttpMethod.POST,
+                                "/api/auth/login"
+                        )
+                        .permitAll()
+
+                        /*
+                         * Comprobación del JWT almacenado
+                         * en el navegador.
+                         */
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/auth/validate"
+                        )
+                        .permitAll()
+
+                        /*
+                         * Solicitar recuperación.
+                         */
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/auth/forgot-password"
+                        )
+                        .permitAll()
+
+                        /*
+                         * Validar enlace de recuperación.
+                         */
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/auth/reset-password/validate"
+                        )
+                        .permitAll()
+
+                        /*
+                         * Guardar la contraseña nueva.
+                         */
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/auth/reset-password"
+                        )
+                        .permitAll()
+
+                        /*
+                         * Cerrar sesión requiere que el token
+                         * actual continúe siendo válido.
+                         */
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/auth/logout"
+                        )
+                        .authenticated()
+
+                        /*
+                         * Portal público.
+                         */
+                        .requestMatchers(
                                 "/api/public/**"
                         )
                         .permitAll()
 
                         /*
-                         * El handshake de SockJS continúa público.
+                         * El handshake de SockJS continúa
+                         * siendo público.
                          *
-                         * La autenticación de suscripciones STOMP
-                         * debe implementarse en WebSocketConfig.
+                         * La autenticación de las suscripciones
+                         * STOMP debe realizarse en WebSocketConfig.
                          */
-                        .requestMatchers("/ws/**")
+                        .requestMatchers(
+                                "/ws/**"
+                        )
                         .permitAll()
 
                         /*
+                         * =========================================
                          * PERFIL
+                         * =========================================
                          */
-                        .requestMatchers("/api/profile/**")
+                        .requestMatchers(
+                                "/api/profile/**"
+                        )
                         .hasAnyAuthority(
                                 "ADMIN",
                                 "RECEPCIONISTA",
@@ -212,9 +340,13 @@ public class SecurityConfig {
                         )
 
                         /*
+                         * =========================================
                          * DASHBOARD
+                         * =========================================
                          */
-                        .requestMatchers("/api/dashboard/**")
+                        .requestMatchers(
+                                "/api/dashboard/**"
+                        )
                         .hasAnyAuthority(
                                 "ADMIN",
                                 "RECEPCIONISTA",
@@ -222,42 +354,70 @@ public class SecurityConfig {
                         )
 
                         /*
+                         * =========================================
                          * AUDITORÍA
+                         * =========================================
                          */
-                        .requestMatchers("/api/audit-logs/**")
-                        .hasAuthority("ADMIN")
+                        .requestMatchers(
+                                "/api/audit-logs/**"
+                        )
+                        .hasAuthority(
+                                "ADMIN"
+                        )
 
                         /*
+                         * =========================================
                          * USUARIOS
+                         * =========================================
                          */
-                        .requestMatchers("/api/users/**")
-                        .hasAuthority("ADMIN")
+                        .requestMatchers(
+                                "/api/users/**"
+                        )
+                        .hasAuthority(
+                                "ADMIN"
+                        )
 
                         /*
-                         * NOTIFICACIONES CREADAS POR ADMIN
+                         * =========================================
+                         * NOTIFICACIONES ADMINISTRATIVAS
+                         * =========================================
                          */
                         .requestMatchers(
                                 "/api/admin-notifications/**"
                         )
-                        .hasAuthority("ADMIN")
+                        .hasAuthority(
+                                "ADMIN"
+                        )
 
                         /*
+                         * =========================================
                          * PROMOCIONES
+                         * =========================================
                          */
-                        .requestMatchers("/api/promotions/**")
-                        .hasAuthority("ADMIN")
+                        .requestMatchers(
+                                "/api/promotions/**"
+                        )
+                        .hasAuthority(
+                                "ADMIN"
+                        )
 
                         /*
+                         * =========================================
                          * PRE-RESERVAS
+                         * =========================================
                          */
-                        .requestMatchers("/api/leads/**")
+                        .requestMatchers(
+                                "/api/leads/**"
+                        )
                         .hasAnyAuthority(
                                 "ADMIN",
                                 "RECEPCIONISTA"
                         )
 
                         /*
+                         * =========================================
                          * PSICÓLOGOS: CONSULTA
+                         * =========================================
                          */
                         .requestMatchers(
                                 HttpMethod.GET,
@@ -275,10 +435,14 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/psychologists/**"
                         )
-                        .hasAuthority("ADMIN")
+                        .hasAuthority(
+                                "ADMIN"
+                        )
 
                         /*
+                         * =========================================
                          * SERVICIOS: CONSULTA
+                         * =========================================
                          */
                         .requestMatchers(
                                 HttpMethod.GET,
@@ -293,32 +457,54 @@ public class SecurityConfig {
                         /*
                          * SERVICIOS: ADMINISTRACIÓN
                          */
-                        .requestMatchers("/api/services/**")
-                        .hasAuthority("ADMIN")
+                        .requestMatchers(
+                                "/api/services/**"
+                        )
+                        .hasAuthority(
+                                "ADMIN"
+                        )
 
                         /*
+                         * =========================================
                          * FINANZAS
+                         * =========================================
                          */
-                        .requestMatchers("/api/finances/**")
-                        .hasAuthority("ADMIN")
+                        .requestMatchers(
+                                "/api/finances/**"
+                        )
+                        .hasAuthority(
+                                "ADMIN"
+                        )
 
                         /*
+                         * =========================================
                          * REPORTES
+                         * =========================================
                          */
-                        .requestMatchers("/api/reports/**")
-                        .hasAuthority("ADMIN")
+                        .requestMatchers(
+                                "/api/reports/**"
+                        )
+                        .hasAuthority(
+                                "ADMIN"
+                        )
 
                         /*
+                         * =========================================
                          * PACIENTES
+                         * =========================================
                          */
-                        .requestMatchers("/api/patients/**")
+                        .requestMatchers(
+                                "/api/patients/**"
+                        )
                         .hasAnyAuthority(
                                 "ADMIN",
                                 "RECEPCIONISTA"
                         )
 
                         /*
+                         * =========================================
                          * DISPONIBILIDAD: CONSULTA
+                         * =========================================
                          */
                         .requestMatchers(
                                 HttpMethod.GET,
@@ -336,12 +522,18 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/psychologist-availabilities/**"
                         )
-                        .hasAuthority("ADMIN")
+                        .hasAuthority(
+                                "ADMIN"
+                        )
 
                         /*
+                         * =========================================
                          * NOTIFICACIONES
+                         * =========================================
                          */
-                        .requestMatchers("/api/notifications/**")
+                        .requestMatchers(
+                                "/api/notifications/**"
+                        )
                         .hasAnyAuthority(
                                 "ADMIN",
                                 "RECEPCIONISTA",
@@ -350,10 +542,9 @@ public class SecurityConfig {
 
                         /*
                          * =========================================
-                         * CITAS: CONSULTAS DEL PSICÓLOGO
+                         * CITAS DEL PSICÓLOGO
                          * =========================================
                          */
-
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/appointments/my"
@@ -375,7 +566,23 @@ public class SecurityConfig {
                         )
 
                         /*
-                         * ADMIN Y RECEPCIÓN: CONSULTA GENERAL
+                         * Consultar psicólogos relacionados
+                         * con un servicio.
+                         */
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/appointments/"
+                                        + "psychologists-by-service"
+                        )
+                        .hasAnyAuthority(
+                                "ADMIN",
+                                "RECEPCIONISTA"
+                        )
+
+                        /*
+                         * =========================================
+                         * CONSULTA GENERAL DE CITAS
+                         * =========================================
                          */
                         .requestMatchers(
                                 HttpMethod.GET,
@@ -405,7 +612,9 @@ public class SecurityConfig {
                         )
 
                         /*
+                         * =========================================
                          * CREAR CITA
+                         * =========================================
                          */
                         .requestMatchers(
                                 HttpMethod.POST,
@@ -417,10 +626,12 @@ public class SecurityConfig {
                         )
 
                         /*
+                         * =========================================
                          * REGISTRAR PAGO
+                         * =========================================
                          *
-                         * Esta regla específica se coloca antes
-                         * de la regla general de actualización.
+                         * La regla específica debe declararse
+                         * antes de la actualización general.
                          */
                         .requestMatchers(
                                 HttpMethod.PUT,
@@ -432,10 +643,12 @@ public class SecurityConfig {
                         )
 
                         /*
+                         * =========================================
                          * CAMBIAR ESTADO
+                         * =========================================
                          *
-                         * El servicio debe comprobar que el psicólogo
-                         * solo modifique citas que le pertenecen.
+                         * El servicio comprueba que un psicólogo
+                         * solo modifique sus propias citas.
                          */
                         .requestMatchers(
                                 HttpMethod.PUT,
@@ -448,7 +661,9 @@ public class SecurityConfig {
                         )
 
                         /*
+                         * =========================================
                          * ACTUALIZACIÓN GENERAL
+                         * =========================================
                          */
                         .requestMatchers(
                                 HttpMethod.PUT,
@@ -460,20 +675,26 @@ public class SecurityConfig {
                         )
 
                         /*
+                         * =========================================
                          * ELIMINAR CITA
+                         * =========================================
                          */
                         .requestMatchers(
                                 HttpMethod.DELETE,
                                 "/api/appointments/*"
                         )
-                        .hasAuthority("ADMIN")
+                        .hasAuthority(
+                                "ADMIN"
+                        )
 
                         /*
+                         * =========================================
                          * HISTORIA CLÍNICA
+                         * =========================================
                          *
                          * Además del rol, el servicio debe comprobar
-                         * que la historia pertenece a un paciente
-                         * asignado al psicólogo autenticado.
+                         * que el paciente esté relacionado con una
+                         * cita del psicólogo autenticado.
                          */
                         .requestMatchers(
                                 "/api/clinical-history/**"
@@ -484,29 +705,31 @@ public class SecurityConfig {
                         )
 
                         /*
-                         * Cualquier ruta no declarada
-                         * exige autenticación.
+                         * Cualquier ruta no declarada requiere
+                         * un usuario autenticado.
                          */
                         .anyRequest()
                         .authenticated()
                 )
 
                 /*
-                 * Encabezados HTTP de seguridad.
+                 * =================================================
+                 * ENCABEZADOS HTTP DE SEGURIDAD
+                 * =================================================
                  */
                 .headers(headers -> headers
 
                         /*
-                         * Evita que el sistema se cargue dentro
-                         * de un iframe externo.
+                         * Evita que CentroPsico sea cargado
+                         * dentro de un iframe externo.
                          */
-                        .frameOptions(frame ->
-                                frame.deny()
+                        .frameOptions(frameOptions ->
+                                frameOptions.deny()
                         )
 
                         /*
-                         * Evita que el navegador intente adivinar
-                         * el tipo real de un archivo.
+                         * Evita que el navegador intente
+                         * adivinar tipos de contenido.
                          */
                         .contentTypeOptions(
                                 Customizer.withDefaults()
@@ -514,7 +737,7 @@ public class SecurityConfig {
 
                         /*
                          * Obliga al navegador a utilizar HTTPS
-                         * después de visitar el sitio por HTTPS.
+                         * después de acceder mediante HTTPS.
                          */
                         .httpStrictTransportSecurity(hsts ->
                                 hsts
@@ -527,8 +750,8 @@ public class SecurityConfig {
                 )
 
                 /*
-                 * Filtro JWT antes del filtro estándar
-                 * de usuario y contraseña.
+                 * El filtro JWT se ejecuta antes del filtro
+                 * estándar de usuario y contraseña.
                  */
                 .addFilterBefore(
                         jwtAuthenticationFilter,
@@ -536,47 +759,50 @@ public class SecurityConfig {
                 )
 
                 /*
-                 * Respuestas uniformes 401 y 403.
+                 * =================================================
+                 * RESPUESTAS 401 Y 403
+                 * =================================================
                  */
-                .exceptionHandling(ex -> ex
+                .exceptionHandling(exceptionHandling ->
+                        exceptionHandling
 
-                        .authenticationEntryPoint(
-                                (
-                                        request,
-                                        response,
-                                        exception
-                                ) -> {
-                                    auditUnauthorizedRequest(
-                                            request
-                                    );
+                                .authenticationEntryPoint(
+                                        (
+                                                request,
+                                                response,
+                                                exception
+                                        ) -> {
+                                            auditUnauthorizedRequest(
+                                                    request
+                                            );
 
-                                    writeJsonError(
-                                            response,
-                                            HttpServletResponse
-                                                    .SC_UNAUTHORIZED,
-                                            "No autorizado"
-                                    );
-                                }
-                        )
+                                            writeJsonError(
+                                                    response,
+                                                    HttpServletResponse
+                                                            .SC_UNAUTHORIZED,
+                                                    "No autorizado"
+                                            );
+                                        }
+                                )
 
-                        .accessDeniedHandler(
-                                (
-                                        request,
-                                        response,
-                                        exception
-                                ) -> {
-                                    auditAccessDenied(
-                                            request
-                                    );
+                                .accessDeniedHandler(
+                                        (
+                                                request,
+                                                response,
+                                                exception
+                                        ) -> {
+                                            auditAccessDenied(
+                                                    request
+                                            );
 
-                                    writeJsonError(
-                                            response,
-                                            HttpServletResponse
-                                                    .SC_FORBIDDEN,
-                                            "Acceso denegado"
-                                    );
-                                }
-                        )
+                                            writeJsonError(
+                                                    response,
+                                                    HttpServletResponse
+                                                            .SC_FORBIDDEN,
+                                                    "Acceso denegado"
+                                            );
+                                        }
+                                )
                 );
 
         return http.build();
@@ -633,12 +859,16 @@ public class SecurityConfig {
         );
 
         /*
-         * Actualmente el JWT viaja en Authorization,
+         * El JWT viaja en el encabezado Authorization,
          * no dentro de una cookie.
          */
-        configuration.setAllowCredentials(false);
+        configuration.setAllowCredentials(
+                false
+        );
 
-        configuration.setMaxAge(3600L);
+        configuration.setMaxAge(
+                3600L
+        );
 
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();
@@ -663,7 +893,8 @@ public class SecurityConfig {
         return email -> {
 
             User user =
-                    userRepository.findByEmail(email)
+                    userRepository
+                            .findByEmailIgnoreCase(email)
                             .orElseThrow(() ->
                                     new UsernameNotFoundException(
                                             "Usuario no encontrado"
@@ -671,8 +902,8 @@ public class SecurityConfig {
                             );
 
             if (
-                    user.getRole() == null ||
-                    user.getRole().isBlank()
+                    user.getRole() == null
+                    || user.getRole().isBlank()
             ) {
                 throw new UsernameNotFoundException(
                         "Usuario sin rol asignado"
@@ -725,10 +956,14 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
 
         /*
-         * Los hashes existentes de BCrypt seguirán funcionando.
-         * Las contraseñas nuevas utilizarán factor 12.
+         * Los hashes anteriores de BCrypt continúan
+         * funcionando.
+         *
+         * Las contraseñas nuevas utilizan factor 12.
          */
-        return new BCryptPasswordEncoder(12);
+        return new BCryptPasswordEncoder(
+                12
+        );
     }
 
     /*
@@ -743,7 +978,9 @@ public class SecurityConfig {
             String message
     ) throws java.io.IOException {
 
-        response.setStatus(status);
+        response.setStatus(
+                status
+        );
 
         response.setCharacterEncoding(
                 StandardCharsets.UTF_8.name()
@@ -783,8 +1020,8 @@ public class SecurityConfig {
                 );
 
         if (
-                uri == null ||
-                !uri.startsWith("/api/")
+                uri.isBlank()
+                || !uri.startsWith("/api/")
         ) {
             return;
         }
@@ -827,18 +1064,21 @@ public class SecurityConfig {
                         .getAuthentication();
 
         String email =
-                authentication != null &&
-                authentication.isAuthenticated() &&
-                authentication.getName() != null
+                authentication != null
+                        && authentication.isAuthenticated()
+                        && authentication.getName() != null
+
                         ? sanitizeLogValue(
                                 authentication.getName(),
                                 150
                         )
+
                         : "desconocido";
 
         String role =
-                authentication != null &&
-                authentication.getAuthorities() != null
+                authentication != null
+                        && authentication.getAuthorities() != null
+
                         ? authentication
                                 .getAuthorities()
                                 .stream()
@@ -849,6 +1089,7 @@ public class SecurityConfig {
                                         )
                                 )
                                 .orElse("SIN_ROL")
+
                         : "SIN_ROL";
 
         String uri =
@@ -886,8 +1127,8 @@ public class SecurityConfig {
     }
 
     /*
-     * Evita registrar constantemente la validación normal
-     * de una sesión que ya expiró.
+     * Evita registrar repetidamente solicitudes normales
+     * asociadas con la validación de una sesión expirada.
      */
     private boolean shouldSkipUnauthorizedAudit(
             String uri
@@ -901,47 +1142,63 @@ public class SecurityConfig {
             String uri
     ) {
 
-        if (uri == null) {
+        if (
+                uri == null
+                || uri.isBlank()
+        ) {
             return false;
         }
 
         return uri.startsWith("/api/users")
+
                 || uri.startsWith(
                         "/api/admin-notifications"
                 )
+
                 || uri.startsWith(
                         "/api/promotions"
                 )
+
                 || uri.startsWith(
                         "/api/finances"
                 )
+
                 || uri.startsWith(
                         "/api/reports"
                 )
+
                 || uri.startsWith(
                         "/api/audit-logs"
                 )
+
                 || uri.startsWith(
                         "/api/profile"
                 )
+
                 || uri.startsWith(
                         "/api/services"
                 )
+
                 || uri.startsWith(
                         "/api/psychologists"
                 )
+
                 || uri.startsWith(
                         "/api/patients"
                 )
+
                 || uri.startsWith(
                         "/api/leads"
                 )
+
                 || uri.startsWith(
                         "/api/appointments"
                 )
+
                 || uri.startsWith(
                         "/api/psychologist-availabilities"
                 )
+
                 || uri.startsWith(
                         "/api/clinical-history"
                 );
@@ -957,31 +1214,34 @@ public class SecurityConfig {
                 );
 
         if (
-                ip == null ||
-                ip.isBlank()
+                ip == null
+                || ip.isBlank()
         ) {
-            ip = request.getRemoteAddr();
+            ip =
+                    request.getRemoteAddr();
         }
 
         if (
-                ip != null &&
-                ip.contains(",")
+                ip != null
+                && ip.contains(",")
         ) {
-            ip = ip
-                    .split(",")[0]
-                    .trim();
+            ip =
+                    ip.split(",")[0]
+                            .trim();
         }
 
-        ip = sanitizeLogValue(
-                ip,
-                64
-        );
+        ip =
+                sanitizeLogValue(
+                        ip,
+                        64
+                );
 
         if (
-                "0:0:0:0:0:0:0:1".equals(ip) ||
-                "::1".equals(ip)
+                "0:0:0:0:0:0:0:1".equals(ip)
+                || "::1".equals(ip)
         ) {
-            ip = "localhost";
+            ip =
+                    "localhost";
         }
 
         String userAgent =
@@ -990,8 +1250,8 @@ public class SecurityConfig {
                 );
 
         if (
-                userAgent == null ||
-                userAgent.isBlank()
+                userAgent == null
+                || userAgent.isBlank()
         ) {
             userAgent =
                     "No identificado";
@@ -1015,7 +1275,7 @@ public class SecurityConfig {
     }
 
     /*
-     * Evita saltos de línea y valores enormes
+     * Evita saltos de línea y valores demasiado grandes
      * dentro de los registros de auditoría.
      */
     private String sanitizeLogValue(
@@ -1034,8 +1294,8 @@ public class SecurityConfig {
                         .trim();
 
         if (
-                sanitized.length() >
-                maximumLength
+                sanitized.length()
+                        > maximumLength
         ) {
             return sanitized.substring(
                     0,
@@ -1053,7 +1313,7 @@ public class SecurityConfig {
         String browser =
                 "Navegador desconocido";
 
-        String os =
+        String operatingSystem =
                 "Sistema desconocido";
 
         if (
@@ -1061,57 +1321,85 @@ public class SecurityConfig {
                         "Windows NT 10.0"
                 )
         ) {
-            os = "Windows 10/11";
+            operatingSystem =
+                    "Windows 10/11";
 
         } else if (
-                userAgent.contains("Windows")
+                userAgent.contains(
+                        "Windows"
+                )
         ) {
-            os = "Windows";
+            operatingSystem =
+                    "Windows";
 
         } else if (
-                userAgent.contains("Android")
+                userAgent.contains(
+                        "Android"
+                )
         ) {
-            os = "Android";
+            operatingSystem =
+                    "Android";
 
         } else if (
-                userAgent.contains("iPhone") ||
-                userAgent.contains("iPad")
+                userAgent.contains("iPhone")
+                || userAgent.contains("iPad")
         ) {
-            os = "iOS";
+            operatingSystem =
+                    "iOS";
 
         } else if (
-                userAgent.contains("Mac OS")
+                userAgent.contains(
+                        "Mac OS"
+                )
         ) {
-            os = "macOS";
+            operatingSystem =
+                    "macOS";
 
         } else if (
-                userAgent.contains("Linux")
+                userAgent.contains(
+                        "Linux"
+                )
         ) {
-            os = "Linux";
+            operatingSystem =
+                    "Linux";
         }
 
         if (
-                userAgent.contains("Edg/")
+                userAgent.contains(
+                        "Edg/"
+                )
         ) {
-            browser = "Microsoft Edge";
+            browser =
+                    "Microsoft Edge";
 
         } else if (
-                userAgent.contains("Chrome/")
+                userAgent.contains(
+                        "Chrome/"
+                )
         ) {
-            browser = "Google Chrome";
+            browser =
+                    "Google Chrome";
 
         } else if (
-                userAgent.contains("Firefox/")
+                userAgent.contains(
+                        "Firefox/"
+                )
         ) {
-            browser = "Mozilla Firefox";
+            browser =
+                    "Mozilla Firefox";
 
         } else if (
-                userAgent.contains("Safari/")
+                userAgent.contains(
+                        "Safari/"
+                )
         ) {
-            browser = "Safari";
+            browser =
+                    "Safari";
         }
 
-        return browser + " en " + os;
+        return browser
+                + " en "
+                + operatingSystem;
     }
 
     private String normalizeAuthority(
@@ -1119,8 +1407,8 @@ public class SecurityConfig {
     ) {
 
         if (
-                role == null ||
-                role.isBlank()
+                role == null
+                || role.isBlank()
         ) {
             return "SIN_ROL";
         }

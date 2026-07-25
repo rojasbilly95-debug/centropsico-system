@@ -78,3 +78,15 @@ async function login() {
         message.className = "login-message error";
     }
 }
+
+document.addEventListener(
+    "keydown",
+    event => {
+        if (
+            event.key === "Enter"
+            && !event.repeat
+        ) {
+            login();
+        }
+    }
+);

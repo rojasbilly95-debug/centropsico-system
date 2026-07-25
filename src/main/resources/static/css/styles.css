@@ -3160,3 +3160,468 @@ body:not(.login-body) .section-title + p {
         transform: translateX(50%) translateY(-2px);
     }
 }
+
+/* =========================================================
+   RECUPERACIÓN DE CONTRASEÑA
+========================================================= */
+
+.login-recovery-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: -4px;
+    margin-bottom: 6px;
+}
+
+.forgot-password-link {
+    color: #0f4c81;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.forgot-password-link:hover {
+    color: #0a3559;
+    text-decoration: underline;
+}
+
+.recovery-body {
+    min-height: 100vh;
+    margin: 0;
+    background:
+        radial-gradient(
+            circle at 15% 20%,
+            rgba(59, 130, 246, 0.12),
+            transparent 34%
+        ),
+        radial-gradient(
+            circle at 85% 80%,
+            rgba(15, 76, 129, 0.10),
+            transparent 32%
+        ),
+        #eef3f8;
+    color: #1f2937;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.recovery-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+    box-sizing: border-box;
+}
+
+.recovery-card {
+    width: 100%;
+    max-width: 510px;
+    padding: 34px 38px 38px;
+    background: #ffffff;
+    border: 1px solid rgba(203, 213, 225, 0.8);
+    border-radius: 22px;
+    box-shadow:
+        0 22px 60px rgba(15, 23, 42, 0.13);
+    box-sizing: border-box;
+}
+
+.recovery-card [hidden] {
+    display: none !important;
+}
+
+.recovery-back-link,
+.recovery-login-link {
+    color: #526273;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.recovery-back-link:hover,
+.recovery-login-link:hover {
+    color: #0f4c81;
+    text-decoration: underline;
+}
+
+.recovery-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 28px 0 32px;
+}
+
+.recovery-brand img {
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
+}
+
+.recovery-brand span {
+    color: #123b5d;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.recovery-content {
+    animation: recoveryFadeIn 0.3s ease;
+}
+
+.recovery-icon,
+.recovery-success-icon,
+.recovery-invalid-icon {
+    width: 58px;
+    height: 58px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 20px;
+    border-radius: 50%;
+    font-size: 25px;
+    font-weight: 800;
+}
+
+.recovery-icon {
+    background: #e8f1fa;
+    color: #0f4c81;
+}
+
+.recovery-success-icon {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.recovery-invalid-icon {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.recovery-eyebrow {
+    display: inline-block;
+    margin-bottom: 9px;
+    color: #0f4c81;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+.recovery-content h1 {
+    margin: 0 0 13px;
+    color: #123b5d;
+    font-size: 27px;
+    line-height: 1.25;
+}
+
+.recovery-description {
+    margin: 0 0 25px;
+    color: #526273;
+    font-size: 14px;
+    line-height: 1.75;
+}
+
+.recovery-field {
+    display: block;
+    margin-bottom: 17px;
+}
+
+.recovery-field > span {
+    display: block;
+    margin-bottom: 7px;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.recovery-input-wrapper {
+    position: relative;
+}
+
+.recovery-input-wrapper input {
+    width: 100%;
+    min-height: 48px;
+    padding: 0 15px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    outline: none;
+    background: #ffffff;
+    color: #1f2937;
+    font-size: 14px;
+    box-sizing: border-box;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.recovery-input-wrapper input:focus {
+    border-color: #0f4c81;
+    box-shadow:
+        0 0 0 3px rgba(15, 76, 129, 0.13);
+}
+
+.recovery-input-wrapper input[type="password"],
+.recovery-input-wrapper input[type="text"] {
+    padding-right: 76px;
+}
+
+.password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    padding: 6px 8px;
+    border: 0;
+    background: transparent;
+    color: #0f4c81;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    transform: translateY(-50%);
+}
+
+.recovery-primary-button,
+.recovery-secondary-button,
+.recovery-primary-link {
+    width: 100%;
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    box-sizing: border-box;
+    font-size: 14px;
+    font-weight: 800;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+        transform 0.15s ease,
+        opacity 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.recovery-primary-button,
+.recovery-primary-link {
+    border: 0;
+    background: #0f4c81;
+    color: #ffffff;
+}
+
+.recovery-primary-button:hover:not(:disabled),
+.recovery-primary-link:hover {
+    background: #0a3d69;
+    transform: translateY(-1px);
+}
+
+.recovery-secondary-button {
+    margin-bottom: 18px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #334155;
+}
+
+.recovery-secondary-button:disabled,
+.recovery-primary-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
+.recovery-message {
+    min-height: 20px;
+    margin: 4px 0 12px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.recovery-message-error {
+    color: #b42318;
+}
+
+.recovery-message-success {
+    color: #047857;
+}
+
+.recovery-security-note,
+.recovery-information-box {
+    margin-top: 20px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    font-size: 12px;
+    line-height: 1.65;
+}
+
+.recovery-security-note {
+    border: 1px solid #bfdbfe;
+    background: #eff6ff;
+    color: #1e3a5f;
+}
+
+.recovery-information-box {
+    margin-bottom: 20px;
+    border: 1px solid #fde68a;
+    background: #fefce8;
+    color: #713f12;
+}
+
+.recovery-success,
+.recovery-invalid {
+    text-align: center;
+}
+
+.recovery-success-icon,
+.recovery-invalid-icon {
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.recovery-login-link {
+    display: inline-block;
+    margin-top: 17px;
+}
+
+.recovery-loading {
+    padding: 22px 0;
+    text-align: center;
+}
+
+.recovery-spinner {
+    width: 42px;
+    height: 42px;
+    margin: 0 auto 22px;
+    border: 4px solid #dbeafe;
+    border-top-color: #0f4c81;
+    border-radius: 50%;
+    animation: recoverySpin 0.8s linear infinite;
+}
+
+.password-strength {
+    margin: -4px 0 16px;
+}
+
+.password-strength-track {
+    width: 100%;
+    height: 6px;
+    overflow: hidden;
+    border-radius: 20px;
+    background: #e2e8f0;
+}
+
+.password-strength-bar {
+    width: 0;
+    height: 100%;
+    border-radius: 20px;
+    background: #dc2626;
+    transition:
+        width 0.25s ease,
+        background-color 0.25s ease;
+}
+
+.password-strength-bar[data-score="3"],
+.password-strength-bar[data-score="4"] {
+    background: #d97706;
+}
+
+.password-strength-bar[data-score="5"] {
+    background: #15803d;
+}
+
+#passwordStrengthText {
+    display: block;
+    margin-top: 7px;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.password-requirements {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px 12px;
+    margin: 0 0 21px;
+    padding: 0;
+    list-style: none;
+}
+
+.password-requirements li {
+    position: relative;
+    padding-left: 19px;
+    color: #64748b;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.password-requirements li::before {
+    content: "○";
+    position: absolute;
+    left: 0;
+    color: #94a3b8;
+    font-weight: 800;
+}
+
+.password-requirements li.valid {
+    color: #047857;
+}
+
+.password-requirements li.valid::before {
+    content: "✓";
+    color: #047857;
+}
+
+.password-match-message {
+    min-height: 18px;
+    margin-top: -8px;
+    margin-bottom: 8px;
+    font-size: 12px;
+}
+
+.password-match-message.valid {
+    color: #047857;
+}
+
+.password-match-message.invalid {
+    color: #b42318;
+}
+
+.recovery-redirect-message {
+    margin-top: 16px;
+    color: #64748b;
+    font-size: 12px;
+}
+
+@keyframes recoverySpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes recoveryFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 600px) {
+    .recovery-page {
+        padding: 18px 12px;
+    }
+
+    .recovery-card {
+        padding: 27px 22px 31px;
+        border-radius: 17px;
+    }
+
+    .recovery-brand {
+        margin-top: 24px;
+        margin-bottom: 27px;
+    }
+
+    .recovery-content h1 {
+        font-size: 23px;
+    }
+
+    .password-requirements {
+        grid-template-columns: 1fr;
+    }
+}
